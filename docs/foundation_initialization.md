@@ -10,7 +10,7 @@
 # 1) Create the app
 
 ```bash
-npx create-next-app@latest ai-interviews --ts --app --eslint
+npx create-next-app@latest ./ --ts --app --eslint
 cd ai-interviews
 ```
 
