@@ -14,7 +14,7 @@ export default function Header() {
         justify="space-between"
       >
         <Text fontWeight="bold" fontSize="lg">
-          Sociobot
+          Sociosim
         </Text>
 
         <HStack gap={4}>

@@ -20,7 +20,7 @@ export default function Home() {
     <Container py={16}>
       <Stack spacing={8}>
         <Stack spacing={4}>
-          <Heading size="lg">Bienvenue sur Sociobot</Heading>
+          <Heading size="lg">Bienvenue sur Sociosim</Heading>
           <Text fontSize="lg" color="gray.600">
             Entraînez vos entretiens de sociologie grâce à des avatars IA
             configurables et recueillez des retours précis de vos enseignants.
