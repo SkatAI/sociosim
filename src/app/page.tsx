@@ -18,8 +18,8 @@ export default function Home() {
 
   return (
     <Container py={16}>
-      <Stack spacing={8}>
-        <Stack spacing={4}>
+      <Stack gap={8}>
+        <Stack gap={4}>
           <Heading size="lg">Bienvenue sur Sociosim</Heading>
           <Text fontSize="lg" color="gray.600">
             Entraînez vos entretiens de sociologie grâce à des avatars IA
@@ -28,7 +28,7 @@ export default function Home() {
           <Button
             as="a"
             href="/interview"
-            colorScheme="teal"
+            colorPalette="blue"
             alignSelf="flex-start"
           >
             Démarrer un entretien
