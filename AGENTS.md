@@ -22,6 +22,7 @@ Write components in TypeScript with React 19 conventions. Follow functional comp
 
 - Use `gap`, `columnGap`, `rowGap`, etc. instead of the v2-only `spacing` prop with layout primitives such as `Stack` or `HStack`.
 - Buttons and other color-aware components rely on `colorPalette="teal"` (or another token family) rather than the deprecated `colorScheme` prop. Sticking to `colorPalette` prevents TS errors with the v3 recipe types.
+- Quick references for Chakra v3 live under `docs/chakra-v3/*.txt`; consult those notes whenever you bump into API or token conflicts.
 
 ## Testing Guidelines
 
