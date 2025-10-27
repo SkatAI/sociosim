@@ -29,7 +29,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
           <Header />
-          {children}
+          <main className="app-shell">{children}</main>
         </Providers>
       </body>
     </html>
