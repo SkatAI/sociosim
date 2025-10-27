@@ -8,6 +8,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
+import NextLink from "next/link";
 
 export default function Home() {
   const sampleAvatars = [
@@ -25,13 +26,8 @@ export default function Home() {
             Entraînez vos entretiens de sociologie grâce à des avatars IA
             configurables et recueillez des retours précis de vos enseignants.
           </Text>
-          <Button
-            as="a"
-            href="/interview"
-            colorPalette="blue"
-            alignSelf="flex-start"
-          >
-            Démarrer un entretien
+          <Button asChild colorPalette="blue" alignSelf="flex-start">
+            <NextLink href="/interview">Démarrer un entretien</NextLink>
           </Button>
         </Stack>
 

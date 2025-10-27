@@ -12,7 +12,7 @@ devrun: ## Start Panda watch and Next dev server.
 	npm run dev
 
 lint: ## Run ESLint with repo config.
-	npm run lint
+	npm run lint:all
 
 pretty: ## Run prettier auto-fix task.
 	npm run format:fix

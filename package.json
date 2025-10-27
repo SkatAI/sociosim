@@ -9,11 +9,14 @@
     "build:panda": "panda codegen",
     "panda": "panda codegen --watch",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "lint:all": "npm run lint && npm run typecheck",
     "format": "prettier --check .",
     "format:fix": "prettier --write ."
   },
   "dependencies": {
     "@chakra-ui/react": "^3.28.0",
+    "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.76.1",
     "next": "16.0.0",
     "react": "19.2.0",
