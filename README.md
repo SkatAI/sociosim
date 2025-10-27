@@ -1,7 +1,7 @@
-# Interstice
+# SocioSim
 
 
-Interstice est un simulateur d’entretiens en sciences sociales conçu pour entraîner les étudiants à conduire des entretiens qualitatifs.
+SocioSim est un simulateur d’entretiens en sciences sociales conçu pour entraîner les étudiants à conduire des entretiens qualitatifs.
 
 Le projet propose une expérience conversationnelle immersive, dans laquelle l’étudiant apprend à écouter, relancer, reformuler et explorer les représentations sociales de son interlocuteur.
 
