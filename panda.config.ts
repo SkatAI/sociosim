@@ -6,7 +6,7 @@ export default defineConfig({
 
   // Where to look for your css declarations
   presets: ["@pandacss/preset-base", "@pandacss/preset-panda"],
-  include: ["./app/**/*.{ts,tsx}"],
+  include: ["./src/app/**/*.{ts,tsx}"],
 
   // Files to exclude
   exclude: [],
