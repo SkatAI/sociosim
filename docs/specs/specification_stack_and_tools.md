@@ -19,19 +19,18 @@ This is a demo, POC application, low volume expected. simple UI with light desig
 - Token budgets per role (e.g., teacher analysis can be larger; student chat smaller).
 - Caching avatar system prompts.
 
-
 ## Data schema
 
 - avatars : image, name, description
 - prompts : avatar, system, guardrails, ...
 - themes : title, desc, prompts
 - interviews : date, avatar, student, + avatar tuning (bavard, méfiant, coopératif)
-    - messages (author, questions, answers, text)
-        - [TBD] each message has feedback thread : comments by teacher as tableau de codage et analyse de l’entretien.
+  - messages (author, questions, answers, text)
+    - [TBD] each message has feedback thread : comments by teacher as tableau de codage et analyse de l’entretien.
 - users
-    - students
-    - teachers
-    - admins
+  - students
+  - teachers
+  - admins
 - feedback
 - sessions
 - LLM call cost & tokens
@@ -41,7 +40,6 @@ This is a demo, POC application, low volume expected. simple UI with light desig
 - interview is composed of messages
 - messages have author, author role (student, avatar), is_question, is_answer, the text
 - Versioning: prompt versions per avatar; freeze version per interview for reproducibility.
-
 
 ### Schema
 
@@ -54,15 +52,14 @@ This is a demo, POC application, low volume expected. simple UI with light desig
 - llm_calls (id, interview_id, provider, model, tokens_in, tokens_out, ms, cost_est)
 - feature_flags / settings (provider, model, enabled, org-wide or per-avatar)
 
-
 ## Front end
 
 - header : help, faq, user account creation and management (login, register, manage account)
 - Consent screen (students know AI is used; data retention policy).
 - index page: mutiple (2, 3, 4) avatars with image and short text
 - dashboard :
-    - student logged in: dashboard previous interviews (avatar, title, summary, date, teacher reviewed)
-    - teacher logged in: new interviews, new replies and previous interviews
+  - student logged in: dashboard previous interviews (avatar, title, summary, date, teacher reviewed)
+  - teacher logged in: new interviews, new replies and previous interviews
 - interview as student: top: avatar, title; center : left / right chat; right column: collapsable with instructions / teacher comments (on previous interviews)
 - Moderation (lightweight: provider moderation API; at least on user input). User can flag messages as inappropriate.
 - interview as teacher: top: avatar, title, student info; subtop: recap of interview; center interview with messages, each message can have feedback; left column: list of questions for navigation;
@@ -70,14 +67,16 @@ This is a demo, POC application, low volume expected. simple UI with light desig
 - footer: university logo, legal links, contact
 
 ## RGPD
+
 - PII minimization + data retention TTL (auto-delete after X months).
 - Export/erase interview on request (GDPR-ish).
 
 ## Testing
+
 - E2E tests (Playwright: basic flows—login, create interview, stream, comment).
 
-
 **later** : Not included in this version
+
 - [TBD] student belong to teacher / teacher sees his students
 - [TBD] each message has notes by student
 - avatar or interview [TBD] follows a theory : title, desc, prompts (Bourdieu, Latour, Crozier). The theory helps generate a avatar
@@ -99,6 +98,7 @@ This is a demo, POC application, low volume expected. simple UI with light desig
 - short timeline, low workload, one developper. I want to develop all that in a few days.
 
 # RLS
+
 student ↔ their interviews; teacher ↔ assigned students; admin ↔ all.
 
 Enforce in DB with Supabase RLS
@@ -131,6 +131,3 @@ Enforce in DB with Supabase RLS
 - LLM context: tbd. let's start with in memory
 - responsive design
 - sequential storage of interview messages
-
-
-

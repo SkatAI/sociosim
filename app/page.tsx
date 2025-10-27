@@ -25,7 +25,12 @@ export default function Home() {
             Entraînez vos entretiens de sociologie grâce à des avatars IA
             configurables et recueillez des retours précis de vos enseignants.
           </Text>
-          <Button as="a" href="/interview" colorScheme="teal" alignSelf="flex-start">
+          <Button
+            as="a"
+            href="/interview"
+            colorScheme="teal"
+            alignSelf="flex-start"
+          >
             Démarrer un entretien
           </Button>
         </Stack>

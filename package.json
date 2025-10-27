@@ -8,7 +8,9 @@
     "start": "next start",
     "build:panda": "panda codegen",
     "panda": "panda codegen --watch",
-    "lint": "eslint"
+    "lint": "eslint",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write ."
   },
   "dependencies": {
     "@chakra-ui/react": "^3.28.0",

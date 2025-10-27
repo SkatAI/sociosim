@@ -1,9 +1,8 @@
-
 # 0) Prereqs
 
-* Node 20+
-* npm (bundled with Node)
-* (Optional) Supabase account OR Docker Desktop for local Supabase
+- Node 20+
+- npm (bundled with Node)
+- (Optional) Supabase account OR Docker Desktop for local Supabase
 
 ---
 
@@ -73,7 +72,11 @@ import Providers from "./providers";
 
 export const metadata = { title: "AI Interviews (POC)" };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body>
@@ -95,7 +98,9 @@ export default function Home() {
     <Container py={10}>
       <Heading size="lg">AI Interview Avatars (POC)</Heading>
       <Text mt={3}>Practice interviews with simple AI avatars.</Text>
-      <Button mt={6} as="a" href="/interview">Start interview</Button>
+      <Button mt={6} as="a" href="/interview">
+        Start interview
+      </Button>
     </Container>
   );
 }
@@ -136,7 +141,7 @@ import { createClient } from "@supabase/supabase-js";
 
 export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 ```
 
@@ -288,7 +293,9 @@ export default function InterviewPage() {
     <Stack p={6} gap={4}>
       <Box borderWidth="1px" rounded="xl" p={4} minH="280px">
         {msgs.map((m, i) => (
-          <Text key={i} mb={2}><b>{m.role}:</b> {m.content}</Text>
+          <Text key={i} mb={2}>
+            <b>{m.role}:</b> {m.content}
+          </Text>
         ))}
       </Box>
       <HStack>
@@ -296,7 +303,7 @@ export default function InterviewPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask the avatar..."
-          onKeyDown={(e)=> e.key==="Enter" ? send() : null}
+          onKeyDown={(e) => (e.key === "Enter" ? send() : null)}
         />
         <Button onClick={send}>Send</Button>
       </HStack>
@@ -316,7 +323,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 
 export async function POST(req: NextRequest) {

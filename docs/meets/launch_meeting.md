@@ -1,4 +1,4 @@
-Since your initial document is high-level and you’re turning it into a real POC with Supabase + Next.js + React + TypeScript, your **launch meeting** should clarify what’s currently *ambiguous* in four categories: **product / tech / organization / budget-scope**.
+Since your initial document is high-level and you’re turning it into a real POC with Supabase + Next.js + React + TypeScript, your **launch meeting** should clarify what’s currently _ambiguous_ in four categories: **product / tech / organization / budget-scope**.
 
 Below is a checklist you can literally take into the meeting.
 
@@ -8,7 +8,7 @@ Below is a checklist you can literally take into the meeting.
 
 | Topic                     | Why it matters                  | Questions to clarify                                                                                                                              |
 | ------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Core user journey**     | Avoid over-engineering          | What is the *one* end-to-end flow we must demo (student logs in → selects personality → chats → teacher views transcript)?                        |
+| **Core user journey**     | Avoid over-engineering          | What is the _one_ end-to-end flow we must demo (student logs in → selects personality → chats → teacher views transcript)?                        |
 | **Roles & permissions**   | Drives schema & auth            | Do teachers register manually, or are they pre-approved by admin? Any admin dashboard at all for the POC?                                         |
 | **University-email rule** | Impacts auth config             | Which domains are valid (single domain or list)? Is the validation strict (`@univ.fr` only) or pattern-based (subdomains allowed)?                |
 | **Personalities**         | Defines seed data & prompt work | How many personalities should exist at launch? Who writes/approves their system prompts? Is personality tuning (talkative etc.) mandatory for v1? |
