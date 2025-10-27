@@ -1,6 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Interstice
 
-## Getting Started
+
+Interstice est un simulateur d’entretiens en sciences sociales conçu pour entraîner les étudiants à conduire des entretiens qualitatifs.
+
+Le projet propose une expérience conversationnelle immersive, dans laquelle l’étudiant apprend à écouter, relancer, reformuler et explorer les représentations sociales de son interlocuteur.
+
+
+## Objectifs
+
+- S’entraîner à mener des entretiens semi-directifs
+- Développer la posture d’écoute active
+- Apprendre à relancer sans diriger
+- Comprendre les dynamiques interactionnelles
+
+## Public
+
+- Étudiants en sociologie, en SHS
+- Formations à la médiation, enquête, relation d’aide
+
+
+
+# Getting Started
 
 First, run the development server:
 
