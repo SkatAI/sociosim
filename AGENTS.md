@@ -35,3 +35,8 @@ Commits mirror the initial history (`create-next-app`): short, imperative phrase
 ## Configuration & Secrets
 
 Store Supabase and other API keys in `.env.local` and NEVER commit them. Provide `.env.example` updates when new variables are required. Review Next.js settings after changing environment variables.
+
+## default git branch
+
+The main default branch is `master` not `main`
+
