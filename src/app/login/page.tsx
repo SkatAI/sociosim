@@ -64,7 +64,7 @@ export default function LoginPage() {
   const hasError = Boolean(error);
 
   return (
-    <Container py={16} maxW="lg" centerContent>
+    <Container py={16} maxW="lg" centerContent mx="auto">
       <Stack gap={8} alignItems="center">
         <Stack gap={2} textAlign="center" maxW="lg" width="full">
           <Heading size="lg">Se connecter</Heading>
@@ -85,58 +85,64 @@ export default function LoginPage() {
           </Alert.Root>
         ) : null}
 
-        <chakra.form onSubmit={handleSubmit} maxW="sm" width="100%" mx="auto">
-          <Stack gap={6} width="100%">
-            <Field.Root required>
-              <Field.Label>Adresse e-mail</Field.Label>
+        <chakra.form
+          onSubmit={handleSubmit}
+          maxW="sm"
+          width="full"
+          mx="auto"
+          display="flex"
+          flexDirection="column"
+          gap={6}
+        >
+          <Field.Root required>
+            <Field.Label>Adresse e-mail</Field.Label>
+            <Input
+              type="email"
+              value={form.email}
+              onChange={handleChange("email")}
+              placeholder="exemple@universite.fr"
+            />
+          </Field.Root>
+
+          <Field.Root required invalid={hasError}>
+            <Field.Label>Mot de passe</Field.Label>
+            <InputGroup
+              endElement={
+                <IconButton
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  onClick={() => setShowPassword(!showPassword)}
+                  variant="ghost"
+                  size="sm"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </IconButton>
+              }
+            >
               <Input
-                type="email"
-                value={form.email}
-                onChange={handleChange("email")}
-                placeholder="exemple@universite.fr"
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={handleChange("password")}
+                placeholder="Votre mot de passe"
               />
-            </Field.Root>
+            </InputGroup>
+            {hasError ? <Field.ErrorText>{error}</Field.ErrorText> : null}
+          </Field.Root>
 
-            <Field.Root required invalid={hasError}>
-              <Field.Label>Mot de passe</Field.Label>
-              <InputGroup
-                endElement={
-                  <IconButton
-                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                    onClick={() => setShowPassword(!showPassword)}
-                    variant="ghost"
-                    size="sm"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </IconButton>
-                }
-              >
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={form.password}
-                  onChange={handleChange("password")}
-                  placeholder="Votre mot de passe"
-                />
-              </InputGroup>
-              {hasError ? <Field.ErrorText>{error}</Field.ErrorText> : null}
-            </Field.Root>
+          {hasError && !isSubmitting ? (
+            <Alert.Root status="error" borderRadius="md">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Title>Connexion impossible</Alert.Title>
+                <Alert.Description>
+                  {error}
+                </Alert.Description>
+              </Alert.Content>
+            </Alert.Root>
+          ) : null}
 
-            {hasError && !isSubmitting ? (
-              <Alert.Root status="error" borderRadius="md">
-                <Alert.Indicator />
-                <Alert.Content>
-                  <Alert.Title>Connexion impossible</Alert.Title>
-                  <Alert.Description>
-                    {error}
-                  </Alert.Description>
-                </Alert.Content>
-              </Alert.Root>
-            ) : null}
-
-            <Button type="submit" colorPalette="blue" loading={isSubmitting}>
-              Se connecter
-            </Button>
-          </Stack>
+          <Button type="submit" colorPalette="blue" loading={isSubmitting}>
+            Se connecter
+          </Button>
         </chakra.form>
 
         <Text textAlign="center" color="gray.600">
