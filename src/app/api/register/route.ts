@@ -46,6 +46,14 @@ export async function POST(req: NextRequest) {
       });
 
     if (createUserError || !userData?.user) {
+      if (createUserError) {
+        console.error("Erreur lors de la création de l'utilisateur Supabase auth:", {
+          email: normalizedEmail,
+          errorMessage: createUserError.message,
+          errorCode: createUserError.code,
+          errorDetails: createUserError,
+        });
+      }
       return NextResponse.json(
         {
           error:
@@ -74,6 +82,13 @@ export async function POST(req: NextRequest) {
       );
 
     if (upsertError) {
+      console.error("Erreur lors de l'upsert du profil utilisateur:", {
+        userId,
+        email: normalizedEmail,
+        errorMessage: upsertError.message,
+        errorCode: upsertError.code,
+        errorDetails: upsertError,
+      });
       return NextResponse.json(
         {
           error: "Compte créé, mais impossible de synchroniser le profil.",

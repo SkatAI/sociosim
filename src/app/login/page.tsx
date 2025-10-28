@@ -6,11 +6,14 @@ import {
   Container,
   Field,
   Heading,
+  IconButton,
   Input,
+  InputGroup,
   Link,
   Stack,
   Text,
 } from "@chakra-ui/react";
+import { Eye, EyeOff } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -28,6 +31,7 @@ export default function LoginPage() {
   const [form, setForm] = useState<AuthState>({ email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (field: keyof AuthState) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
@@ -94,12 +98,25 @@ export default function LoginPage() {
 
             <Field.Root required invalid={hasError}>
               <Field.Label>Mot de passe</Field.Label>
-              <Input
-                type="password"
-                value={form.password}
-                onChange={handleChange("password")}
-                placeholder="Votre mot de passe"
-              />
+              <InputGroup
+                endElement={
+                  <IconButton
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    onClick={() => setShowPassword(!showPassword)}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </IconButton>
+                }
+              >
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={handleChange("password")}
+                  placeholder="Votre mot de passe"
+                />
+              </InputGroup>
               {hasError ? <Field.ErrorText>{error}</Field.ErrorText> : null}
             </Field.Root>
 

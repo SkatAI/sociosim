@@ -16,3 +16,9 @@ lint: ## Run ESLint with repo config.
 
 pretty: ## Run prettier auto-fix task.
 	npm run format:fix
+
+
+# Supabase
+
+sup_migrate: ## Run supbase migration up
+	supabase migration up
