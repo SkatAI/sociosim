@@ -42,6 +42,21 @@ a {
   text-decoration: none;
 }
 
+/* Input padding - applies to all input fields */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="url"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+textarea,
+select {
+  padding: 0.5rem 0.75rem !important;
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
