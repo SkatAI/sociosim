@@ -6,15 +6,18 @@ import {
   Container,
   Field,
   Heading,
+  IconButton,
   Input,
+  InputGroup,
   Link,
   Stack,
   Text,
 } from "@chakra-ui/react";
+import { Eye, EyeOff } from "lucide-react";
 import NextLink from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 
 type AuthState = {
   email: string;
@@ -23,9 +26,12 @@ type AuthState = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const passwordJustCreated = searchParams.get("password") === "created";
   const [form, setForm] = useState<AuthState>({ email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (field: keyof AuthState) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
@@ -66,6 +72,18 @@ export default function LoginPage() {
           </Text>
         </Stack>
 
+        {passwordJustCreated ? (
+          <Alert.Root status="success" borderRadius="md">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Mot de passe enregistré</Alert.Title>
+              <Alert.Description>
+                Vous pouvez maintenant vous connecter avec votre adresse e-mail et le mot de passe défini.
+              </Alert.Description>
+            </Alert.Content>
+          </Alert.Root>
+        ) : null}
+
         <form onSubmit={handleSubmit}>
           <Stack gap={6}>
             <Field.Root required>
@@ -80,12 +98,25 @@ export default function LoginPage() {
 
             <Field.Root required invalid={hasError}>
               <Field.Label>Mot de passe</Field.Label>
-              <Input
-                type="password"
-                value={form.password}
-                onChange={handleChange("password")}
-                placeholder="Votre mot de passe"
-              />
+              <InputGroup
+                endElement={
+                  <IconButton
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    onClick={() => setShowPassword(!showPassword)}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </IconButton>
+                }
+              >
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={handleChange("password")}
+                  placeholder="Votre mot de passe"
+                />
+              </InputGroup>
               {hasError ? <Field.ErrorText>{error}</Field.ErrorText> : null}
             </Field.Root>
 
