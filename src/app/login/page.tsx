@@ -63,9 +63,9 @@ export default function LoginPage() {
   const hasError = Boolean(error);
 
   return (
-    <Container py={16} maxW="lg">
-      <Stack gap={8}>
-        <Stack gap={2} textAlign="center">
+    <Container py={16} maxW="lg" centerContent mx="auto">
+      <Stack gap={8} alignItems="center">
+        <Stack gap={2} textAlign="center" maxW="lg" width="full">
           <Heading size="lg">Se connecter</Heading>
           <Text color="gray.600">
             Accédez à votre espace Sociosim pour continuer vos simulations.
@@ -84,66 +84,82 @@ export default function LoginPage() {
           </Alert.Root>
         ) : null}
 
-        <form onSubmit={handleSubmit}>
-          <Stack gap={6}>
-            <Field.Root required>
-              <Field.Label>Adresse e-mail</Field.Label>
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            maxWidth: "28rem",
+            width: "100%",
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.5rem",
+          }}
+        >
+          <Field.Root required>
+            <Field.Label>Adresse e-mail</Field.Label>
+            <Input
+              type="email"
+              value={form.email}
+              onChange={handleChange("email")}
+              placeholder="exemple@universite.fr"
+            />
+          </Field.Root>
+
+          <Field.Root required invalid={hasError}>
+            <Field.Label>Mot de passe</Field.Label>
+            <InputGroup
+              endElement={
+                <IconButton
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  onClick={() => setShowPassword(!showPassword)}
+                  variant="ghost"
+                  size="sm"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </IconButton>
+              }
+            >
               <Input
-                type="email"
-                value={form.email}
-                onChange={handleChange("email")}
-                placeholder="exemple@universite.fr"
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={handleChange("password")}
+                placeholder="Votre mot de passe"
               />
-            </Field.Root>
+            </InputGroup>
+            {hasError ? <Field.ErrorText>{error}</Field.ErrorText> : null}
+          </Field.Root>
 
-            <Field.Root required invalid={hasError}>
-              <Field.Label>Mot de passe</Field.Label>
-              <InputGroup
-                endElement={
-                  <IconButton
-                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                    onClick={() => setShowPassword(!showPassword)}
-                    variant="ghost"
-                    size="sm"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </IconButton>
-                }
-              >
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={form.password}
-                  onChange={handleChange("password")}
-                  placeholder="Votre mot de passe"
-                />
-              </InputGroup>
-              {hasError ? <Field.ErrorText>{error}</Field.ErrorText> : null}
-            </Field.Root>
+          {hasError && !isSubmitting ? (
+            <Alert.Root status="error" borderRadius="md">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Title>Connexion impossible</Alert.Title>
+                <Alert.Description>
+                  {error}
+                </Alert.Description>
+              </Alert.Content>
+            </Alert.Root>
+          ) : null}
 
-            {hasError && !isSubmitting ? (
-              <Alert.Root status="error" borderRadius="md">
-                <Alert.Indicator />
-                <Alert.Content>
-                  <Alert.Title>Connexion impossible</Alert.Title>
-                  <Alert.Description>
-                    {error}
-                  </Alert.Description>
-                </Alert.Content>
-              </Alert.Root>
-            ) : null}
-
-            <Button type="submit" colorPalette="blue" loading={isSubmitting}>
-              Se connecter
-            </Button>
-          </Stack>
+          <Button type="submit" colorPalette="blue" loading={isSubmitting}>
+            Se connecter
+          </Button>
         </form>
 
-        <Text textAlign="center" color="gray.600">
-          Pas encore de compte ?{" "}
-          <Link as={NextLink} href="/register" color="blue.600" fontWeight="semibold">
-            Créer un compte
-          </Link>
-        </Text>
+        <Stack gap={2} width="full" textAlign="center">
+          <Text color="gray.600">
+            Mot de passe oublié ?{" "}
+            <Link as={NextLink} href="/reset-password" color="blue.600" fontWeight="semibold">
+              Réinitialiser
+            </Link>
+          </Text>
+          <Text color="gray.600">
+            Pas encore de compte ?{" "}
+            <Link as={NextLink} href="/register" color="blue.600" fontWeight="semibold">
+              Créer un compte
+            </Link>
+          </Text>
+        </Stack>
       </Stack>
     </Container>
   );

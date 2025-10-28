@@ -23,7 +23,7 @@ type PasswordFormState = {
   confirmation: string;
 };
 
-export default function SetPasswordPage() {
+export default function ResetPasswordConfirmPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
@@ -78,14 +78,14 @@ export default function SetPasswordPage() {
 
     setIsSubmitting(true);
 
-    const response = await fetch("/api/register/set-password", {
+    const response = await fetch("/api/reset-password/confirm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, password: form.password }),
     });
 
     if (response.ok) {
-      router.replace("/login?password=created");
+      router.replace("/login?password=reset");
       return;
     }
 
@@ -94,23 +94,23 @@ export default function SetPasswordPage() {
       | null;
 
     setError(
-      payload?.error ?? "Impossible d'enregistrer votre mot de passe."
+      payload?.error ?? "Impossible de réinitialiser votre mot de passe."
     );
     setIsSubmitting(false);
   };
 
   return (
-    <Container py={16} maxW="lg">
-      <Stack gap={8}>
-        <Stack gap={2} textAlign="center">
-          <Heading size="lg">Définir votre mot de passe</Heading>
+    <Container py={16} maxW="lg" centerContent mx="auto">
+      <Stack gap={8} alignItems="center">
+        <Stack gap={2} textAlign="center" maxW="lg" width="full">
+          <Heading size="lg">Créer un nouveau mot de passe</Heading>
           <Text color="gray.600">
-            Choisissez un mot de passe pour finaliser l&apos;activation de votre compte.
+            Choisissez un mot de passe pour réinitialiser l&apos;accès à votre compte.
           </Text>
         </Stack>
 
         {error ? (
-          <Alert.Root status="error" borderRadius="md">
+          <Alert.Root status="error" borderRadius="md" width="full">
             <Alert.Indicator />
             <Alert.Content>
               <Alert.Title>Action requise</Alert.Title>
@@ -119,10 +119,10 @@ export default function SetPasswordPage() {
           </Alert.Root>
         ) : null}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ width: "100%", maxWidth: "28rem" }}>
           <Stack gap={6}>
             <Field.Root required>
-              <Field.Label>Mot de passe</Field.Label>
+              <Field.Label>Nouveau mot de passe</Field.Label>
               <InputGroup
                 endElement={
                   <IconButton
@@ -177,7 +177,7 @@ export default function SetPasswordPage() {
               loading={isSubmitting}
               disabled={isTokenMissing}
             >
-              Enregistrer mon mot de passe
+              Réinitialiser mon mot de passe
             </Button>
           </Stack>
         </form>
