@@ -100,9 +100,6 @@ export default function RegisterPage() {
       <Stack gap={8}>
         <Stack gap={2} textAlign="center">
           <Heading size="lg">Créer un compte</Heading>
-          <Text color="gray.600">
-            Renseignez vos informations pour accéder à Sociosim en tant qu&apos;étudiant·e.
-          </Text>
         </Stack>
 
         {serverError ? (
@@ -120,6 +117,7 @@ export default function RegisterPage() {
             <Field.Root required invalid={Boolean(fieldErrors.firstName)}>
               <Field.Label>Prénom</Field.Label>
               <Input
+                type="text"
                 value={form.firstName}
                 onChange={handleChange("firstName")}
                 placeholder="Prénom"
@@ -132,6 +130,7 @@ export default function RegisterPage() {
             <Field.Root required invalid={Boolean(fieldErrors.lastName)}>
               <Field.Label>Nom</Field.Label>
               <Input
+                type="text"
                 value={form.lastName}
                 onChange={handleChange("lastName")}
                 placeholder="Nom"
