@@ -1,6 +1,8 @@
 // app/components/Header.tsx
 "use client";
-import { Box, Flex, HStack, Link, Text } from "@chakra-ui/react";
+import { Box, Flex, HStack, IconButton, Link, Text } from "@chakra-ui/react";
+import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -10,8 +12,19 @@ type UserInfo = {
 } | null;
 
 export default function Header() {
+  const router = useRouter();
   const [user, setUser] = useState<UserInfo>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      router.replace("/login");
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -61,9 +74,20 @@ export default function Header() {
 
         <HStack gap={4}>
           {!isLoading && user ? (
-            <Text fontWeight="medium" color="gray.700">
-              {user.firstName} {user.lastName}
-            </Text>
+            <HStack gap={2}>
+              <Text fontWeight="medium" color="gray.700">
+                {user.firstName} {user.lastName}
+              </Text>
+              <IconButton
+                aria-label="Déconnexion"
+                onClick={handleLogout}
+                variant="ghost"
+                size="sm"
+                title="Se déconnecter"
+              >
+                <LogOut size={20} />
+              </IconButton>
+            </HStack>
           ) : (
             <Link href="/login" fontWeight="medium" color="gray.700">
               Se connecter

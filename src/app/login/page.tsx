@@ -12,7 +12,6 @@ import {
   Link,
   Stack,
   Text,
-  chakra,
 } from "@chakra-ui/react";
 import { Eye, EyeOff } from "lucide-react";
 import NextLink from "next/link";
@@ -85,14 +84,16 @@ export default function LoginPage() {
           </Alert.Root>
         ) : null}
 
-        <chakra.form
+        <form
           onSubmit={handleSubmit}
-          maxW="sm"
-          width="full"
-          mx="auto"
-          display="flex"
-          flexDirection="column"
-          gap={6}
+          style={{
+            maxWidth: "28rem",
+            width: "100%",
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.5rem",
+          }}
         >
           <Field.Root required>
             <Field.Label>Adresse e-mail</Field.Label>
@@ -143,14 +144,22 @@ export default function LoginPage() {
           <Button type="submit" colorPalette="blue" loading={isSubmitting}>
             Se connecter
           </Button>
-        </chakra.form>
+        </form>
 
-        <Text textAlign="center" color="gray.600">
-          Pas encore de compte ?{" "}
-          <Link as={NextLink} href="/register" color="blue.600" fontWeight="semibold">
-            Créer un compte
-          </Link>
-        </Text>
+        <Stack gap={2} width="full" textAlign="center">
+          <Text color="gray.600">
+            Mot de passe oublié ?{" "}
+            <Link as={NextLink} href="/reset-password" color="blue.600" fontWeight="semibold">
+              Réinitialiser
+            </Link>
+          </Text>
+          <Text color="gray.600">
+            Pas encore de compte ?{" "}
+            <Link as={NextLink} href="/register" color="blue.600" fontWeight="semibold">
+              Créer un compte
+            </Link>
+          </Text>
+        </Stack>
       </Stack>
     </Container>
   );
