@@ -324,10 +324,16 @@ Automatically creates a pull request when pushing to any branch (except `master`
 ```yaml
 - Trigger: Push to non-master branches
 - Base: master
-- Creates PR with auto-delete of source branch
+- Uses GitHub CLI to create PR with branch name as title
 ```
 
-**Note:** Manual pushes to `master` bypass this workflow.
+**How it works:**
+1. When you push to a feature branch, the workflow runs
+2. Uses `gh pr create` to create a PR from your branch → `master`
+3. PR title is auto-generated as `PR: {branch-name}`
+4. Workflow is skipped if pushed directly to `master`
+
+**Note:** If a PR already exists for the branch, the workflow will fail (which is expected behavior - no duplicate PRs).
 
 ## Testing
 
