@@ -5,6 +5,10 @@ on:
     branches-ignore:
       - master  # Don't create PR when pushing to master
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   create_pr:
     runs-on: ubuntu-latest
