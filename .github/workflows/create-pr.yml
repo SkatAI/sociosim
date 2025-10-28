@@ -2,17 +2,18 @@ name: Create Pull Request
 
 on:
   push:
-    branches:
-      - '*'  # Trigger on any branch push
+    branches-ignore:
+      - master  # Don't create PR when pushing to master
 
 jobs:
   create_pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          base: master 
-          head: ${{ github.head_ref }}  # The branch that was pushed
+          base: master
+          head: ${{ github.ref_name }}
+          delete-branch: true

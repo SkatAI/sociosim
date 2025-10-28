@@ -166,6 +166,23 @@ All tables use Row-Level Security (RLS) for data isolation by role.
 - Double quotes for strings
 - Colocate styles with components (CSS Modules or Panda CSS inline)
 
+### Input Components - Global Padding
+**Input padding is applied globally in `globals.css`** - no per-component props needed.
+
+All input fields automatically receive:
+- Horizontal padding: `0.75rem` (left/right)
+- Vertical padding: `0.5rem` (top/bottom)
+
+This covers:
+- Text inputs (`type="text"`)
+- Email inputs (`type="email"`)
+- Password inputs (`type="password"`)
+- Textareas
+- Select dropdowns
+- Other standard input types
+
+**No need to add `px` or `py` props to individual Input components** - it's handled by global CSS in `src/app/globals.css`.
+
 ### Imports
 ```typescript
 // Chakra UI components
@@ -279,6 +296,38 @@ const { data } = await supabaseClient
 ### eslint.config.mjs
 - Next.js recommended rules
 - Ignores generated files and build directories
+
+## CI/CD & Node Version
+
+### Node Version
+The project uses **Node.js 20.11.0** (LTS) configured in `.nvmrc`. When using `nvm`:
+```bash
+nvm use  # Automatically switches to v20.11.0
+```
+
+The CI/CD pipelines automatically read from `.nvmrc` to ensure consistency.
+
+### GitHub Actions Workflows
+
+#### `ci.yml` - Pull Request Checks
+Runs on all pull requests to verify code quality:
+```yaml
+- Install dependencies
+- Run lint:all (ESLint + TypeScript)
+- Run build (Panda codegen + Next.js build)
+```
+
+Checks must pass before merging to `master`.
+
+#### `create-pr.yml` - Auto Create PR
+Automatically creates a pull request when pushing to any branch (except `master`):
+```yaml
+- Trigger: Push to non-master branches
+- Base: master
+- Creates PR with auto-delete of source branch
+```
+
+**Note:** Manual pushes to `master` bypass this workflow.
 
 ## Testing
 
