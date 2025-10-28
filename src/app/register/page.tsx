@@ -7,9 +7,12 @@ import {
   Field,
   Heading,
   Input,
+  Link,
   Stack,
   Text,
+  chakra,
 } from "@chakra-ui/react";
+import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -94,13 +97,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <Container py={16} maxW="lg">
-      <Stack gap={8}>
-        <Stack gap={2} textAlign="center">
+    <Container py={16} maxW="lg" centerContent mx="auto">
+      <Stack gap={8} alignItems="center">
+        <Stack gap={2} textAlign="center" maxW="lg" width="full">
           <Heading size="lg">Créer un compte</Heading>
-          <Text color="gray.600">
-            Renseignez vos informations pour accéder à Sociosim en tant qu&apos;étudiant·e.
-          </Text>
         </Stack>
 
         {serverError ? (
@@ -113,50 +113,65 @@ export default function RegisterPage() {
           </Alert.Root>
         ) : null}
 
-        <form onSubmit={handleSubmit}>
-          <Stack gap={6}>
-            <Field.Root required invalid={Boolean(fieldErrors.firstName)}>
-              <Field.Label>Prénom</Field.Label>
-              <Input
-                value={form.firstName}
-                onChange={handleChange("firstName")}
-                placeholder="Prénom"
-              />
-              {fieldErrors.firstName ? (
-                <Field.ErrorText>{fieldErrors.firstName}</Field.ErrorText>
-              ) : null}
-            </Field.Root>
+        <chakra.form
+          onSubmit={handleSubmit}
+          maxW="sm"
+          width="full"
+          mx="auto"
+          display="flex"
+          flexDirection="column"
+          gap={6}
+        >
+          <Field.Root required invalid={Boolean(fieldErrors.firstName)}>
+            <Field.Label>Prénom</Field.Label>
+            <Input
+              type="text"
+              value={form.firstName}
+              onChange={handleChange("firstName")}
+              placeholder="Prénom"
+            />
+            {fieldErrors.firstName ? (
+              <Field.ErrorText>{fieldErrors.firstName}</Field.ErrorText>
+            ) : null}
+          </Field.Root>
 
-            <Field.Root required invalid={Boolean(fieldErrors.lastName)}>
-              <Field.Label>Nom</Field.Label>
-              <Input
-                value={form.lastName}
-                onChange={handleChange("lastName")}
-                placeholder="Nom"
-              />
-              {fieldErrors.lastName ? (
-                <Field.ErrorText>{fieldErrors.lastName}</Field.ErrorText>
-              ) : null}
-            </Field.Root>
+          <Field.Root required invalid={Boolean(fieldErrors.lastName)}>
+            <Field.Label>Nom</Field.Label>
+            <Input
+              type="text"
+              value={form.lastName}
+              onChange={handleChange("lastName")}
+              placeholder="Nom"
+            />
+            {fieldErrors.lastName ? (
+              <Field.ErrorText>{fieldErrors.lastName}</Field.ErrorText>
+            ) : null}
+          </Field.Root>
 
-            <Field.Root required invalid={Boolean(fieldErrors.email)}>
-              <Field.Label>Adresse e-mail</Field.Label>
-              <Input
-                type="email"
-                value={form.email}
-                onChange={handleChange("email")}
-                placeholder="exemple@universite.fr"
-              />
-              {fieldErrors.email ? (
-                <Field.ErrorText>{fieldErrors.email}</Field.ErrorText>
-              ) : null}
-            </Field.Root>
+          <Field.Root required invalid={Boolean(fieldErrors.email)}>
+            <Field.Label>Adresse e-mail</Field.Label>
+            <Input
+              type="email"
+              value={form.email}
+              onChange={handleChange("email")}
+              placeholder="exemple@universite.fr"
+            />
+            {fieldErrors.email ? (
+              <Field.ErrorText>{fieldErrors.email}</Field.ErrorText>
+            ) : null}
+          </Field.Root>
 
-            <Button type="submit" colorPalette="blue" loading={isSubmitting}>
-              Envoyer le lien d&apos;inscription
-            </Button>
-          </Stack>
-        </form>
+          <Button type="submit" colorPalette="blue" loading={isSubmitting}>
+            Envoyer le lien d&apos;inscription
+          </Button>
+        </chakra.form>
+
+        <Text textAlign="center" color="gray.600">
+          Vous avez un compte ?{" "}
+          <Link as={NextLink} href="/login" color="blue.600" fontWeight="semibold">
+            Se connecter
+          </Link>
+        </Text>
       </Stack>
     </Container>
   );
