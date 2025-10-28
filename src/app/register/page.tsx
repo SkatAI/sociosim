@@ -10,6 +10,7 @@ import {
   Link,
   Stack,
   Text,
+  chakra,
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
@@ -96,9 +97,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <Container py={16} maxW="lg">
-      <Stack gap={8}>
-        <Stack gap={2} textAlign="center">
+    <Container py={16} maxW="lg" centerContent>
+      <Stack gap={8} alignItems="center">
+        <Stack gap={2} textAlign="center" maxW="lg" width="full">
           <Heading size="lg">Créer un compte</Heading>
         </Stack>
 
@@ -112,8 +113,8 @@ export default function RegisterPage() {
           </Alert.Root>
         ) : null}
 
-        <form onSubmit={handleSubmit}>
-          <Stack gap={6}>
+        <chakra.form onSubmit={handleSubmit} maxW="sm" width="100%" mx="auto">
+          <Stack gap={6} width="100%">
             <Field.Root required invalid={Boolean(fieldErrors.firstName)}>
               <Field.Label>Prénom</Field.Label>
               <Input
@@ -157,7 +158,7 @@ export default function RegisterPage() {
               Envoyer le lien d&apos;inscription
             </Button>
           </Stack>
-        </form>
+        </chakra.form>
 
         <Text textAlign="center" color="gray.600">
           Vous avez un compte ?{" "}

@@ -12,6 +12,7 @@ import {
   Link,
   Stack,
   Text,
+  chakra,
 } from "@chakra-ui/react";
 import { Eye, EyeOff } from "lucide-react";
 import NextLink from "next/link";
@@ -63,9 +64,9 @@ export default function LoginPage() {
   const hasError = Boolean(error);
 
   return (
-    <Container py={16} maxW="lg">
-      <Stack gap={8}>
-        <Stack gap={2} textAlign="center">
+    <Container py={16} maxW="lg" centerContent>
+      <Stack gap={8} alignItems="center">
+        <Stack gap={2} textAlign="center" maxW="lg" width="full">
           <Heading size="lg">Se connecter</Heading>
           <Text color="gray.600">
             Accédez à votre espace Sociosim pour continuer vos simulations.
@@ -84,8 +85,8 @@ export default function LoginPage() {
           </Alert.Root>
         ) : null}
 
-        <form onSubmit={handleSubmit}>
-          <Stack gap={6}>
+        <chakra.form onSubmit={handleSubmit} maxW="sm" width="100%" mx="auto">
+          <Stack gap={6} width="100%">
             <Field.Root required>
               <Field.Label>Adresse e-mail</Field.Label>
               <Input
@@ -136,7 +137,7 @@ export default function LoginPage() {
               Se connecter
             </Button>
           </Stack>
-        </form>
+        </chakra.form>
 
         <Text textAlign="center" color="gray.600">
           Pas encore de compte ?{" "}

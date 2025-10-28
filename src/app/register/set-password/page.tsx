@@ -6,10 +6,13 @@ import {
   Container,
   Field,
   Heading,
+  IconButton,
   Input,
+  InputGroup,
   Stack,
   Text,
 } from "@chakra-ui/react";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -30,6 +33,8 @@ export default function SetPasswordPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const isTokenMissing = useMemo(() => token.length === 0, [token]);
 
@@ -118,24 +123,52 @@ export default function SetPasswordPage() {
           <Stack gap={6}>
             <Field.Root required>
               <Field.Label>Mot de passe</Field.Label>
-              <Input
-                type="password"
-                value={form.password}
-                onChange={handleChange("password")}
-                placeholder="Au moins 8 caractères"
-                disabled={isTokenMissing}
-              />
+              <InputGroup
+                endElement={
+                  <IconButton
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    onClick={() => setShowPassword(!showPassword)}
+                    variant="ghost"
+                    size="sm"
+                    disabled={isTokenMissing}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </IconButton>
+                }
+              >
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={handleChange("password")}
+                  placeholder="Au moins 8 caractères"
+                  disabled={isTokenMissing}
+                />
+              </InputGroup>
             </Field.Root>
 
             <Field.Root required>
               <Field.Label>Confirmez le mot de passe</Field.Label>
-              <Input
-                type="password"
-                value={form.confirmation}
-                onChange={handleChange("confirmation")}
-                placeholder="Répétez votre mot de passe"
-                disabled={isTokenMissing}
-              />
+              <InputGroup
+                endElement={
+                  <IconButton
+                    aria-label={showConfirmation ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    onClick={() => setShowConfirmation(!showConfirmation)}
+                    variant="ghost"
+                    size="sm"
+                    disabled={isTokenMissing}
+                  >
+                    {showConfirmation ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </IconButton>
+                }
+              >
+                <Input
+                  type={showConfirmation ? "text" : "password"}
+                  value={form.confirmation}
+                  onChange={handleChange("confirmation")}
+                  placeholder="Répétez votre mot de passe"
+                  disabled={isTokenMissing}
+                />
+              </InputGroup>
             </Field.Root>
 
             <Button
