@@ -3,7 +3,7 @@ name: Create Pull Request
 on:
   push:
     branches-ignore:
-      - master  # Don't create PR when pushing to master
+      - main  # Don't create PR when pushing to main
 
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
           gh pr create \
             --title "PR: ${{ github.ref_name }}" \
             --body "Auto-created PR from branch: ${{ github.ref_name }}" \
-            --base master \
+            --base main \
             --head ${{ github.ref_name }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

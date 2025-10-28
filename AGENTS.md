@@ -38,5 +38,4 @@ Store Supabase and other API keys in `.env.local` and NEVER commit them. Provide
 
 ## default git branch
 
-The main default branch is `master` not `main`
-
+The main default branch is `main`

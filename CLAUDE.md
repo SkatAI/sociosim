@@ -71,7 +71,7 @@ make pretty            # Auto-fix formatting
 
 Commits should be lowercase, imperative: `"add interview lobby screen"`, `"fix password validation"`
 
-Default branch is **`master`** (not `main`).
+Default branch is **`main`**.
 
 ### Adding New Features
 1. Create page/component in `src/app/`
@@ -317,21 +317,21 @@ Runs on all pull requests to verify code quality:
 - Run build (Panda codegen + Next.js build)
 ```
 
-Checks must pass before merging to `master`.
+Checks must pass before merging to `main`.
 
 #### `create-pr.yml` - Auto Create PR
-Automatically creates a pull request when pushing to any branch (except `master`):
+Automatically creates a pull request when pushing to any branch (except `main`):
 ```yaml
-- Trigger: Push to non-master branches
-- Base: master
+- Trigger: Push to non-main branches
+- Base: main
 - Uses GitHub CLI to create PR with branch name as title
 ```
 
 **How it works:**
 1. When you push to a feature branch, the workflow runs
-2. Uses `gh pr create` to create a PR from your branch → `master`
+2. Uses `gh pr create` to create a PR from your branch → `main`
 3. PR title is auto-generated as `PR: {branch-name}`
-4. Workflow is skipped if pushed directly to `master`
+4. Workflow is skipped if pushed directly to `main`
 
 **Note:** If a PR already exists for the branch, the workflow will fail (which is expected behavior - no duplicate PRs).
 
@@ -363,7 +363,7 @@ Future testing strategy (from specs):
 
 3. **French first** - UI text and messages should be in French by default
 
-4. **Default branch is `master`** (not `main`)
+4. **Default branch is `main`**
 
 5. **Secrets in `.env.local`** - Never commit environment variables
 
