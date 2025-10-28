@@ -7,9 +7,11 @@ import {
   Field,
   Heading,
   Input,
+  Link,
   Stack,
   Text,
 } from "@chakra-ui/react";
+import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -157,6 +159,13 @@ export default function RegisterPage() {
             </Button>
           </Stack>
         </form>
+
+        <Text textAlign="center" color="gray.600">
+          Vous avez un compte ?{" "}
+          <Link as={NextLink} href="/login" color="blue.600" fontWeight="semibold">
+            Se connecter
+          </Link>
+        </Text>
       </Stack>
     </Container>
   );
