@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { createServiceSupabaseClient } from "../../../lib/supabaseServiceClient";
+import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = createServiceSupabaseClient();
+    const passwordSetupToken = randomBytes(24).toString("hex");
     const generatedPassword = randomBytes(16).toString("base64url");
     const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
     const normalizedEmail = email.trim().toLowerCase();
@@ -40,10 +41,19 @@ export async function POST(req: NextRequest) {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           name: fullName,
+          passwordConfigured: false,
         },
       });
 
     if (createUserError || !userData?.user) {
+      if (createUserError) {
+        console.error("Erreur lors de la création de l'utilisateur Supabase auth:", {
+          email: normalizedEmail,
+          errorMessage: createUserError.message,
+          errorCode: createUserError.code,
+          errorDetails: createUserError,
+        });
+      }
       return NextResponse.json(
         {
           error:
@@ -65,12 +75,20 @@ export async function POST(req: NextRequest) {
             name: fullName,
             email: normalizedEmail,
             role: "student",
+            password_setup_token: passwordSetupToken,
           },
         ],
         { onConflict: "id" }
       );
 
     if (upsertError) {
+      console.error("Erreur lors de l'upsert du profil utilisateur:", {
+        userId,
+        email: normalizedEmail,
+        errorMessage: upsertError.message,
+        errorCode: upsertError.code,
+        errorDetails: upsertError,
+      });
       return NextResponse.json(
         {
           error: "Compte créé, mais impossible de synchroniser le profil.",
@@ -79,8 +97,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const fakeToken = randomBytes(16).toString("hex");
-    const confirmationUrl = `http://localhost:3000/enregistrement/confirmation?token=${fakeToken}`;
+    const confirmationUrl = `http://localhost:3000/register/set-password?token=${passwordSetupToken}`;
     // Simulate sending email by logging the confirmation URL.
     console.log(
       `[Sociosim] Lien de validation pour ${normalizedEmail}: ${confirmationUrl}`

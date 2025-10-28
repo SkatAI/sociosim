@@ -18,9 +18,6 @@ export default function Header() {
         </Text>
 
         <HStack gap={4}>
-          <Link href="/register" fontWeight="medium" color="teal.600">
-            Créer un compte
-          </Link>
           <Link href="/login" fontWeight="medium" color="gray.700">
             Se connecter
           </Link>
