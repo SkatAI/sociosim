@@ -12,9 +12,9 @@ import {
   Text,
 } from "@chakra-ui/react";
 import NextLink from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 
 type AuthState = {
   email: string;
@@ -23,6 +23,8 @@ type AuthState = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const passwordJustCreated = searchParams.get("password") === "created";
   const [form, setForm] = useState<AuthState>({ email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +67,18 @@ export default function LoginPage() {
             Accédez à votre espace Sociosim pour continuer vos simulations.
           </Text>
         </Stack>
+
+        {passwordJustCreated ? (
+          <Alert.Root status="success" borderRadius="md">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Mot de passe enregistré</Alert.Title>
+              <Alert.Description>
+                Vous pouvez maintenant vous connecter avec votre adresse e-mail et le mot de passe défini.
+              </Alert.Description>
+            </Alert.Content>
+          </Alert.Root>
+        ) : null}
 
         <form onSubmit={handleSubmit}>
           <Stack gap={6}>

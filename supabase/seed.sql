@@ -79,17 +79,19 @@ begin
        where id = auth_id;
     end if;
 
-    insert into public.users (id, name, email, role)
+    insert into public.users (id, name, email, role, password_setup_token)
     values (
       auth_id,
       seed_user.full_name,
       seed_user.email,
-      seed_user.role::public.user_role
+      seed_user.role::public.user_role,
+      null
     )
     on conflict (id) do update
       set name = excluded.name,
           email = excluded.email,
-          role = excluded.role;
+          role = excluded.role,
+          password_setup_token = excluded.password_setup_token;
   end loop;
 end
 $$;
