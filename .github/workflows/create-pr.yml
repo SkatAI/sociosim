@@ -1,0 +1,18 @@
+name: Create Pull Request
+
+on:
+  push:
+    branches:
+      - '*'  # Trigger on any branch push
+
+jobs:
+  create_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: master 
+          head: ${{ github.head_ref }}  # The branch that was pushed
