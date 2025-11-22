@@ -2,6 +2,7 @@ import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
 import {
   Interview,
   InterviewUsage,
+  Message,
   validateInterview,
   validateInterviewUsage,
 } from "@/lib/schemas";
@@ -101,13 +102,16 @@ export async function getUserInterviewsWithMessages(userId: string) {
 
   return (data || []).map((raw) => {
     const interview = validateInterview(raw);
-    const usage = (raw as any).interview_usage;
-    const userInterviewSession = (raw as any).user_interview_session || [];
+    const usage = (raw as { interview_usage?: InterviewUsage[] }).interview_usage;
+    const userInterviewSession =
+      (raw as { user_interview_session?: Array<{ sessions?: { messages?: Message[] } }> })
+        .user_interview_session || [];
 
     const allMessages: Array<{ content: string; role: string; created_at: string }> = [];
-    userInterviewSession.forEach((uis: any) => {
-      if (uis.sessions?.messages) {
-        allMessages.push(...uis.sessions.messages);
+    userInterviewSession.forEach((uis) => {
+      const messages = uis.sessions?.messages;
+      if (messages) {
+        allMessages.push(...messages);
       }
     });
 
