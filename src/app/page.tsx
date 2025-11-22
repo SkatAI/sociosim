@@ -1,4 +1,5 @@
 // app/page.tsx
+"use client";
 import {
   Box,
   Button,
@@ -9,8 +10,34 @@ import {
   Text,
 } from "@chakra-ui/react";
 import NextLink from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Home() {
+  const router = useRouter();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.user?.id) {
+        router.replace("/dashboard");
+      } else {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  if (isCheckingAuth) {
+    return null;
+  }
+
   const sampleAvatars = [
     { name: "Aïcha", trait: "Empathic field interviewer" },
     { name: "Marc", trait: "Skeptical policy maker" },
