@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
-// import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient"; // For future database integration
+import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
 
 const adkClient = new AdkClient();
 
@@ -39,30 +39,23 @@ export async function POST(req: NextRequest) {
     // ADK expects a UUID-like session ID, so we'll use the interviewId
     const adkSession = await adkClient.createSession("app", userId, interviewId);
 
-    // Store mapping in Supabase (for future transcript persistence)
-    // This is optional - ADK manages sessions internally
-    // Once you have interviews table, uncomment this:
-    /*
+    // Store interview in database
     const supabase = createServiceSupabaseClient();
-    const { error: upsertError } = await supabase
+    const { error: insertError } = await supabase
       .from("interviews")
-      .upsert(
-        [
-          {
-            id: interviewId,
-            student_id: userId,
-            adk_session_id: adkSession.session_id,
-            status: "in_progress",
-          },
-        ],
-        { onConflict: "id" }
-      );
+      .insert([
+        {
+          id: interviewId,
+          user_id: userId,
+          adk_session_id: adkSession.session_id,
+          status: "in_progress",
+        },
+      ]);
 
-    if (upsertError) {
-      console.error("Failed to store session mapping:", upsertError);
+    if (insertError) {
+      console.error("[/api/sessions POST] Failed to store interview record:", insertError);
       // Log but don't fail - ADK session is already created
     }
-    */
 
     return NextResponse.json(
       {
@@ -127,6 +120,18 @@ export async function DELETE(req: NextRequest) {
 
     // Delete ADK session
     await adkClient.deleteSession("app", userId, sessionId);
+
+    // Update interview status to standby (user left but session can be resumed)
+    const supabase = createServiceSupabaseClient();
+    const { error: updateError } = await supabase
+      .from("interviews")
+      .update({ status: "standby" })
+      .eq("adk_session_id", sessionId);
+
+    if (updateError) {
+      console.error("[/api/sessions DELETE] Failed to update interview status:", updateError);
+      // Log but don't fail - ADK session is already deleted
+    }
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
+import * as interviewDb from "@/lib/interviewDatabase";
 
 const adkClient = new AdkClient();
 
@@ -20,6 +21,8 @@ export async function POST(req: NextRequest) {
   try {
     // Parse request body
     const { message, userId, sessionId, interviewId, streaming } = await req.json();
+
+    console.log("[/api/chat POST] Received:", { message: message?.substring(0, 20), userId, sessionId, interviewId, streaming });
 
     // Validate required fields
     if (!message || typeof message !== "string") {
@@ -77,6 +80,8 @@ function handleStreamingResponse(
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
+      let assistantResponse = "";
+      let tokenUsage: { input: number; output: number } | null = null;
 
       try {
         console.log("[/api/chat] Creating ADK request...");
@@ -98,10 +103,63 @@ function handleStreamingResponse(
         // Stream events from ADK
         for await (const event of adkClient.streamMessage(adkRequest)) {
           eventCount++;
+          const eventTyped = event as Record<string, unknown>;
+          const hasTokens = event.hasOwnProperty("total_input_tokens");
+
           console.log(`[/api/chat] Received event ${eventCount}:`, {
-            hasContent: !!event.content,
-            hasTokens: event.hasOwnProperty("total_input_tokens"),
+            hasContent: !!eventTyped.content,
+            hasTokens,
+            eventKeys: Object.keys(eventTyped).slice(0, 5),
           });
+
+          // Accumulate assistant response
+          if (eventTyped.content && typeof eventTyped.content === "object") {
+            const content = eventTyped.content as Record<string, unknown>;
+            if (Array.isArray(content.parts)) {
+              for (const part of content.parts) {
+                if (typeof part === "object" && part !== null && "text" in part && typeof (part as Record<string, unknown>).text === "string") {
+                  assistantResponse += (part as Record<string, unknown>).text as string;
+                }
+              }
+            }
+          }
+
+          // Extract token usage from event
+          if (eventTyped.usageMetadata && typeof eventTyped.usageMetadata === "object") {
+            const usageMetadata = eventTyped.usageMetadata as Record<string, unknown>;
+
+            // ADK returns: promptTokenCount (input) and candidatesTokenCount (output)
+            const promptTokenCount = usageMetadata.promptTokenCount as number | undefined;
+            const candidatesTokenCount = usageMetadata.candidatesTokenCount as number | undefined;
+
+            // Also support older format with input/output tokens
+            const inputTokens =
+              promptTokenCount ||
+              (usageMetadata.inputTokens as number | undefined) ||
+              (usageMetadata.input_tokens as number | undefined) ||
+              (usageMetadata.total_input_tokens as number | undefined);
+
+            const outputTokens =
+              candidatesTokenCount ||
+              (usageMetadata.outputTokens as number | undefined) ||
+              (usageMetadata.output_tokens as number | undefined) ||
+              (usageMetadata.total_output_tokens as number | undefined);
+
+            if (inputTokens && outputTokens) {
+              tokenUsage = {
+                input: inputTokens,
+                output: outputTokens,
+              };
+              console.log("[/api/chat] Token usage extracted:", tokenUsage);
+            }
+          } else if (event.hasOwnProperty("total_input_tokens") && event.hasOwnProperty("total_output_tokens")) {
+            // Old format fallback
+            tokenUsage = {
+              input: (event as Record<string, unknown>).total_input_tokens as number,
+              output: (event as Record<string, unknown>).total_output_tokens as number,
+            };
+            console.log("[/api/chat] Token usage extracted from direct properties:", tokenUsage);
+          }
 
           try {
             // Send event as SSE
@@ -119,6 +177,45 @@ function handleStreamingResponse(
 
         console.log(`[/api/chat] Finished streaming ${eventCount} events`);
 
+        // Store messages in database after streaming completes
+        console.log("[/api/chat] Checking database storage...", { interviewId, hasTokenUsage: !!tokenUsage });
+
+        if (interviewId && tokenUsage) {
+          try {
+            console.log("[/api/chat] Storing messages in database...", { interviewId, tokens: tokenUsage });
+
+            // Store user message
+            await interviewDb.storeMessage(interviewId, "user", message);
+            console.log("[/api/chat] User message stored");
+
+            // Store assistant message with tokens
+            await interviewDb.storeMessage(interviewId, "assistant", assistantResponse, tokenUsage);
+            console.log("[/api/chat] Assistant message stored");
+
+            // Update usage
+            await interviewDb.updateInterviewUsage(
+              interviewId,
+              tokenUsage.input,
+              tokenUsage.output
+            );
+            console.log("[/api/chat] Usage updated");
+
+            console.log("[/api/chat] Messages stored successfully");
+          } catch (dbError) {
+            const dbErrorMessage = dbError instanceof Error ? dbError.message : "Unknown error";
+            console.error("[/api/chat] Failed to store messages:", dbErrorMessage, dbError);
+
+            // Send error event to client
+            const errorEvent = `data: ${JSON.stringify({
+              type: "error",
+              error: "Session is no longer being saved. Please refresh the page.",
+            })}\n\n`;
+            controller.enqueue(encoder.encode(errorEvent));
+          }
+        } else {
+          console.log("[/api/chat] Skipping database storage - missing interviewId or tokenUsage");
+        }
+
         // Close stream
         controller.close();
       } catch (error) {
@@ -130,7 +227,7 @@ function handleStreamingResponse(
             type: "error",
             error: errorMessage,
           })}\n\n`;
-          controller.enqueue(new TextEncoder().encode(errorEvent));
+          controller.enqueue(encoder.encode(errorEvent));
         } catch (e) {
           console.error("[/api/chat] Failed to send error event:", e);
         }
@@ -174,6 +271,36 @@ async function handleBatchResponse(
     const events = await adkClient.sendMessage(adkRequest);
     const textResponse = adkClient.extractTextResponse(events);
     const tokenUsage = adkClient.getTokenUsage(events);
+
+    // Store messages in database
+    if (interviewId && tokenUsage) {
+      try {
+        console.log("[/api/chat] Storing messages in database...");
+
+        // Store user message
+        await interviewDb.storeMessage(interviewId, "user", message);
+
+        // Store assistant message with tokens
+        await interviewDb.storeMessage(interviewId, "assistant", textResponse, tokenUsage);
+
+        // Update usage
+        await interviewDb.updateInterviewUsage(
+          interviewId,
+          tokenUsage.input,
+          tokenUsage.output
+        );
+
+        console.log("[/api/chat] Messages stored successfully");
+      } catch (dbError) {
+        const dbErrorMessage = dbError instanceof Error ? dbError.message : "Unknown error";
+        console.error("[/api/chat] Failed to store messages:", dbErrorMessage);
+
+        return NextResponse.json(
+          { error: "Session is no longer being saved. Please refresh the page." },
+          { status: 500 }
+        );
+      }
+    }
 
     return NextResponse.json({
       success: true,

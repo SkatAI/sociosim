@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { generateUuid } from "@/lib/uuid";
 
 interface InterviewSession {
   sessionId: string;
@@ -29,8 +30,8 @@ export function useInterviewSession(userId: string | null) {
         setIsLoading(true);
         setError(null);
 
-        // Generate interview ID
-        const interviewId = `interview-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        // Generate interview ID as UUID
+        const interviewId = generateUuid();
 
         const response = await fetch("/api/sessions", {
           method: "POST",
