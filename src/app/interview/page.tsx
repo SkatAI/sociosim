@@ -255,43 +255,59 @@ export default function InterviewPage() {
         </Text>
       </Box>
 
-      {/* Messages */}
-      <Box
-        ref={setMessagesContainerRef}
-        flex={1}
-        overflowY="auto"
-        backgroundColor="white"
-      >
-        {messages.length === 0 ? (
-          <VStack
-            height="100%"
-            justifyContent="center"
-            alignItems="center"
-            gap={4}
-            padding={4}
+      {/* Messages and Input */}
+      {messages.length === 0 ? (
+        // Empty state: centered layout with input in the middle
+        <VStack
+          flex={1}
+          justifyContent="center"
+          alignItems="center"
+          gap={8}
+          padding={4}
+          backgroundColor="white"
+        >
+          <Text color="gray.500" fontSize="lg">
+            Bonjour! Cliquez ci-dessous pour commencer.
+          </Text>
+          <Box width="100%" maxWidth="600px">
+            <MessageInput
+              onSendMessage={handleSendMessage}
+              isLoading={isStreaming}
+              placeholder="Tapez votre message..."
+            />
+          </Box>
+        </VStack>
+      ) : (
+        // Active session: messages above, input below
+        <>
+          <Box
+            ref={setMessagesContainerRef}
+            flex={1}
+            minHeight={0}
+            overflowY="auto"
+            backgroundColor="white"
+            paddingX={4}
           >
-            <Text color="gray.500">Bonjour! Cliquez ci-dessous pour commencer.</Text>
-          </VStack>
-        ) : (
-          <Stack gap={0} padding={4}>
-            {messages.map((msg) => (
-              <ChatMessage
-                key={msg.id}
-                role={msg.role}
-                text={msg.text}
-                timestamp={msg.timestamp}
-              />
-            ))}
-          </Stack>
-        )}
-      </Box>
+            <Stack gap={0} paddingY={4}>
+              {messages.map((msg) => (
+                <ChatMessage
+                  key={msg.id}
+                  role={msg.role}
+                  text={msg.text}
+                  timestamp={msg.timestamp}
+                />
+              ))}
+            </Stack>
+          </Box>
 
-      {/* Input */}
-      <MessageInput
-        onSendMessage={handleSendMessage}
-        isLoading={isStreaming}
-        placeholder="Tapez votre message..."
-      />
+          {/* Input */}
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            isLoading={isStreaming}
+            placeholder="Tapez votre message..."
+          />
+        </>
+      )}
     </Box>
   );
 }
