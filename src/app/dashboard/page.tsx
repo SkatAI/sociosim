@@ -11,6 +11,8 @@ import {
   HStack,
   Badge,
   Spinner,
+  IconButton,
+  Icon,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -64,22 +66,32 @@ const getStatusLabel = (status: string): string => {
   return labels[status] || status;
 };
 
-const getLastAssistantMessage = (messages: Array<{ content: string; role: string }>): string => {
-  const assistantMessages = messages.filter((msg) => msg.role === "assistant");
-  if (assistantMessages.length === 0) return "";
-
-  const lastMessage = assistantMessages[assistantMessages.length - 1];
-  const maxLength = 100;
-  return lastMessage.content.length > maxLength
-    ? lastMessage.content.substring(0, maxLength) + "..."
-    : lastMessage.content;
+const getLatestAssistantMessage = (
+  messages: Array<{ content: string; role: string; created_at: string }>
+) => {
+  if (!messages?.length) return null;
+  // Messages are sorted desc by created_at; first assistant is the latest
+  return messages.find((msg) => msg.role === "assistant") || null;
 };
+
+const ExpandMoreSvg = () => (
+  <Icon viewBox="0 0 24 24" width="20px" height="20px" color="gray.700">
+    <path d="m12 15.5-6.5-6 1.5-1.5 5 4.6 5-4.6 1.5 1.5-6.5 6z" fill="currentColor" />
+  </Icon>
+);
+
+const ExpandLessSvg = () => (
+  <Icon viewBox="0 0 24 24" width="20px" height="20px" color="gray.700">
+    <path d="m12 8.5 6.5 6-1.5 1.5-5-4.6-5 4.6L5.5 14.5l6.5-6z" fill="currentColor" />
+  </Icon>
+);
 
 export default function DashboardPage() {
   const router = useRouter();
   const [interviews, setInterviews] = useState<InterviewWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedInterviewId, setExpandedInterviewId] = useState<string | null>(null);
 
   // Check authentication and fetch interviews
   useEffect(() => {
@@ -124,6 +136,10 @@ export default function DashboardPage() {
 
   const handleCreateInterview = () => {
     router.push("/interview");
+  };
+
+  const toggleExpanded = (interviewId: string) => {
+    setExpandedInterviewId((current) => (current === interviewId ? null : interviewId));
   };
 
   if (isLoading) {
@@ -199,7 +215,10 @@ export default function DashboardPage() {
           <Stack gap={4}>
             {interviews.map((interview) => {
               const usage = interview.interview_usage?.[0];
-              const lastMessage = getLastAssistantMessage(interview.messages || []);
+              const latestAssistant = getLatestAssistantMessage(interview.messages || []);
+              const firstLine =
+                latestAssistant?.content?.split("\n")[0]?.trim() ?? "Aucun message assistant";
+              const isExpanded = expandedInterviewId === interview.id;
 
               return (
                 <Box
@@ -208,15 +227,7 @@ export default function DashboardPage() {
                   borderColor="gray.200"
                   borderRadius="md"
                   padding={4}
-                  cursor="pointer"
-                  _hover={{
-                    borderColor: "blue.300",
-                    backgroundColor: "blue.50",
-                  }}
                   transition="all 0.2s"
-                  onClick={() => {
-                    router.push(`/interview/${interview.id}`);
-                  }}
                 >
                   {/* Top Row: Agent, Status, Date */}
                   <HStack justify="space-between" marginBottom={3}>
@@ -234,40 +245,64 @@ export default function DashboardPage() {
                   </HStack>
 
                   {/* Last Message Preview */}
-                  {lastMessage && (
-                    <Text
-                      color="gray.700"
-                      fontSize="sm"
-                      marginBottom={3}
-                      overflow="hidden"
-                      textOverflow="ellipsis"
-                      display="-webkit-box"
-                      css={{
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                      }}
+                  <VStack align="stretch" gap={2} marginBottom={3}>
+                    <Box
+                      as="button"
+                      textAlign="left"
+                      onClick={() => toggleExpanded(interview.id)}
+                      paddingY={1}
+                      paddingRight={2}
+                      paddingLeft={2}
+                      cursor="pointer"
+                      _hover={{ color: "gray.800" }}
                     >
-                      {lastMessage}
-                    </Text>
-                  )}
+                      <Text
+                        color="gray.700"
+                        fontSize="sm"
+                        flex="1"
+                        whiteSpace={isExpanded ? "pre-wrap" : "nowrap"}
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                      >
+                        {isExpanded ? latestAssistant?.content : firstLine}
+                      </Text>
+                    </Box>
+                  </VStack>
 
                   {/* Token Counts */}
-                  {usage && (
-                    <HStack justify="flex-start" gap={4}>
-                      <Text fontSize="xs" color="gray.600">
-                        <Text as="span" fontWeight="semibold">
-                          {usage.total_input_tokens}
-                        </Text>{" "}
-                        tokens entrée
-                      </Text>
-                      <Text fontSize="xs" color="gray.600">
-                        <Text as="span" fontWeight="semibold">
-                          {usage.total_output_tokens}
-                        </Text>{" "}
-                        tokens sortie
-                      </Text>
+                  <VStack align="stretch" gap={2}>
+                    <HStack align="center" justify="space-between" gap={4}>
+                      {usage ? (
+                        <HStack justify="flex-start" gap={4}>
+                          <Text fontSize="xs" color="gray.600">
+                            <Text as="span" fontWeight="semibold">
+                              {usage.total_input_tokens}
+                            </Text>{" "}
+                            tokens entrée
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            <Text as="span" fontWeight="semibold">
+                              {usage.total_output_tokens}
+                            </Text>{" "}
+                            tokens sortie
+                          </Text>
+                        </HStack>
+                      ) : (
+                        <Box />
+                      )}
+
+                      <Button
+                        colorPalette="blue"
+                        size="xs"
+                        paddingInline={4}
+                        paddingBlock={2}
+                        fontSize="xs"
+                        onClick={() => router.push(`/interview/${interview.id}`)}
+                      >
+                        Continuer
+                      </Button>
                     </HStack>
-                  )}
+                  </VStack>
                 </Box>
               );
             })}
