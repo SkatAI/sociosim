@@ -16,10 +16,15 @@ const adkClient = new AdkClient();
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, interviewId } = await req.json();
+    const body = await req.json();
+    const userId = typeof body.userId === "string" ? body.userId : null;
+    const interviewId =
+      typeof body.interviewId === "string" && body.interviewId.trim().length > 0
+        ? body.interviewId
+        : null;
 
     // Validate required fields
-    if (!userId || typeof userId !== "string") {
+    if (!userId) {
       return NextResponse.json(
         { error: "Missing or invalid 'userId' field (must be string)" },
         { status: 400 }
@@ -30,7 +35,7 @@ export async function POST(req: NextRequest) {
     let isResume = false;
 
     // Check if this is a resume request (interviewId provided) or new interview
-    if (interviewId && typeof interviewId === "string") {
+    if (interviewId) {
       // RESUME MODE: Verify interview exists
       const interview = await interviews.getInterviewById(interviewId);
       if (!interview) {
@@ -102,7 +107,8 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
-    const sessionId = searchParams.get("sessionId");
+    const sessionId = searchParams.get("sessionId"); // Database session UUID
+    const adkSessionId = searchParams.get("adkSessionId"); // ADK session ID
 
     // Validate required fields
     if (!userId) {
@@ -119,11 +125,11 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Delete ADK session
-    await adkClient.deleteSession("app", userId, sessionId);
+    // Delete ADK session (prefer ADK session ID, fall back to DB ID if missing)
+    await adkClient.deleteSession("app", userId, adkSessionId || sessionId);
 
-    // Update session status to 'ended'
-    await interviewDb.updateSessionStatus(sessionId, "ended");
+    // Update session status to 'ended' in database
+    await sessions.updateSessionStatus(sessionId, "ended");
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
