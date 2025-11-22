@@ -7,6 +7,7 @@ import { ChatMessage } from "@/components/ChatMessage";
 import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
 import { supabase } from "@/lib/supabaseClient";
+import { generateUuid } from "@/lib/uuid";
 
 interface Message {
   id: string;
@@ -78,7 +79,7 @@ export default function InterviewPage() {
 
     // Add user message to display
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
+      id: generateUuid(),
       role: "user",
       text: message,
       timestamp: new Date().toLocaleTimeString("fr-FR", {
@@ -115,7 +116,7 @@ export default function InterviewPage() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
-      const assistantMessageId = `assistant-${Date.now()}`;
+      const assistantMessageId = generateUuid();
       let assistantText = "";
 
       while (true) {
@@ -190,7 +191,7 @@ export default function InterviewPage() {
       setMessages((prev) => [
         ...prev,
         {
-          id: `error-${Date.now()}`,
+          id: generateUuid(),
           role: "assistant",
           text: `Erreur: ${errorMessage}`,
           timestamp: new Date().toLocaleTimeString("fr-FR", {
@@ -246,7 +247,13 @@ export default function InterviewPage() {
   return (
     <Box height="100vh" display="flex" flexDirection="column" backgroundColor="white">
       {/* Header */}
-      <Box padding={4} borderBottom="1px solid" borderBottomColor="gray.200" backgroundColor="white">
+      <Box
+        padding={4}
+        borderBottom="1px solid"
+        borderBottomColor="gray.200"
+        backgroundColor="white"
+        zIndex={10}
+      >
         <Heading as="h1" size="lg">
           Entretien avec Oriane
         </Heading>
@@ -255,7 +262,7 @@ export default function InterviewPage() {
         </Text>
       </Box>
 
-      {/* Messages and Input */}
+      {/* Messages Container */}
       {messages.length === 0 ? (
         // Empty state: centered layout with input in the middle
         <VStack
@@ -265,6 +272,7 @@ export default function InterviewPage() {
           gap={8}
           padding={4}
           backgroundColor="white"
+          paddingBottom="120px"
         >
           <Text color="gray.500" fontSize="lg">
             Bonjour! Cliquez ci-dessous pour commencer.
@@ -278,35 +286,47 @@ export default function InterviewPage() {
           </Box>
         </VStack>
       ) : (
-        // Active session: messages above, input below
-        <>
-          <Box
-            ref={setMessagesContainerRef}
-            flex={1}
-            minHeight={0}
-            overflowY="auto"
-            backgroundColor="white"
-            paddingX={4}
-          >
-            <Stack gap={0} paddingY={4}>
-              {messages.map((msg) => (
-                <ChatMessage
-                  key={msg.id}
-                  role={msg.role}
-                  text={msg.text}
-                  timestamp={msg.timestamp}
-                />
-              ))}
-            </Stack>
-          </Box>
+        // Active session: scrollable messages
+        <Box
+          ref={setMessagesContainerRef}
+          flex={1}
+          overflowY="auto"
+          backgroundColor="white"
+          paddingX={4}
+          paddingBottom="120px"
+        >
+          <Stack gap={0} paddingY={4}>
+            {messages.map((msg) => (
+              <ChatMessage
+                key={msg.id}
+                role={msg.role}
+                text={msg.text}
+                timestamp={msg.timestamp}
+              />
+            ))}
+          </Stack>
+        </Box>
+      )}
 
-          {/* Input */}
+      {/* Fixed Input at Bottom - Only show when messages exist */}
+      {messages.length > 0 && (
+        <Box
+          position="fixed"
+          bottom={0}
+          left={0}
+          right={0}
+          backgroundColor="white"
+          borderTop="1px solid"
+          borderTopColor="gray.200"
+          zIndex={20}
+          paddingX={4}
+        >
           <MessageInput
             onSendMessage={handleSendMessage}
             isLoading={isStreaming}
             placeholder="Tapez votre message..."
           />
-        </>
+        </Box>
       )}
     </Box>
   );
