@@ -11,10 +11,10 @@ import { interviews, messages } from "@/lib/data";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: interviewId } = params;
+    const { id: interviewId } = await params;
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId") || undefined;
 

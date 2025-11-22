@@ -2,7 +2,7 @@
 
 import { Box, Container, Heading, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { ChatMessage } from "@/components/ChatMessage";
 import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
@@ -19,9 +19,9 @@ import { UIMessage } from "@/types/ui";
  * - Creates new session for continued conversation
  * - Streams responses from ADK Agent Service
  */
-export default function ResumeInterviewPage({ params }: { params: { id: string } }) {
+export default function ResumeInterviewPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const interviewId = params.id;
+  const { id: interviewId } = use(params);
 
   // Auth state
   const [userId, setUserId] = useState<string | null>(null);

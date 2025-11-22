@@ -34,21 +34,14 @@ export function useInterviewSession(userId: string | null, existingInterviewId?:
         setIsLoading(true);
         setError(null);
 
-        let interviewId = existingInterviewId;
-
-        // If resuming, don't generate new ID
-        // If new interview, generate ID (but let API create it)
-        if (!existingInterviewId) {
-          // New interview - don't generate ID here, let API create it
-          interviewId = undefined;
-        }
+        const resumeInterviewId = existingInterviewId ?? undefined;
 
         const response = await fetch("/api/sessions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId,
-            ...(interviewId && { interviewId }),
+            interviewId: resumeInterviewId,
           }),
         });
 
@@ -58,22 +51,28 @@ export function useInterviewSession(userId: string | null, existingInterviewId?:
         }
 
         const data = await response.json();
+        if (resumeInterviewId && data.interviewId !== resumeInterviewId) {
+          throw new Error("La reprise de l'entretien a échoué (identifiant différent)");
+        }
+
         const newSession: InterviewSession = {
           sessionId: data.sessionId, // Database session UUID
           adkSessionId: data.adkSessionId, // ADK session ID
-          interviewId: data.interviewId,
+          interviewId: resumeInterviewId || data.interviewId,
           createdAt: data.createdAt,
         };
 
         setSession(newSession);
-        setIsResume(data.isResume || false);
+        setIsResume(!!resumeInterviewId || data.isResume || false);
         sessionRef.current = newSession;
 
         // If resuming, load existing messages
-        if (data.isResume && data.interviewId) {
+        if (resumeInterviewId || data.interviewId) {
+          const targetInterviewId = resumeInterviewId || data.interviewId;
+
           try {
             const messagesResponse = await fetch(
-              `/api/interviews/${data.interviewId}/messages?userId=${userId}`
+              `/api/interviews/${targetInterviewId}/messages?userId=${userId}`
             );
 
             if (!messagesResponse.ok) {
@@ -103,8 +102,11 @@ export function useInterviewSession(userId: string | null, existingInterviewId?:
     // Cleanup: delete session on unmount
     return () => {
       if (sessionRef.current && userId) {
+        const dbSessionId = sessionRef.current.sessionId;
+        const adkSessionId = sessionRef.current.adkSessionId;
+
         fetch(
-          `/api/sessions?userId=${userId}&sessionId=${sessionRef.current.adkSessionId}`,
+          `/api/sessions?userId=${userId}&sessionId=${dbSessionId}&adkSessionId=${adkSessionId}`,
           { method: "DELETE" }
         ).catch((err) =>
           console.error("[useInterviewSession] Error deleting session:", err)
