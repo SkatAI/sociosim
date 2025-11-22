@@ -69,9 +69,16 @@ export default function Header() {
         align="center"
         justify="space-between"
       >
-        <Text fontWeight="bold" fontSize="lg">
+        <Link
+          as={NextLink}
+          href={!isLoading && user ? "/dashboard" : "/"}
+          fontWeight="bold"
+          fontSize="lg"
+          color="inherit"
+          _hover={{ opacity: 0.8 }}
+        >
           Sociosim
-        </Text>
+        </Link>
 
         <HStack gap={4}>
           {!isLoading && user ? (

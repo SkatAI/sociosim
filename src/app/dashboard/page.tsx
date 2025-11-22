@@ -109,7 +109,11 @@ export default function DashboardPage() {
           setError("Impossible de charger vos entretiens");
           console.error("Error fetching interviews:", fetchError);
         } else {
-          setInterviews((data as InterviewWithDetails[]) || []);
+          // Filter to only show interviews with at least one message
+          const filteredInterviews = ((data as InterviewWithDetails[]) || []).filter(
+            (interview) => interview.messages && interview.messages.length > 0
+          );
+          setInterviews(filteredInterviews);
         }
       } catch (err) {
         console.error("Error in dashboard:", err);
