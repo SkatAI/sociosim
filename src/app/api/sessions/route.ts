@@ -10,8 +10,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
-import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
-import * as interviewDb from "@/lib/interviewDatabase";
+import { interviews, sessions } from "@/lib/data";
 
 const adkClient = new AdkClient();
 
@@ -27,20 +26,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabase = createServiceSupabaseClient();
     let finalInterviewId = interviewId;
     let isResume = false;
 
     // Check if this is a resume request (interviewId provided) or new interview
     if (interviewId && typeof interviewId === "string") {
       // RESUME MODE: Verify interview exists
-      const { data: interview, error: checkError } = await supabase
-        .from("interviews")
-        .select("id")
-        .eq("id", interviewId)
-        .single();
-
-      if (checkError || !interview) {
+      const interview = await interviews.getInterviewById(interviewId);
+      if (!interview) {
         return NextResponse.json(
           { error: "Interview not found" },
           { status: 404 }
@@ -50,7 +43,7 @@ export async function POST(req: NextRequest) {
       isResume = true;
     } else {
       // NEW MODE: Create new interview
-      const interview = await interviewDb.createInterview();
+      const interview = await interviews.createInterview();
       finalInterviewId = interview.id;
     }
 
@@ -58,10 +51,10 @@ export async function POST(req: NextRequest) {
     const adkSession = await adkClient.createSession("app", userId);
 
     // Create sessions record
-    const session = await interviewDb.createSession(adkSession.session_id);
+    const session = await sessions.createSession(adkSession.session_id);
 
     // Link user, interview, and session in junction table
-    await interviewDb.linkUserInterviewSession(userId, finalInterviewId, session.id);
+    await sessions.linkUserInterviewSession(userId, finalInterviewId, session.id);
 
     return NextResponse.json(
       {

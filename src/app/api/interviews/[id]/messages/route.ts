@@ -7,15 +7,16 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getInterviewMessages } from "@/lib/interviewDatabase";
-import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
+import { interviews, messages } from "@/lib/data";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id: interviewId } = await params;
+    const { id: interviewId } = params;
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId") || undefined;
 
     if (!interviewId) {
       return NextResponse.json(
@@ -25,14 +26,8 @@ export async function GET(
     }
 
     // Verify interview exists (could add user_id check for security if needed)
-    const supabase = createServiceSupabaseClient();
-    const { data: interview, error: checkError } = await supabase
-      .from("interviews")
-      .select("id")
-      .eq("id", interviewId)
-      .single();
-
-    if (checkError || !interview) {
+    const interview = await interviews.getInterviewById(interviewId);
+    if (!interview) {
       return NextResponse.json(
         { error: "Interview not found" },
         { status: 404 }
@@ -40,12 +35,12 @@ export async function GET(
     }
 
     // Load all messages
-    const messages = await getInterviewMessages(interviewId);
+    const interviewMessages = await messages.getInterviewMessages(interviewId, userId);
 
     return NextResponse.json(
       {
         success: true,
-        messages,
+        messages: interviewMessages,
       },
       { status: 200 }
     );
