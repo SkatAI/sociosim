@@ -101,7 +101,7 @@ export default function DashboardPage() {
           .eq("user_id", authSession.user.id);
 
         if (userInterviewError) {
-          setError("Impossible de charger vos entretiens");
+          setError("Impossible de charger vos entretiens: userInterviewError");
           console.error("Error fetching user interviews:", userInterviewError);
           setIsLoading(false);
           return;
@@ -115,25 +115,52 @@ export default function DashboardPage() {
           return;
         }
 
+        // Query through junction table to get interviews with sessions and messages
         const { data, error: fetchError } = await supabase
           .from("interviews")
           .select(`
             *,
             interview_usage(total_input_tokens, total_output_tokens),
-            messages(content, role, created_at)
+            user_interview_session!inner(
+              sessions(
+                messages(content, role, created_at)
+              )
+            )
           `)
           .in("id", interviewIds)
           .order("updated_at", { ascending: false });
 
         if (fetchError) {
-          setError("Impossible de charger vos entretiens");
+          setError(`Impossible de charger vos entretiens: ${fetchError.message}`);
           console.error("Error fetching interviews:", fetchError);
         } else {
-          // Filter to only show interviews with at least one message
-          const filteredInterviews = ((data as InterviewWithDetails[]) || []).filter(
-            (interview) => interview.messages && interview.messages.length > 0
-          );
-          setInterviews(filteredInterviews);
+          // Transform data: flatten messages from sessions
+          const transformedInterviews = ((data as any[]) || [])
+            .map((interview) => {
+              // Collect all messages from all sessions for this interview
+              const allMessages: any[] = [];
+              if (interview.user_interview_session) {
+                interview.user_interview_session.forEach((uis: any) => {
+                  if (uis.sessions?.messages) {
+                    allMessages.push(...uis.sessions.messages);
+                  }
+                });
+              }
+
+              // Sort by created_at descending to get most recent first
+              allMessages.sort((a: any, b: any) =>
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+              );
+
+              return {
+                ...interview,
+                interview_usage: interview.interview_usage,
+                messages: allMessages,
+              };
+            })
+            .filter((interview) => interview.messages && interview.messages.length > 0);
+
+          setInterviews(transformedInterviews);
         }
       } catch (err) {
         console.error("Error in dashboard:", err);
