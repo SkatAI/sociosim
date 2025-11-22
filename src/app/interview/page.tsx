@@ -246,7 +246,7 @@ export default function InterviewPage() {
   // Main interview interface
   return (
     <Box height="100vh" display="flex" flexDirection="column" backgroundColor="white">
-      {/* Header */}
+      {/* Interview header */}
       <Box
         padding={4}
         borderBottom="1px solid"
