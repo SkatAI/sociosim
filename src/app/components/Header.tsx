@@ -2,6 +2,7 @@
 "use client";
 import { Box, Flex, HStack, IconButton, Link, Text } from "@chakra-ui/react";
 import { LogOut } from "lucide-react";
+import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
@@ -74,22 +75,30 @@ export default function Header() {
 
         <HStack gap={4}>
           {!isLoading && user ? (
-            <HStack gap={2}>
-              <Text fontWeight="medium" color="gray.700">
-                {user.firstName} {user.lastName}
-              </Text>
-              <IconButton
-                aria-label="Déconnexion"
-                onClick={handleLogout}
-                variant="ghost"
-                size="sm"
-                title="Se déconnecter"
-              >
-                <LogOut size={20} />
-              </IconButton>
+            <HStack gap={4}>
+              <Link as={NextLink} href="/dashboard" fontWeight="medium" color="gray.700" _hover={{ color: "blue.600" }}>
+                Tableau de bord
+              </Link>
+              <Link as={NextLink} href="/interview" fontWeight="medium" color="gray.700" _hover={{ color: "blue.600" }}>
+                Nouvel entretien
+              </Link>
+              <HStack gap={2}>
+                <Text fontWeight="medium" color="gray.700">
+                  {user.firstName} {user.lastName}
+                </Text>
+                <IconButton
+                  aria-label="Déconnexion"
+                  onClick={handleLogout}
+                  variant="ghost"
+                  size="sm"
+                  title="Se déconnecter"
+                >
+                  <LogOut size={20} />
+                </IconButton>
+              </HStack>
             </HStack>
           ) : (
-            <Link href="/login" fontWeight="medium" color="gray.700">
+            <Link as={NextLink} href="/login" fontWeight="medium" color="gray.700">
               Se connecter
             </Link>
           )}
