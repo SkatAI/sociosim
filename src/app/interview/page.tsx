@@ -268,6 +268,8 @@ export default function InterviewPage() {
           padding={4}
           backgroundColor="white"
           paddingBottom="120px"
+          maxWidth="840px"
+          marginX="auto"
         >
           <Text color="gray.500" fontSize="lg">
             Bonjour! Cliquez ci-dessous pour commencer.
@@ -288,41 +290,33 @@ export default function InterviewPage() {
           overflowY="auto"
           backgroundColor="white"
           paddingX={4}
-          paddingBottom="120px"
+          paddingBottom={6}
+          maxWidth="840px"
+          marginX="auto"
         >
-          <Stack gap={0} paddingY={4}>
-            {messages.map((msg) => (
-              <ChatMessage
-                key={msg.id}
-                role={msg.role}
-                text={msg.text}
-                timestamp={msg.timestamp}
+          <VStack align="stretch" gap={4} paddingY={4}>
+            <Stack gap={0}>
+              {messages.map((msg) => (
+                <ChatMessage
+                  key={msg.id}
+                  role={msg.role}
+                  text={msg.text}
+                  timestamp={msg.timestamp}
+                />
+              ))}
+            </Stack>
+
+            <Box>
+              <MessageInput
+                onSendMessage={handleSendMessage}
+                isLoading={isStreaming}
+                placeholder="Tapez votre message..."
               />
-            ))}
-          </Stack>
+            </Box>
+          </VStack>
         </Box>
       )}
 
-      {/* Fixed Input at Bottom - Only show when messages exist */}
-      {messages.length > 0 && (
-        <Box
-          position="fixed"
-          bottom={0}
-          left={0}
-          right={0}
-          backgroundColor="white"
-          borderTop="1px solid"
-          borderTopColor="gray.200"
-          zIndex={20}
-          paddingX={4}
-        >
-          <MessageInput
-            onSendMessage={handleSendMessage}
-            isLoading={isStreaming}
-            placeholder="Tapez votre message..."
-          />
-        </Box>
-      )}
     </Box>
   );
 }
