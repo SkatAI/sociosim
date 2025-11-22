@@ -9,16 +9,14 @@
 
 import {
   AdkRequest,
-  AdkEvent,
-  AdkFinalResponse,
   AdkSession,
   AdkError,
-  isAdkEvent,
-  isAdkFinalResponse,
+  AdkEvent,
+  AdkFinalResponse,
 } from "@/types/adk";
 // Unused imports preserved for future use:
+// - isAdkEvent, isAdkFinalResponse, isAdkError: for error type guards
 // - AdkMessage: for type hints in future methods
-// - isAdkError: for error type guards
 
 export class AdkClient {
   private baseUrl: string;
@@ -101,7 +99,7 @@ export class AdkClient {
    * @yields Event objects as they're received
    * @throws Error if the request fails or stream is not available
    */
-  async *streamMessage(request: AdkRequest): AsyncGenerator<any> {
+  async *streamMessage(request: AdkRequest): AsyncGenerator<Record<string, unknown>> {
     const response = await fetch(`${this.baseUrl}/run_sse`, {
       method: "POST",
       headers: {
@@ -151,7 +149,7 @@ export class AdkClient {
               // Try to parse the JSON
               const event = JSON.parse(dataStr);
               yield event;
-            } catch (e) {
+            } catch {
               // JSON might be incomplete, keep trying to accumulate
               // Put this line back in buffer
               buffer = line + "\n" + lines.slice(i + 1).join("\n");
@@ -204,11 +202,11 @@ export class AdkClient {
    * @param events - Array of events from ADK
    * @returns The concatenated text response from the assistant
    */
-  extractTextResponse(events: Array<any>): string {
+  extractTextResponse(events: Array<AdkEvent | AdkFinalResponse>): string {
     return events
-      .filter((e) => e && e.content && e.content.parts)
+      .filter((e): e is AdkEvent => "content" in e && e.content !== undefined)
       .flatMap((e) => e.content.parts)
-      .map((p: any) => p.text || "")
+      .map((p) => p.text || "")
       .join("");
   }
 
@@ -218,18 +216,20 @@ export class AdkClient {
    * @param events - Array of events from ADK
    * @returns Token counts or null if not available
    */
-  getTokenUsage(events: Array<any>): {
+  getTokenUsage(
+    events: Array<AdkEvent | AdkFinalResponse>
+  ): {
     input: number;
     output: number;
   } | null {
-    // ADK returns usageMetadata in the event object
+    // ADK returns total_input_tokens and total_output_tokens in final response
     for (const event of events) {
-      if (event && event.usageMetadata) {
-        const metadata = event.usageMetadata;
-        if (metadata.promptTokenCount && metadata.candidatesTokenCount) {
+      if (event && "total_input_tokens" in event && "total_output_tokens" in event) {
+        const finalResponse = event as AdkFinalResponse;
+        if (finalResponse.total_input_tokens && finalResponse.total_output_tokens) {
           return {
-            input: metadata.promptTokenCount,
-            output: metadata.candidatesTokenCount,
+            input: finalResponse.total_input_tokens,
+            output: finalResponse.total_output_tokens,
           };
         }
       }

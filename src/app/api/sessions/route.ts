@@ -128,10 +128,7 @@ export async function DELETE(req: NextRequest) {
     // Delete ADK session
     await adkClient.deleteSession("app", userId, sessionId);
 
-    return NextResponse.json(
-      { success: true, sessionId },
-      { status: 204 }
-    );
+    return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error("[/api/sessions DELETE] Error:", error);
 

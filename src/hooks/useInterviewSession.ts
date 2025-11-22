@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface InterviewSession {
   sessionId: string;
@@ -14,6 +14,9 @@ export function useInterviewSession(userId: string | null) {
   const [session, setSession] = useState<InterviewSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Use ref to track session for cleanup without triggering re-renders
+  const sessionRef = useRef<InterviewSession | null>(null);
 
   useEffect(() => {
     if (!userId) {
@@ -44,11 +47,14 @@ export function useInterviewSession(userId: string | null) {
         }
 
         const data = await response.json();
-        setSession({
+        const newSession: InterviewSession = {
           sessionId: data.sessionId,
           interviewId: data.interviewId,
           createdAt: data.createdAt,
-        });
+        };
+
+        setSession(newSession);
+        sessionRef.current = newSession;
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         setError(message);
@@ -62,9 +68,9 @@ export function useInterviewSession(userId: string | null) {
 
     // Cleanup: delete session on unmount
     return () => {
-      if (session) {
+      if (sessionRef.current && userId) {
         fetch(
-          `/api/sessions?userId=${userId}&sessionId=${session.sessionId}`,
+          `/api/sessions?userId=${userId}&sessionId=${sessionRef.current.sessionId}`,
           { method: "DELETE" }
         ).catch((err) =>
           console.error("[useInterviewSession] Error deleting session:", err)
