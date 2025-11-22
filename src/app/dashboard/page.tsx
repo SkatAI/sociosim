@@ -94,7 +94,27 @@ export default function DashboardPage() {
           return;
         }
 
-        // Fetch user's interviews
+        // Fetch user's interviews through junction table
+        const { data: userInterviewData, error: userInterviewError } = await supabase
+          .from("user_interview_session")
+          .select("interview_id")
+          .eq("user_id", authSession.user.id);
+
+        if (userInterviewError) {
+          setError("Impossible de charger vos entretiens");
+          console.error("Error fetching user interviews:", userInterviewError);
+          setIsLoading(false);
+          return;
+        }
+
+        const interviewIds = (userInterviewData || []).map((row: { interview_id: string }) => row.interview_id);
+
+        if (interviewIds.length === 0) {
+          setInterviews([]);
+          setIsLoading(false);
+          return;
+        }
+
         const { data, error: fetchError } = await supabase
           .from("interviews")
           .select(`
@@ -102,7 +122,7 @@ export default function DashboardPage() {
             interview_usage(total_input_tokens, total_output_tokens),
             messages(content, role, created_at)
           `)
-          .eq("user_id", authSession.user.id)
+          .in("id", interviewIds)
           .order("updated_at", { ascending: false });
 
         if (fetchError) {
@@ -219,7 +239,7 @@ export default function DashboardPage() {
                   }}
                   transition="all 0.2s"
                   onClick={() => {
-                    // TODO: Navigate to interview details/resume
+                    router.push(`/interview/${interview.id}`);
                   }}
                 >
                   {/* Top Row: Agent, Status, Date */}

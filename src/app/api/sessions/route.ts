@@ -2,17 +2,16 @@
  * Sessions API Route
  *
  * Manages ADK Agent sessions for interviews.
- * Maps interview IDs to ADK session IDs.
+ * Works with the many-to-many schema using user_interview_session junction table.
  *
- * POST /api/sessions - Create a new session
- * DELETE /api/sessions/:id - Delete a session
- *
- * See: ../../lib/adkClient.ts
+ * POST /api/sessions - Create a new session (new or resume interview)
+ * DELETE /api/sessions - End a session
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
 import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
+import * as interviewDb from "@/lib/interviewDatabase";
 
 const adkClient = new AdkClient();
 
@@ -28,40 +27,49 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!interviewId || typeof interviewId !== "string") {
-      return NextResponse.json(
-        { error: "Missing or invalid 'interviewId' field (must be string)" },
-        { status: 400 }
-      );
-    }
-
-    // Create ADK session
-    // ADK expects a UUID-like session ID, so we'll use the interviewId
-    const adkSession = await adkClient.createSession("app", userId, interviewId);
-
-    // Store interview in database
     const supabase = createServiceSupabaseClient();
-    const { error: insertError } = await supabase
-      .from("interviews")
-      .insert([
-        {
-          id: interviewId,
-          user_id: userId,
-          adk_session_id: adkSession.session_id,
-          status: "in_progress",
-        },
-      ]);
+    let finalInterviewId = interviewId;
+    let isResume = false;
 
-    if (insertError) {
-      console.error("[/api/sessions POST] Failed to store interview record:", insertError);
-      // Log but don't fail - ADK session is already created
+    // Check if this is a resume request (interviewId provided) or new interview
+    if (interviewId && typeof interviewId === "string") {
+      // RESUME MODE: Verify interview exists
+      const { data: interview, error: checkError } = await supabase
+        .from("interviews")
+        .select("id")
+        .eq("id", interviewId)
+        .single();
+
+      if (checkError || !interview) {
+        return NextResponse.json(
+          { error: "Interview not found" },
+          { status: 404 }
+        );
+      }
+
+      isResume = true;
+    } else {
+      // NEW MODE: Create new interview
+      const interview = await interviewDb.createInterview();
+      finalInterviewId = interview.id;
     }
+
+    // Create ADK session (let ADK generate its own session ID)
+    const adkSession = await adkClient.createSession("app", userId);
+
+    // Create sessions record
+    const session = await interviewDb.createSession(adkSession.session_id);
+
+    // Link user, interview, and session in junction table
+    await interviewDb.linkUserInterviewSession(userId, finalInterviewId, session.id);
 
     return NextResponse.json(
       {
         success: true,
-        sessionId: adkSession.session_id,
-        interviewId,
+        sessionId: session.id,
+        adkSessionId: adkSession.session_id,
+        interviewId: finalInterviewId,
+        isResume,
         createdAt: adkSession.created_at,
       },
       { status: 201 }
@@ -70,7 +78,7 @@ export async function POST(req: NextRequest) {
     console.error("[/api/sessions POST] Error:", error);
 
     if (error instanceof Error && error.message.includes("409")) {
-      // Session already exists - return 409
+      // Session already exists
       return NextResponse.json(
         { error: "Session already exists" },
         { status: 409 }
@@ -94,7 +102,7 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * DELETE handler - delete a session
+ * DELETE handler - end a session
  * Called with query params: ?userId=xxx&sessionId=yyy
  */
 export async function DELETE(req: NextRequest) {
@@ -121,17 +129,8 @@ export async function DELETE(req: NextRequest) {
     // Delete ADK session
     await adkClient.deleteSession("app", userId, sessionId);
 
-    // Update interview status to standby (user left but session can be resumed)
-    const supabase = createServiceSupabaseClient();
-    const { error: updateError } = await supabase
-      .from("interviews")
-      .update({ status: "standby" })
-      .eq("adk_session_id", sessionId);
-
-    if (updateError) {
-      console.error("[/api/sessions DELETE] Failed to update interview status:", updateError);
-      // Log but don't fail - ADK session is already deleted
-    }
+    // Update session status to 'ended'
+    await interviewDb.updateSessionStatus(sessionId, "ended");
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

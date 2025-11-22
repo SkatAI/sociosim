@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup start dev build lint format clean db-start db-stop db-reset
+.PHONY: help setup start start-logs dev build lint format clean db-start db-stop db-reset
 
 help: ## Show available make targets.
 	@echo "Available make targets:"
@@ -21,6 +21,15 @@ start: ## Start Supabase and Next.js dev server concurrently.
 	@echo "Next.js App: http://localhost:3000"
 	@echo "Press Ctrl+C to stop"
 	supabase start & npm run dev
+
+start-logs: ## Start Supabase and Next.js with logs streamed to logs/dev.log
+	@mkdir -p logs
+	@echo "Starting Supabase and Next.js dev server with logging..."
+	@echo "Logs will be written to: logs/dev.log"
+	@echo "Supabase Studio: http://localhost:54323"
+	@echo "Next.js App: http://localhost:3000"
+	@echo "Press Ctrl+C to stop"
+	(supabase start & npm run dev 2>&1) | tee -a logs/dev.log
 
 dev: ## Start Next.js dev server only (Supabase must be running separately).
 	npm run dev

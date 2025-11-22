@@ -20,9 +20,9 @@ const adkClient = new AdkClient();
 export async function POST(req: NextRequest) {
   try {
     // Parse request body
-    const { message, userId, sessionId, interviewId, streaming } = await req.json();
+    const { message, userId, sessionId, adkSessionId, interviewId, streaming } = await req.json();
 
-    console.log("[/api/chat POST] Received:", { message: message?.substring(0, 20), userId, sessionId, interviewId, streaming });
+    console.log("[/api/chat POST] Received:", { message: message?.substring(0, 20), userId, sessionId, adkSessionId, interviewId, streaming });
 
     // Validate required fields
     if (!message || typeof message !== "string") {
@@ -46,16 +46,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!adkSessionId || typeof adkSessionId !== "string") {
+      return NextResponse.json(
+        { error: "Missing or invalid 'adkSessionId' field (must be string)" },
+        { status: 400 }
+      );
+    }
+
     // Determine if streaming or not (default: streaming)
     const shouldStream = streaming !== false;
 
     // Handle streaming response
     if (shouldStream) {
-      return handleStreamingResponse(message, userId, sessionId, interviewId);
+      return handleStreamingResponse(message, userId, sessionId, adkSessionId, interviewId);
     }
 
     // Handle batch response
-    return handleBatchResponse(message, userId, sessionId, interviewId);
+    return handleBatchResponse(message, userId, sessionId, adkSessionId, interviewId);
   } catch (error) {
     console.error("[/api/chat] Error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -73,9 +80,10 @@ function handleStreamingResponse(
   message: string,
   userId: string,
   sessionId: string,
+  adkSessionId: string,
   interviewId?: string
 ) {
-  console.log("[/api/chat] Starting stream:", { message, userId, sessionId });
+  console.log("[/api/chat] Starting stream:", { message, userId, sessionId, adkSessionId });
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -90,7 +98,7 @@ function handleStreamingResponse(
         const adkRequest = {
           app_name: "app",
           user_id: userId,
-          session_id: sessionId,
+          session_id: adkSessionId,  // Use ADK session ID for ADK calls
           new_message: {
             role: "user" as const,
             parts: [{ text: message }],
@@ -182,14 +190,14 @@ function handleStreamingResponse(
 
         if (interviewId && tokenUsage) {
           try {
-            console.log("[/api/chat] Storing messages in database...", { interviewId, tokens: tokenUsage });
+            console.log("[/api/chat] Storing messages in database...", { interviewId, sessionId, tokens: tokenUsage });
 
             // Store user message
-            await interviewDb.storeMessage(interviewId, "user", message);
+            await interviewDb.storeMessage(sessionId, "user", message);
             console.log("[/api/chat] User message stored");
 
             // Store assistant message with tokens
-            await interviewDb.storeMessage(interviewId, "assistant", assistantResponse, tokenUsage);
+            await interviewDb.storeMessage(sessionId, "assistant", assistantResponse, tokenUsage);
             console.log("[/api/chat] Assistant message stored");
 
             // Update usage
@@ -255,13 +263,14 @@ async function handleBatchResponse(
   message: string,
   userId: string,
   sessionId: string,
+  adkSessionId: string,
   interviewId?: string
 ) {
   try {
     const adkRequest = {
       app_name: "app",
       user_id: userId,
-      session_id: sessionId,
+      session_id: adkSessionId,  // Use ADK session ID for ADK calls
       new_message: {
         role: "user" as const,
         parts: [{ text: message }],
@@ -275,13 +284,13 @@ async function handleBatchResponse(
     // Store messages in database
     if (interviewId && tokenUsage) {
       try {
-        console.log("[/api/chat] Storing messages in database...");
+        console.log("[/api/chat] Storing messages in database...", { interviewId, sessionId });
 
         // Store user message
-        await interviewDb.storeMessage(interviewId, "user", message);
+        await interviewDb.storeMessage(sessionId, "user", message);
 
         // Store assistant message with tokens
-        await interviewDb.storeMessage(interviewId, "assistant", textResponse, tokenUsage);
+        await interviewDb.storeMessage(sessionId, "assistant", textResponse, tokenUsage);
 
         // Update usage
         await interviewDb.updateInterviewUsage(
