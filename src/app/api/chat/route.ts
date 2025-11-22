@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
-import * as interviewDb from "@/lib/interviewDatabase";
+import { messages, usage } from "@/lib/data";
 
 const adkClient = new AdkClient();
 
@@ -193,15 +193,15 @@ function handleStreamingResponse(
             console.log("[/api/chat] Storing messages in database...", { interviewId, sessionId, tokens: tokenUsage });
 
             // Store user message
-            await interviewDb.storeMessage(sessionId, "user", message);
+            await messages.storeMessage(sessionId, "user", message);
             console.log("[/api/chat] User message stored");
 
             // Store assistant message with tokens
-            await interviewDb.storeMessage(sessionId, "assistant", assistantResponse, tokenUsage);
+            await messages.storeMessage(sessionId, "assistant", assistantResponse, tokenUsage);
             console.log("[/api/chat] Assistant message stored");
 
             // Update usage
-            await interviewDb.updateInterviewUsage(
+            await usage.updateInterviewUsage(
               interviewId,
               tokenUsage.input,
               tokenUsage.output
@@ -287,13 +287,13 @@ async function handleBatchResponse(
         console.log("[/api/chat] Storing messages in database...", { interviewId, sessionId });
 
         // Store user message
-        await interviewDb.storeMessage(sessionId, "user", message);
+        await messages.storeMessage(sessionId, "user", message);
 
         // Store assistant message with tokens
-        await interviewDb.storeMessage(sessionId, "assistant", textResponse, tokenUsage);
+        await messages.storeMessage(sessionId, "assistant", textResponse, tokenUsage);
 
         // Update usage
-        await interviewDb.updateInterviewUsage(
+        await usage.updateInterviewUsage(
           interviewId,
           tokenUsage.input,
           tokenUsage.output

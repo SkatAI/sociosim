@@ -72,7 +72,9 @@ export function useInterviewSession(userId: string | null, existingInterviewId?:
         // If resuming, load existing messages
         if (data.isResume && data.interviewId) {
           try {
-            const messagesResponse = await fetch(`/api/interviews/${data.interviewId}/messages`);
+            const messagesResponse = await fetch(
+              `/api/interviews/${data.interviewId}/messages?userId=${userId}`
+            );
 
             if (!messagesResponse.ok) {
               throw new Error("Failed to load messages");
