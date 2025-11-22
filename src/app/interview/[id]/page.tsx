@@ -8,24 +8,27 @@ import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
 import { supabase } from "@/lib/supabaseClient";
 import { generateUuid } from "@/lib/uuid";
+import { Message } from "@/lib/schemas";
 import { UIMessage } from "@/types/ui";
 
 /**
- * Interview Page
- * Real-time chat interface for conducting interviews with Oriane AI agent
+ * Resume Interview Page
+ * Real-time chat interface for resuming past interviews
  * - Requires authentication
- * - Creates session on mount, deletes on unmount
+ * - Loads existing messages from database
+ * - Creates new session for continued conversation
  * - Streams responses from ADK Agent Service
  */
-export default function InterviewPage() {
+export default function ResumeInterviewPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const interviewId = params.id;
 
   // Auth state
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   // Session management
-  const { session, isLoading: isSessionLoading, error: sessionError } = useInterviewSession(userId);
+  const { session, messages: loadedMessages, isResume, isLoading: isSessionLoading, error: sessionError } = useInterviewSession(userId, interviewId);
 
   // Chat state
   const [messages, setMessages] = useState<UIMessage[]>([]);
@@ -58,12 +61,35 @@ export default function InterviewPage() {
     checkAuth();
   }, [router]);
 
-  // Auto-scroll to bottom when messages change
+  // Initialize messages from loaded data (resume mode)
   useEffect(() => {
-    if (messagesContainerRef) {
+    if (loadedMessages.length > 0) {
+      const convertedMessages: UIMessage[] = loadedMessages.map((msg: Message) => ({
+        id: msg.id,
+        role: msg.role,
+        text: msg.content,
+        timestamp: new Date(msg.created_at).toLocaleTimeString("fr-FR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      }));
+      setMessages(convertedMessages);
+    }
+  }, [loadedMessages]);
+
+  // Auto-scroll to bottom when messages load (resume mode)
+  useEffect(() => {
+    if (isResume && messagesContainerRef && messages.length > 0) {
       messagesContainerRef.scrollTop = messagesContainerRef.scrollHeight;
     }
-  }, [messages, messagesContainerRef]);
+  }, [isResume, messages, messagesContainerRef]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesContainerRef && !isResume) {
+      messagesContainerRef.scrollTop = messagesContainerRef.scrollHeight;
+    }
+  }, [messages, messagesContainerRef, isResume]);
 
   const handleSendMessage = async (message: string) => {
     if (!session || !userId) {
@@ -218,7 +244,7 @@ export default function InterviewPage() {
       <Container maxWidth="2xl" height="100vh" display="flex" alignItems="center" justifyContent="center">
         <VStack gap={4}>
           <Spinner size="lg" color="blue.500" />
-          <Text>Démarrage de la session d&apos;entretien...</Text>
+          <Text>Chargement de la session d&apos;entretien...</Text>
         </VStack>
       </Container>
     );
@@ -250,7 +276,7 @@ export default function InterviewPage() {
         zIndex={10}
       >
         <Heading as="h1" size="lg">
-          Entretien avec Oriane
+          Entretien avec Oriane {isResume && <Text as="span" fontSize="sm" color="blue.600"> (reprise)</Text>}
         </Heading>
         <Text fontSize="sm" color="gray.600" marginTop={1}>
           Session: {session?.sessionId}
@@ -270,7 +296,7 @@ export default function InterviewPage() {
           paddingBottom="120px"
         >
           <Text color="gray.500" fontSize="lg">
-            Bonjour! Cliquez ci-dessous pour commencer.
+            {isResume ? "Continuer votre entretien" : "Bonjour! Cliquez ci-dessous pour commencer."}
           </Text>
           <Box width="100%" maxWidth="600px">
             <MessageInput
