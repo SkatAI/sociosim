@@ -47,6 +47,7 @@ export function MessageInput({
       borderTop="1px solid"
       borderTopColor="gray.200"
       backgroundColor="white"
+      flexShrink={0}
     >
       <Textarea
         ref={textareaRef}
