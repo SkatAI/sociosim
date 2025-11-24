@@ -11,6 +11,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
 import { interviews, sessions } from "@/lib/data";
+import { getAgentIdByName } from "@/lib/data/agents";
+import { isValidAgentName, type AgentName } from "@/lib/agents";
 
 const adkClient = new AdkClient();
 
@@ -22,6 +24,14 @@ export async function POST(req: NextRequest) {
       typeof body.interviewId === "string" && body.interviewId.trim().length > 0
         ? body.interviewId
         : null;
+    const agentName = isValidAgentName(body.agent_name) ? (body.agent_name as AgentName) : "oriane";
+
+    console.log("--- api session routes interviewId (should be missing):", interviewId);
+    console.log("--- api session routes agentName :", agentName);
+
+    // Look up agent UUID from database
+    const agentId = await getAgentIdByName(agentName);
+    console.log("--- api session routes agentId :", agentId);
 
     // Validate required fields
     if (!userId) {
@@ -36,6 +46,7 @@ export async function POST(req: NextRequest) {
 
     // Check if this is a resume request (interviewId provided) or new interview
     if (interviewId) {
+      console.log("--- RESUME MODE");
       // RESUME MODE: Verify interview exists
       const interview = await interviews.getInterviewById(interviewId);
       if (!interview) {
@@ -45,15 +56,24 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // Verify interview has agent_id
+      if (!interview.agent_id) {
+        return NextResponse.json(
+          { error: "Interview has no agent assigned" },
+          { status: 500 }
+        );
+      }
+
       isResume = true;
     } else {
-      // NEW MODE: Create new interview
-      const interview = await interviews.createInterview();
+      console.log("--- NEW MODE");
+      // NEW MODE: Create new interview with agent_id
+      const interview = await interviews.createInterview(agentId);
       finalInterviewId = interview.id;
     }
 
     // Create ADK session (let ADK generate its own session ID)
-    const adkSession = await adkClient.createSession("app", userId);
+    const adkSession = await adkClient.createSession("app", userId, undefined, agentName);
 
     // Create sessions record
     const session = await sessions.createSession(adkSession.session_id);
@@ -67,6 +87,7 @@ export async function POST(req: NextRequest) {
         sessionId: session.id,
         adkSessionId: adkSession.session_id,
         interviewId: finalInterviewId,
+        agent_name: agentName,
         isResume,
         createdAt: adkSession.created_at,
       },

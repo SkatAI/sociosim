@@ -25,6 +25,7 @@ export type MessageRole = z.infer<typeof MessageRoleSchema>;
 export const InterviewSchema = z.object({
   id: z.string().uuid(),
   status: InterviewStatusSchema,
+  agent_id: z.string().uuid(),
   started_at: z.string().datetime({ offset: true }),
   completed_at: z.string().datetime({ offset: true }).nullable(),
   created_at: z.string().datetime({ offset: true }),

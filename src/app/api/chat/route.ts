@@ -14,6 +14,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
 import { messages, usage } from "@/lib/data";
+import { getInterviewWithAgent } from "@/lib/data/agents";
+import { type AgentName } from "@/lib/agents";
 
 const adkClient = new AdkClient();
 
@@ -53,16 +55,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!interviewId || typeof interviewId !== "string") {
+      return NextResponse.json(
+        { error: "Missing or invalid 'interviewId' field (must be string)" },
+        { status: 400 }
+      );
+    }
+
+    // Load interview with agent from database
+    const interview = await getInterviewWithAgent(interviewId);
+    const agentName = interview.agents.agent_name as AgentName;
+    console.log("[/api/chat POST] Loaded agent from DB:", agentName);
+
     // Determine if streaming or not (default: streaming)
     const shouldStream = streaming !== false;
 
     // Handle streaming response
     if (shouldStream) {
-      return handleStreamingResponse(message, userId, sessionId, adkSessionId, interviewId);
+      return handleStreamingResponse(message, userId, sessionId, adkSessionId, agentName, interviewId);
     }
 
     // Handle batch response
-    return handleBatchResponse(message, userId, sessionId, adkSessionId, interviewId);
+    return handleBatchResponse(message, userId, sessionId, adkSessionId, agentName, interviewId);
   } catch (error) {
     console.error("[/api/chat] Error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -81,6 +95,7 @@ function handleStreamingResponse(
   userId: string,
   sessionId: string,
   adkSessionId: string,
+  agentName: AgentName,
   interviewId?: string
 ) {
   console.log("[/api/chat] Starting stream:", { message, userId, sessionId, adkSessionId });
@@ -99,6 +114,7 @@ function handleStreamingResponse(
           app_name: "app",
           user_id: userId,
           session_id: adkSessionId,  // Use ADK session ID for ADK calls
+          agent_name: agentName,      // Selected agent
           new_message: {
             role: "user" as const,
             parts: [{ text: message }],
@@ -264,6 +280,7 @@ async function handleBatchResponse(
   userId: string,
   sessionId: string,
   adkSessionId: string,
+  agentName: AgentName,
   interviewId?: string
 ) {
   try {
@@ -271,6 +288,7 @@ async function handleBatchResponse(
       app_name: "app",
       user_id: userId,
       session_id: adkSessionId,  // Use ADK session ID for ADK calls
+      agent_name: agentName,      // Selected agent
       new_message: {
         role: "user" as const,
         parts: [{ text: message }],

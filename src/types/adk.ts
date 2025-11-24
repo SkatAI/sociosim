@@ -33,6 +33,8 @@ export interface AdkRequest {
   session_id: string;
   /** The new message to process */
   new_message: AdkMessage;
+  /** Agent name: oriane (default), theo, or jade */
+  agent_name?: string;
   /** Optional: request streaming responses */
   streaming?: boolean;
 }

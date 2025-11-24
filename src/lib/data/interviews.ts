@@ -9,9 +9,9 @@ import {
 import { ensureRecordFound, throwIfError } from "./errors";
 
 /**
- * Create a new interview record.
+ * Create a new interview record with an agent.
  */
-export async function createInterview(): Promise<Interview> {
+export async function createInterview(agentId: string): Promise<Interview> {
   const supabase = createServiceSupabaseClient();
 
   const { data, error } = await supabase
@@ -19,6 +19,7 @@ export async function createInterview(): Promise<Interview> {
     .insert({
       status: "in_progress",
       started_at: new Date().toISOString(),
+      agent_id: agentId,
     })
     .select()
     .single();
