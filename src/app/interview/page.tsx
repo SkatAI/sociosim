@@ -13,7 +13,7 @@ import { getAgentById, type AgentName } from "@/lib/agents";
 
 /**
  * Interview Page
- * Real-time chat interface for conducting interviews with Oriane AI agent
+ * Real-time chat interface for conducting interviews with AI agent
  * - Requires authentication
  * - Creates session on mount, deletes on unmount
  * - Streams responses from ADK Agent Service
@@ -33,7 +33,8 @@ export default function InterviewPage() {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   // Agent state - loaded from database (stored in interview)
-  const [agentName, setAgentName] = useState<AgentName>("oriane");
+  const [agentName, setAgentName] = useState<AgentName | null>(null);
+  const [agentError, setAgentError] = useState<string | null>(null);
 
   // Session management
   // If session params are in URL (new interview from dashboard), use them directly
@@ -68,6 +69,7 @@ export default function InterviewPage() {
       if (!session?.interviewId) return;
 
       try {
+        setAgentError(null);
         // Query interview to get agent info
         const { supabase: sb } = await import("@/lib/supabaseClient");
         const { data, error } = await sb
@@ -77,12 +79,15 @@ export default function InterviewPage() {
           .single();
 
         if (error) throw error;
-        if (data?.agents?.agent_name) {
-          setAgentName(data.agents.agent_name as AgentName);
+        const agentData = (data as { agents?: { agent_name?: string } })?.agents;
+        if (!agentData?.agent_name) {
+          throw new Error("Agent information missing from interview");
         }
+        setAgentName(agentData.agent_name as AgentName);
       } catch (error) {
-        console.error("[Interview] Failed to load agent:", error);
-        setAgentName("oriane"); // Fallback
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error("[Interview] Failed to load agent:", errorMessage);
+        setAgentError(`Failed to load agent: ${errorMessage}`);
       }
     }
 
@@ -312,9 +317,15 @@ export default function InterviewPage() {
         backgroundColor="white"
         zIndex={10}
       >
-        <Heading as="h1" size="lg">
-          Entretien avec {getAgentById(agentName as AgentName)?.name || "Agent"}
-        </Heading>
+        {agentError ? (
+          <Heading as="h1" size="lg" color="red.600">
+            Erreur: {agentError}
+          </Heading>
+        ) : (
+          <Heading as="h1" size="lg">
+            {agentName ? `Entretien avec ${getAgentById(agentName)?.name || "Agent"}` : "Chargement de l'agent..."}
+          </Heading>
+        )}
         <Text fontSize="sm" color="gray.600" marginTop={1}>
           Session: {session?.sessionId}
         </Text>

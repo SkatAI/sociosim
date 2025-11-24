@@ -87,6 +87,7 @@ export async function getUserInterviewsWithMessages(userId: string) {
     .select(
       `
         *,
+        agents(agent_name),
         interview_usage(total_input_tokens, total_output_tokens),
         user_interview_session!inner(
           user_id,
@@ -104,6 +105,7 @@ export async function getUserInterviewsWithMessages(userId: string) {
   return (data || []).map((raw) => {
     const interview = validateInterview(raw);
     const usage = (raw as { interview_usage?: InterviewUsage[] }).interview_usage;
+    const agents = (raw as { agents?: { agent_name?: string } }).agents;
     const userInterviewSession =
       (raw as { user_interview_session?: Array<{ sessions?: { messages?: Message[] } }> })
         .user_interview_session || [];
@@ -121,6 +123,7 @@ export async function getUserInterviewsWithMessages(userId: string) {
     return {
       ...interview,
       interview_usage: usage,
+      agents,
       messages: allMessages,
     };
   });
