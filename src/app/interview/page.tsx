@@ -342,19 +342,17 @@ export default function InterviewPage() {
           padding={4}
           backgroundColor="white"
           paddingBottom="120px"
-          maxWidth="840px"
+          // maxWidth="840px"
           marginX="auto"
         >
           <Text color="gray.500" fontSize="lg">
             Bonjour! Cliquez ci-dessous pour commencer.
           </Text>
-          <Box width="100%" maxWidth="600px">
-            <MessageInput
-              onSendMessage={handleSendMessage}
-              isLoading={isStreaming}
-              placeholder="Tapez votre message..."
-            />
-          </Box>
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            isLoading={isStreaming}
+            placeholder="Tapez votre message..."
+          />
         </VStack>
       ) : (
         // Active session: scrollable messages
@@ -365,7 +363,7 @@ export default function InterviewPage() {
           backgroundColor="white"
           paddingX={4}
           paddingBottom={6}
-          maxWidth="840px"
+          // maxWidth="840px"
           marginX="auto"
         >
           <VStack align="stretch" gap={4} paddingY={4}>
@@ -380,13 +378,11 @@ export default function InterviewPage() {
               ))}
             </Stack>
 
-            <Box>
-              <MessageInput
-                onSendMessage={handleSendMessage}
-                isLoading={isStreaming}
-                placeholder="Tapez votre message..."
-              />
-            </Box>
+            <MessageInput
+              onSendMessage={handleSendMessage}
+              isLoading={isStreaming}
+              placeholder="Tapez votre message..."
+            />
           </VStack>
         </Box>
       )}
