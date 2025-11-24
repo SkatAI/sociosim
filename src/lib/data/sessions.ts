@@ -33,6 +33,8 @@ export async function linkUserInterviewSession(
 ) {
   const supabase = createServiceSupabaseClient();
 
+  console.log("--- linkUserInterviewSession", userId, interviewId, sessionId);
+
   const { data, error } = await supabase
     .from("user_interview_session")
     .insert({

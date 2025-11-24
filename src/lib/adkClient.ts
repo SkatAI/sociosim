@@ -31,20 +31,27 @@ export class AdkClient {
    * @param appName - Name of the app (usually "app")
    * @param userId - ID of the user
    * @param sessionId - Optional: specific session ID to use
+   * @param agentName - Agent name: oriane (default), theo, or jade
    * @returns Session information
    * @throws AdkError if session creation fails
    */
   async createSession(
     appName: string,
     userId: string,
-    sessionId?: string
+    sessionId?: string,
+    agentName: string = "oriane"
   ): Promise<AdkSession> {
     const response = await fetch(
       `${this.baseUrl}/apps/${appName}/users/${userId}/sessions`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sessionId ? { session_id: sessionId } : {}),
+        body: JSON.stringify({
+          ...(sessionId && { session_id: sessionId }),
+          state: {
+            agent_name: agentName,
+          },
+        }),
       }
     );
 
@@ -58,6 +65,10 @@ export class AdkClient {
     // ADK returns { id, appName, userId, state, events, lastUpdateTime }
     // Convert to our AdkSession interface
     const adkResponse = await response.json();
+
+    console.log("--- createSession: adkResponse", adkResponse);
+
+
     return {
       session_id: adkResponse.id,
       user_id: adkResponse.userId,

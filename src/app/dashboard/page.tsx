@@ -11,12 +11,14 @@ import {
   HStack,
   Badge,
   Spinner,
-  IconButton,
-  Icon,
+  Grid,
+  Card,
+  Avatar,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { AGENTS, type AgentName } from "@/lib/agents";
 
 interface InterviewWithDetails {
   id: string;
@@ -74,24 +76,13 @@ const getLatestAssistantMessage = (
   return messages.find((msg) => msg.role === "assistant") || null;
 };
 
-const ExpandMoreSvg = () => (
-  <Icon viewBox="0 0 24 24" width="20px" height="20px" color="gray.700">
-    <path d="m12 15.5-6.5-6 1.5-1.5 5 4.6 5-4.6 1.5 1.5-6.5 6z" fill="currentColor" />
-  </Icon>
-);
-
-const ExpandLessSvg = () => (
-  <Icon viewBox="0 0 24 24" width="20px" height="20px" color="gray.700">
-    <path d="m12 8.5 6.5 6-1.5 1.5-5-4.6-5 4.6L5.5 14.5l6.5-6z" fill="currentColor" />
-  </Icon>
-);
-
 export default function DashboardPage() {
   const router = useRouter();
   const [interviews, setInterviews] = useState<InterviewWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedInterviewId, setExpandedInterviewId] = useState<string | null>(null);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   // Check authentication and fetch interviews
   useEffect(() => {
@@ -134,8 +125,53 @@ export default function DashboardPage() {
     loadData();
   }, [router]);
 
-  const handleCreateInterview = () => {
-    router.push("/interview");
+  const handleSelectAgent = async (agentName: AgentName) => {
+    try {
+      setIsCreatingSession(true);
+
+      console.log("--- handleSelectAgent:", agentName);
+
+      const {
+        data: { session: authSession },
+      } = await supabase.auth.getSession();
+
+      if (!authSession?.user?.id) {
+        router.push("/login");
+        return;
+      }
+
+      const response = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: authSession.user.id,
+          agent_name: agentName,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        const message = data.error || "Impossible de créer une nouvelle session";
+        setError(message);
+        console.error("Error creating session:", message);
+        return;
+      }
+
+      const data = await response.json();
+
+      console.log("--- handleSelectAgent: data", data);
+
+      // Redirect to new interview page with session info (avoid duplicate session creation)
+      // Agent is now stored in database, no need to pass in URL
+      router.push(
+        `/interview?interviewId=${data.interviewId}&sessionId=${data.sessionId}&adkSessionId=${data.adkSessionId}`
+      );
+    } catch (err) {
+      console.error("Error selecting agent:", err);
+      setError("Une erreur est survenue lors de la création de la session");
+    } finally {
+      setIsCreatingSession(false);
+    }
   };
 
   const toggleExpanded = (interviewId: string) => {
@@ -164,19 +200,39 @@ export default function DashboardPage() {
           </Text>
         </VStack>
 
-        {/* Create Interview Button */}
+        {/* Agent Selection Cards */}
         <Box>
-          <Button
-            onClick={handleCreateInterview}
-            colorPalette="blue"
-            size="lg"
-            width="full"
-            height="120px"
-            fontSize="lg"
-            fontWeight="semibold"
-          >
-            + Créer un nouvel entretien
-          </Button>
+          <Heading size="sm" marginBottom={4}>
+            Choisissez un agent pour commencer
+          </Heading>
+          <Grid gridTemplateColumns="repeat(3, 1fr)" gap={6}>
+            {AGENTS.map((agent) => (
+              <Card.Root key={agent.id}>
+                <Card.Body display="flex" flexDirection="column" alignItems="center" gap={4} py={6}>
+                  <Avatar.Root size="lg">
+                    <Avatar.Fallback>{agent.name.charAt(0)}</Avatar.Fallback>
+                  </Avatar.Root>
+                  <VStack gap={2} alignItems="center">
+                    <Text fontWeight="semibold" fontSize="md">
+                      {agent.name}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600" textAlign="center">
+                      {agent.description}
+                    </Text>
+                  </VStack>
+                  <Button
+                    onClick={() => handleSelectAgent(agent.id)}
+                    colorPalette="blue"
+                    size="sm"
+                    width="full"
+                    disabled={isCreatingSession}
+                  >
+                    {isCreatingSession ? "Création..." : "Interviewer"}
+                  </Button>
+                </Card.Body>
+              </Card.Root>
+            ))}
+          </Grid>
         </Box>
 
         {/* Error State */}

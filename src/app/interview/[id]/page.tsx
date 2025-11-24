@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { generateUuid } from "@/lib/uuid";
 import { Message } from "@/lib/schemas";
 import { UIMessage } from "@/types/ui";
+import { getAgentById, type AgentName } from "@/lib/agents";
 
 /**
  * Resume Interview Page
@@ -26,6 +27,9 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   // Auth state
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  // Agent state - loaded from database (stored in interview)
+  const [agentName, setAgentName] = useState<AgentName>("oriane");
 
   // Session management
   const { session, messages: loadedMessages, isResume, isLoading: isSessionLoading, error: sessionError } = useInterviewSession(userId, interviewId);
@@ -60,6 +64,31 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
 
     checkAuth();
   }, [router]);
+
+  // Load agent from database based on interview ID
+  useEffect(() => {
+    async function loadAgent() {
+      try {
+        // Query interview to get agent info
+        const { supabase: sb } = await import("@/lib/supabaseClient");
+        const { data, error } = await sb
+          .from("interviews")
+          .select("agent_id, agents(agent_name)")
+          .eq("id", interviewId)
+          .single();
+
+        if (error) throw error;
+        if (data?.agents?.agent_name) {
+          setAgentName(data.agents.agent_name as AgentName);
+        }
+      } catch (error) {
+        console.error("[Interview] Failed to load agent:", error);
+        setAgentName("oriane"); // Fallback
+      }
+    }
+
+    loadAgent();
+  }, [interviewId]);
 
   // Initialize messages from loaded data (resume mode)
   useEffect(() => {
@@ -121,6 +150,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
           sessionId: session.sessionId,        // Database session UUID
           adkSessionId: session.adkSessionId,  // ADK session ID
           interviewId: session.interviewId,
+          // Agent is now loaded from database, no longer passed in request
           streaming: true,
         }),
       });
@@ -276,7 +306,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         zIndex={10}
       >
         <Heading as="h1" size="lg">
-          Entretien avec Oriane {isResume && <Text as="span" fontSize="sm" color="blue.600"> (reprise)</Text>}
+          Entretien avec {getAgentById(agentName as AgentName)?.name || "Agent"} {isResume && <Text as="span" fontSize="sm" color="blue.600"> (reprise)</Text>}
         </Heading>
         <Text fontSize="sm" color="gray.600" marginTop={1}>
           Session: {session?.sessionId}

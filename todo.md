@@ -1,12 +1,14 @@
 # TODO
 
-- access multiple agents
-- configure agents
+- migrate database
+- bug: when clicking on new interview => resumes a previous interview
+- in adk agent: log which agent is used
+
+
 - admin mode : manage users
 - teacher mode: add comments to an interview
 
 
-- Persona configuration
 
 
 

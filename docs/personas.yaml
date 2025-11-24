@@ -1,0 +1,10 @@
+personas:
+  oriane:
+    description: "Simulated sociological interviewee (Oriane) for higher-ed AI usage research."
+    prompt_path: "prompts/main_agent_system_prompt.md"
+  theo:
+    description: "Simulated sociological interviewee (Théo) with tech-forward stance."
+    prompt_path: "prompts/theo_agent_system_prompt.md"
+  jade:
+    description: "Simulated sociological interviewee (Jade) with critical/activist stance."
+    prompt_path: "prompts/jade_agent_system_prompt.md"
