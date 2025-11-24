@@ -31,15 +31,15 @@ export class AdkClient {
    * @param appName - Name of the app (usually "app")
    * @param userId - ID of the user
    * @param sessionId - Optional: specific session ID to use
-   * @param agentName - Agent name: oriane (default), theo, or jade
+   * @param agentName - Agent name: oriane, theo, or jade
    * @returns Session information
    * @throws AdkError if session creation fails
    */
   async createSession(
     appName: string,
     userId: string,
-    sessionId?: string,
-    agentName: string = "oriane"
+    agentName: string,
+    sessionId?: string
   ): Promise<AdkSession> {
     const response = await fetch(
       `${this.baseUrl}/apps/${appName}/users/${userId}/sessions`,

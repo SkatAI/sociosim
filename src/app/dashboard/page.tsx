@@ -18,12 +18,15 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { AGENTS, type AgentName } from "@/lib/agents";
+import { AGENTS, type AgentName, getAgentById } from "@/lib/agents";
 
 interface InterviewWithDetails {
   id: string;
   status: string;
   updated_at: string;
+  agents?: {
+    agent_name?: string;
+  };
   interview_usage: Array<{
     total_input_tokens: number;
     total_output_tokens: number;
@@ -289,7 +292,7 @@ export default function DashboardPage() {
                   <HStack justify="space-between" marginBottom={3}>
                     <HStack gap={3}>
                       <Text fontWeight="semibold" fontSize="md">
-                        Oriane
+                        {getAgentById(interview.agents?.agent_name as AgentName)?.name || "Agent"}
                       </Text>
                       <Badge colorPalette={getStatusColor(interview.status)}>
                         {getStatusLabel(interview.status)}

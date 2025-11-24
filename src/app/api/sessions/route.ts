@@ -24,14 +24,10 @@ export async function POST(req: NextRequest) {
       typeof body.interviewId === "string" && body.interviewId.trim().length > 0
         ? body.interviewId
         : null;
-    const agentName = isValidAgentName(body.agent_name) ? (body.agent_name as AgentName) : "oriane";
+    const agentName = body.agent_name;
 
     console.log("--- api session routes interviewId (should be missing):", interviewId);
     console.log("--- api session routes agentName :", agentName);
-
-    // Look up agent UUID from database
-    const agentId = await getAgentIdByName(agentName);
-    console.log("--- api session routes agentId :", agentId);
 
     // Validate required fields
     if (!userId) {
@@ -40,6 +36,19 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    if (!isValidAgentName(agentName)) {
+      return NextResponse.json(
+        { error: "Missing or invalid 'agent_name' field (must be one of: oriane, theo, jade)" },
+        { status: 400 }
+      );
+    }
+
+    const validAgentName = agentName as AgentName;
+
+    // Look up agent UUID from database
+    const agentId = await getAgentIdByName(validAgentName);
+    console.log("--- api session routes agentId :", agentId);
 
     let finalInterviewId = interviewId;
     let isResume = false;
@@ -73,7 +82,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create ADK session (let ADK generate its own session ID)
-    const adkSession = await adkClient.createSession("app", userId, undefined, agentName);
+    const adkSession = await adkClient.createSession("app", userId, validAgentName);
 
     // Create sessions record
     const session = await sessions.createSession(adkSession.session_id);
@@ -87,7 +96,7 @@ export async function POST(req: NextRequest) {
         sessionId: session.id,
         adkSessionId: adkSession.session_id,
         interviewId: finalInterviewId,
-        agent_name: agentName,
+        agent_name: validAgentName,
         isResume,
         createdAt: adkSession.created_at,
       },
