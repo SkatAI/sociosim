@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
 import { interviews, sessions } from "@/lib/data";
-import { getAgentIdByName } from "@/lib/data/agents";
+import { getAgentIdByName, getInterviewWithAgent } from "@/lib/data/agents";
 import { isValidAgentName, type AgentName } from "@/lib/agents";
 
 const adkClient = new AdkClient();
@@ -24,10 +24,10 @@ export async function POST(req: NextRequest) {
       typeof body.interviewId === "string" && body.interviewId.trim().length > 0
         ? body.interviewId
         : null;
-    const agentName = body.agent_name;
+    const agentNameFromRequest = body.agent_name;
 
-    console.log("--- api session routes interviewId (should be missing):", interviewId);
-    console.log("--- api session routes agentName :", agentName);
+    console.log("--- api session routes interviewId:", interviewId);
+    console.log("--- api session routes agentName (from request):", agentNameFromRequest);
 
     // Validate required fields
     if (!userId) {
@@ -37,26 +37,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!isValidAgentName(agentName)) {
-      return NextResponse.json(
-        { error: "Missing or invalid 'agent_name' field (must be one of: oriane, theo, jade)" },
-        { status: 400 }
-      );
-    }
-
-    const validAgentName = agentName as AgentName;
-
-    // Look up agent UUID from database
-    const agentId = await getAgentIdByName(validAgentName);
-    console.log("--- api session routes agentId :", agentId);
-
     let finalInterviewId = interviewId;
     let isResume = false;
+    let validAgentName: AgentName;
+    let agentId: string;
 
     // Check if this is a resume request (interviewId provided) or new interview
     if (interviewId) {
       console.log("--- RESUME MODE");
-      // RESUME MODE: Verify interview exists
+      // RESUME MODE: Load interview and get agent from database
       const interview = await interviews.getInterviewById(interviewId);
       if (!interview) {
         return NextResponse.json(
@@ -73,10 +62,38 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      agentId = interview.agent_id;
+
+      // Load agent name from database using the agent_id
+      const agentInfo = await getInterviewWithAgent(interviewId);
+      const agentNameFromDb = agentInfo.agents?.agent_name;
+
+      if (!agentNameFromDb || !isValidAgentName(agentNameFromDb)) {
+        return NextResponse.json(
+          { error: "Interview agent is invalid or missing" },
+          { status: 500 }
+        );
+      }
+
+      validAgentName = agentNameFromDb as AgentName;
       isResume = true;
     } else {
       console.log("--- NEW MODE");
-      // NEW MODE: Create new interview with agent_id
+      // NEW MODE: Validate agent_name from request
+      if (!isValidAgentName(agentNameFromRequest)) {
+        return NextResponse.json(
+          { error: "Missing or invalid 'agent_name' field (must be one of: oriane, theo, jade)" },
+          { status: 400 }
+        );
+      }
+
+      validAgentName = agentNameFromRequest as AgentName;
+
+      // Look up agent UUID from database
+      agentId = await getAgentIdByName(validAgentName);
+      console.log("--- api session routes agentId:", agentId);
+
+      // Create new interview with agent_id
       const interview = await interviews.createInterview(agentId);
       finalInterviewId = interview.id;
     }
