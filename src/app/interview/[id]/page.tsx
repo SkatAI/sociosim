@@ -339,50 +339,34 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
           <Text color="gray.500" fontSize="lg">
             {isResume ? "Continuer votre entretien" : "Bonjour! Cliquez ci-dessous pour commencer."}
           </Text>
-          <Box width="100%" maxWidth="600px">
-            <MessageInput
-              onSendMessage={handleSendMessage}
-              isLoading={isStreaming}
-              placeholder="Tapez votre message..."
-            />
-          </Box>
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            isLoading={isStreaming}
+            placeholder="Tapez votre message..."
+            containerProps={{ maxWidth: "600px" }}
+          />
         </VStack>
       ) : (
-        // Active session: scrollable messages
-        <Box
-          ref={setMessagesContainerRef}
-          flex={1}
-          overflowY="auto"
-          backgroundColor="white"
-          paddingX={4}
-          paddingBottom="120px"
-        >
-          <Stack gap={0} paddingY={4}>
-            {messages.map((msg) => (
-              <ChatMessage
-                key={msg.id}
-                role={msg.role}
-                text={msg.text}
-                timestamp={msg.timestamp}
-              />
-            ))}
-          </Stack>
-        </Box>
-      )}
-
-      {/* Fixed Input at Bottom - Only show when messages exist */}
-      {messages.length > 0 && (
-        <Box
-          position="fixed"
-          bottom={0}
-          left={0}
-          right={0}
-          backgroundColor="white"
-          borderTop="1px solid"
-          borderTopColor="gray.200"
-          zIndex={20}
-          paddingX={4}
-        >
+        // Active session: scrollable messages + inline input
+        <Box display="flex" flexDirection="column" flex={1} backgroundColor="white">
+          <Box
+            ref={setMessagesContainerRef}
+            flex={1}
+            overflowY="auto"
+            paddingX={4}
+            paddingBottom={4}
+          >
+            <Stack gap={0} paddingY={4}>
+              {messages.map((msg) => (
+                <ChatMessage
+                  key={msg.id}
+                  role={msg.role}
+                  text={msg.text}
+                  timestamp={msg.timestamp}
+                />
+              ))}
+            </Stack>
+          </Box>
           <MessageInput
             onSendMessage={handleSendMessage}
             isLoading={isStreaming}
