@@ -16,7 +16,7 @@ import {
 import { Eye, EyeOff } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 type AuthState = {
@@ -24,7 +24,7 @@ type AuthState = {
   password: string;
 };
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const passwordJustCreated = searchParams.get("password") === "created";
@@ -162,5 +162,22 @@ export default function LoginPage() {
         </Stack>
       </Stack>
     </Container>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <Container py={16} maxW="lg" centerContent mx="auto">
+          <Stack gap={4} alignItems="center">
+            <Heading size="md">Chargement de la page de connexion...</Heading>
+            <Text color="gray.600">Merci de patienter.</Text>
+          </Stack>
+        </Container>
+      }
+    >
+      <LoginPageInner />
+    </Suspense>
   );
 }
