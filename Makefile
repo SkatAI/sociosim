@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup start start-logs dev build lint format clean db-start db-stop db-reset
+.PHONY: help setup start start-logs dev build lint format clean db-start db-stop db-reset docker-up docker-up-detached docker-down docker-build docker-logs
 
 help: ## Show available make targets.
 	@echo "Available make targets:"
@@ -47,6 +47,23 @@ format: ## Check code formatting with Prettier.
 
 format-fix: ## Auto-format code with Prettier.
 	npm run format:fix
+
+# Docker
+
+docker-up: ## Build and run the app in Docker using .env.local for env vars.
+	docker compose --env-file .env.local up --build
+
+docker-up-detached: ## Build and run the app in Docker (detached).
+	docker compose --env-file .env.local up --build -d
+
+docker-down: ## Stop Docker containers.
+	docker compose down
+
+docker-build: ## Build Docker images without starting containers.
+	docker compose build
+
+docker-logs: ## Tail Docker logs.
+	docker compose logs -f
 
 # Database
 

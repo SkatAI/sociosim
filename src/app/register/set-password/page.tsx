@@ -14,7 +14,7 @@ import {
 } from "@chakra-ui/react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -23,7 +23,7 @@ type PasswordFormState = {
   confirmation: string;
 };
 
-export default function SetPasswordPage() {
+function SetPasswordPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
@@ -183,5 +183,22 @@ export default function SetPasswordPage() {
         </form>
       </Stack>
     </Container>
+  );
+}
+
+export default function SetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <Container py={16} maxW="lg">
+          <Stack gap={4} alignItems="center" textAlign="center">
+            <Heading size="md">Chargement...</Heading>
+            <Text color="gray.600">Merci de patienter.</Text>
+          </Stack>
+        </Container>
+      }
+    >
+      <SetPasswordPageInner />
+    </Suspense>
   );
 }

@@ -2,7 +2,7 @@
 
 import { Box, Container, Heading, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { ChatMessage } from "@/components/ChatMessage";
 import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
@@ -18,7 +18,7 @@ import { getAgentById, type AgentName } from "@/lib/agents";
  * - Creates session on mount, deletes on unmount
  * - Streams responses from ADK Agent Service
  */
-export default function InterviewPage() {
+function InterviewPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -388,5 +388,28 @@ export default function InterviewPage() {
       )}
 
     </Box>
+  );
+}
+
+export default function InterviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <Container
+          maxWidth="2xl"
+          height="100vh"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <VStack gap={4}>
+            <Spinner size="lg" color="blue.500" />
+            <Text>Chargement de la page d&apos;entretien...</Text>
+          </VStack>
+        </Container>
+      }
+    >
+      <InterviewPageInner />
+    </Suspense>
   );
 }
