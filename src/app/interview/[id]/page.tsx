@@ -6,11 +6,11 @@ import { use, useEffect, useState } from "react";
 import { ChatMessage } from "@/components/ChatMessage";
 import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
-import { supabase } from "@/lib/supabaseClient";
 import { generateUuid } from "@/lib/uuid";
 import { Message } from "@/lib/schemas";
 import { UIMessage } from "@/types/ui";
 import { getAgentById, type AgentName } from "@/lib/agents";
+import { useAuthUser } from "@/hooks/useAuthUser";
 
 /**
  * Resume Interview Page
@@ -24,47 +24,26 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   const router = useRouter();
   const { id: interviewId } = use(params);
 
-  // Auth state
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const { user, isLoading: isAuthLoading } = useAuthUser();
 
   // Agent state - loaded from database (stored in interview)
   const [agentName, setAgentName] = useState<AgentName | null>(null);
   const [agentError, setAgentError] = useState<string | null>(null);
 
   // Session management
-  const { session, messages: loadedMessages, isResume, isLoading: isSessionLoading, error: sessionError } = useInterviewSession(userId, interviewId);
+  const { session, messages: loadedMessages, isResume, isLoading: isSessionLoading, error: sessionError } = useInterviewSession(user?.id ?? null, interviewId);
 
   // Chat state
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [messagesContainerRef, setMessagesContainerRef] = useState<HTMLDivElement | null>(null);
 
-  // Check authentication on mount
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const {
-          data: { session: authSession },
-        } = await supabase.auth.getSession();
-
-        if (!authSession?.user?.id) {
-          // Not authenticated, redirect to login
-          router.push("/login");
-          return;
-        }
-
-        setUserId(authSession.user.id);
-      } catch (error) {
-        console.error("[Interview] Auth check error:", error);
-        router.push("/login");
-      } finally {
-        setIsAuthChecking(false);
-      }
-    };
-
-    checkAuth();
-  }, [router]);
+    if (isAuthLoading) return;
+    if (!user?.id) {
+      router.push("/login");
+    }
+  }, [isAuthLoading, user?.id, router]);
 
   // Load agent from database based on interview ID
   useEffect(() => {
@@ -126,7 +105,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   }, [messages, messagesContainerRef, isResume]);
 
   const handleSendMessage = async (message: string) => {
-    if (!session || !userId) {
+    if (!session || !user?.id) {
       console.error("[Interview] No session or user ID");
       return;
     }
@@ -149,12 +128,12 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          userId,
-          sessionId: session.sessionId,        // Database session UUID
-          adkSessionId: session.adkSessionId,  // ADK session ID
-          interviewId: session.interviewId,
+          body: JSON.stringify({
+            message,
+            userId: user.id,
+            sessionId: session.sessionId,        // Database session UUID
+            adkSessionId: session.adkSessionId,  // ADK session ID
+            interviewId: session.interviewId,
           // Agent is now loaded from database, no longer passed in request
           streaming: true,
         }),
@@ -262,7 +241,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   };
 
   // Show loading state while checking auth
-  if (isAuthChecking) {
+  if (isAuthLoading) {
     return (
       <Container maxWidth="2xl" height="100vh" display="flex" alignItems="center" justifyContent="center">
         <VStack gap={4}>

@@ -16,17 +16,17 @@ export const AGENTS: Agent[] = [
   {
     id: "oriane",
     name: "Oriane",
-    description: "Experte en sociologie urbaine",
+    description: "Master 1 EOS\nUtilisatrice pragmatique de l'IA",
   },
   {
     id: "theo",
     name: "Théo",
-    description: "Spécialiste des dynamiques familiales",
+    description: "M2 Math. App. et Socio Quantitative\nPassionné de technologie",
   },
   {
     id: "jade",
     name: "Jade",
-    description: "Sociologue du travail et des organisations",
+    description: "M2 Sociologie et études de genre\nTechno sceptique",
   },
 ];
 

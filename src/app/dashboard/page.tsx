@@ -17,7 +17,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useAuthUser } from "@/hooks/useAuthUser";
 import { AGENTS, type AgentName, getAgentById } from "@/lib/agents";
 
 interface InterviewWithDetails {
@@ -81,6 +81,7 @@ const getLatestAssistantMessage = (
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user, isLoading: isAuthLoading } = useAuthUser();
   const [interviews, setInterviews] = useState<InterviewWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,18 +90,15 @@ export default function DashboardPage() {
 
   // Check authentication and fetch interviews
   useEffect(() => {
+    if (isAuthLoading) return;
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
     const loadData = async () => {
       try {
-        const {
-          data: { session: authSession },
-        } = await supabase.auth.getSession();
-
-        if (!authSession?.user?.id) {
-          router.push("/login");
-          return;
-        }
-
-        const response = await fetch(`/api/user/interviews?userId=${authSession.user.id}`);
+        const response = await fetch(`/api/user/interviews?userId=${user.id}`);
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
           const message = data.error || "Impossible de charger vos entretiens";
@@ -126,7 +124,7 @@ export default function DashboardPage() {
     };
 
     loadData();
-  }, [router]);
+  }, [isAuthLoading, user, router]);
 
   const handleSelectAgent = async (agentName: AgentName) => {
     try {
@@ -134,11 +132,7 @@ export default function DashboardPage() {
 
       console.log("--- handleSelectAgent:", agentName);
 
-      const {
-        data: { session: authSession },
-      } = await supabase.auth.getSession();
-
-      if (!authSession?.user?.id) {
+      if (!user?.id) {
         router.push("/login");
         return;
       }
@@ -147,7 +141,7 @@ export default function DashboardPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: authSession.user.id,
+          userId: user.id,
           agent_name: agentName,
         }),
       });
@@ -195,23 +189,16 @@ export default function DashboardPage() {
   return (
     <Container maxWidth="4xl" py={8} px={{ base: 4, md: 6 }}>
       <VStack gap={8} alignItems="stretch">
-        {/* Header */}
-        <VStack gap={4} alignItems="start">
-          <Heading size="xl">Mes entretiens</Heading>
-          <Text color="gray.600">
-            Gérez et consultez l&apos;historique de vos simulations d&apos;entretien.
-          </Text>
-        </VStack>
+        <Heading size="lg" marginBottom={0}>
+          Choisissez un personnage
+        </Heading>
 
         {/* Agent Selection Cards */}
         <Box>
-          <Heading size="sm" marginBottom={4}>
-            Choisissez un agent pour commencer
-          </Heading>
           <Grid gridTemplateColumns="repeat(3, 1fr)" gap={6}>
             {AGENTS.map((agent) => (
               <Card.Root key={agent.id}>
-                <Card.Body display="flex" flexDirection="column" alignItems="center" gap={4} py={6}>
+                <Card.Body display="flex" flexDirection="column" alignItems="center" gap={4} py={6} px={4}>
                   <Avatar.Root size="lg">
                     <Avatar.Fallback>{agent.name.charAt(0)}</Avatar.Fallback>
                   </Avatar.Root>
@@ -219,7 +206,15 @@ export default function DashboardPage() {
                     <Text fontWeight="semibold" fontSize="md">
                       {agent.name}
                     </Text>
-                    <Text fontSize="sm" color="gray.600" textAlign="center">
+                    <Text
+                      fontSize="sm"
+                      color="gray.600"
+                      textAlign="center"
+                      // noOfLines={3}
+                      // minH="4.2em"
+                      lineHeight="1.4"
+                      whiteSpace="pre-line"
+                    >
                       {agent.description}
                     </Text>
                   </VStack>
@@ -227,7 +222,8 @@ export default function DashboardPage() {
                     onClick={() => handleSelectAgent(agent.id)}
                     colorPalette="blue"
                     size="sm"
-                    width="full"
+                    // width="full"
+                    padding={4}
                     disabled={isCreatingSession}
                   >
                     {isCreatingSession ? "Création..." : "Interviewer"}
@@ -271,7 +267,12 @@ export default function DashboardPage() {
 
         {/* Interviews List */}
         {interviews.length > 0 && (
+
           <Stack gap={4}>
+            <Heading size="lg" marginBottom={0}>
+              Vos derniers entretiens
+            </Heading>
+
             {interviews.map((interview) => {
               const usage = interview.interview_usage?.[0];
               const latestAssistant = getLatestAssistantMessage(interview.messages || []);

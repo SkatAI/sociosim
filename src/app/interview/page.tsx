@@ -6,10 +6,10 @@ import { Suspense, useEffect, useState } from "react";
 import { ChatMessage } from "@/components/ChatMessage";
 import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
-import { supabase } from "@/lib/supabaseClient";
 import { generateUuid } from "@/lib/uuid";
 import { UIMessage } from "@/types/ui";
 import { getAgentById, type AgentName } from "@/lib/agents";
+import { useAuthUser } from "@/hooks/useAuthUser";
 
 /**
  * Interview Page
@@ -21,16 +21,13 @@ import { getAgentById, type AgentName } from "@/lib/agents";
 function InterviewPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, isLoading: isAuthLoading } = useAuthUser();
 
   // Extract session info from URL (passed from dashboard for new interviews)
   const interviewIdParam = searchParams.get("interviewId");
   const sessionIdParam = searchParams.get("sessionId");
   const adkSessionIdParam = searchParams.get("adkSessionId");
   const hasSessionParams = !!(interviewIdParam && sessionIdParam && adkSessionIdParam);
-
-  // Auth state
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   // Agent state - loaded from database (stored in interview)
   const [agentName, setAgentName] = useState<AgentName | null>(null);
@@ -43,7 +40,7 @@ function InterviewPageInner() {
     session: hookSession,
     isLoading: isSessionLoading,
     error: sessionError,
-  } = useInterviewSession(hasSessionParams ? null : userId);
+  } = useInterviewSession(hasSessionParams ? null : user?.id ?? null);
 
   // Create session object from URL params if available
   const [session, setSession] = useState(
@@ -99,31 +96,12 @@ function InterviewPageInner() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [messagesContainerRef, setMessagesContainerRef] = useState<HTMLDivElement | null>(null);
 
-  // Check authentication on mount
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const {
-          data: { session: authSession },
-        } = await supabase.auth.getSession();
-
-        if (!authSession?.user?.id) {
-          // Not authenticated, redirect to login
-          router.push("/login");
-          return;
-        }
-
-        setUserId(authSession.user.id);
-      } catch (error) {
-        console.error("[Interview] Auth check error:", error);
-        router.push("/login");
-      } finally {
-        setIsAuthChecking(false);
-      }
-    };
-
-    checkAuth();
-  }, [router]);
+    if (isAuthLoading) return;
+    if (!user?.id) {
+      router.push("/login");
+    }
+  }, [isAuthLoading, user?.id, router]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -133,7 +111,7 @@ function InterviewPageInner() {
   }, [messages, messagesContainerRef]);
 
   const handleSendMessage = async (message: string) => {
-    if (!session || !userId) {
+    if (!session || !user?.id) {
       console.error("[Interview] No session or user ID");
       return;
     }
@@ -155,13 +133,13 @@ function InterviewPageInner() {
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          userId,
-          sessionId: session.sessionId,        // Database session UUID
-          adkSessionId: session.adkSessionId,  // ADK session ID
-          interviewId: session.interviewId,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message,
+            userId: user.id,
+            sessionId: session.sessionId,        // Database session UUID
+            adkSessionId: session.adkSessionId,  // ADK session ID
+            interviewId: session.interviewId,
           // Agent is now loaded from database, no longer passed in request
           streaming: true,
         }),
@@ -269,7 +247,7 @@ function InterviewPageInner() {
   };
 
   // Show loading state while checking auth
-  if (isAuthChecking) {
+  if (isAuthLoading) {
     return (
       <Container maxWidth="2xl" height="100vh" display="flex" alignItems="center" justifyContent="center">
         <VStack gap={4}>
