@@ -7,21 +7,27 @@ import {
   Field,
   Heading,
   Input,
+  InputGroup,
+  IconButton,
   Link,
   Stack,
   Text,
   chakra,
 } from "@chakra-ui/react";
+import { Eye, EyeOff } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
 
 type RegisterFormState = {
   firstName: string;
   lastName: string;
   email: string;
+  password: string;
+  confirmation: string;
 };
 
 type FieldErrors = Partial<Record<keyof RegisterFormState, string>>;
@@ -32,10 +38,14 @@ export default function RegisterPage() {
     firstName: "",
     lastName: "",
     email: "",
+    password: "",
+    confirmation: "",
   });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const handleChange = (field: keyof RegisterFormState) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
@@ -57,6 +67,18 @@ export default function RegisterPage() {
       errors.email = "Votre adresse e-mail est requise.";
     } else if (!emailRegex.test(form.email.trim())) {
       errors.email = "Merci de fournir une adresse e-mail valide.";
+    }
+
+    if (!form.password) {
+      errors.password = "Votre mot de passe est requis.";
+    } else if (form.password.length < MIN_PASSWORD_LENGTH) {
+      errors.password = `Votre mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`;
+    }
+
+    if (!form.confirmation) {
+      errors.confirmation = "Merci de confirmer votre mot de passe.";
+    } else if (form.confirmation !== form.password) {
+      errors.confirmation = "La confirmation ne correspond pas au mot de passe.";
     }
 
     return errors;
@@ -81,11 +103,12 @@ export default function RegisterPage() {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         email: form.email.trim(),
+        password: form.password,
       }),
     });
 
     if (response.ok) {
-      router.replace("/register/confirmation");
+      router.replace("/login?signup=success");
       return;
     }
 
@@ -161,8 +184,60 @@ export default function RegisterPage() {
             ) : null}
           </Field.Root>
 
+          <Field.Root required invalid={Boolean(fieldErrors.password)}>
+            <Field.Label>Mot de passe</Field.Label>
+            <InputGroup
+              endElement={
+                <IconButton
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  onClick={() => setShowPassword(!showPassword)}
+                  variant="ghost"
+                  size="sm"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </IconButton>
+              }
+            >
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={handleChange("password")}
+                placeholder={`Au moins ${MIN_PASSWORD_LENGTH} caractères`}
+              />
+            </InputGroup>
+            {fieldErrors.password ? (
+              <Field.ErrorText>{fieldErrors.password}</Field.ErrorText>
+            ) : null}
+          </Field.Root>
+
+          <Field.Root required invalid={Boolean(fieldErrors.confirmation)}>
+            <Field.Label>Confirmez le mot de passe</Field.Label>
+            <InputGroup
+              endElement={
+                <IconButton
+                  aria-label={showConfirmation ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  onClick={() => setShowConfirmation(!showConfirmation)}
+                  variant="ghost"
+                  size="sm"
+                >
+                  {showConfirmation ? <EyeOff size={20} /> : <Eye size={20} />}
+                </IconButton>
+              }
+            >
+              <Input
+                type={showConfirmation ? "text" : "password"}
+                value={form.confirmation}
+                onChange={handleChange("confirmation")}
+                placeholder="Répétez votre mot de passe"
+              />
+            </InputGroup>
+            {fieldErrors.confirmation ? (
+              <Field.ErrorText>{fieldErrors.confirmation}</Field.ErrorText>
+            ) : null}
+          </Field.Root>
+
           <Button type="submit" colorPalette="blue" loading={isSubmitting}>
-            Envoyer le lien d&apos;inscription
+            Créer mon compte
           </Button>
         </chakra.form>
 

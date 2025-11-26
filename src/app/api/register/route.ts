@@ -1,20 +1,21 @@
-import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
 
 export async function POST(req: NextRequest) {
   try {
-    const { firstName, lastName, email } = (await req.json()) as {
+    const { firstName, lastName, email, password } = (await req.json()) as {
       firstName?: string;
       lastName?: string;
       email?: string;
+      password?: string;
     };
 
-    if (!firstName?.trim() || !lastName?.trim() || !email?.trim()) {
+    if (!firstName?.trim() || !lastName?.trim() || !email?.trim() || !password) {
       return NextResponse.json(
-        { error: "Merci de renseigner votre prénom, nom et adresse e-mail." },
+        { error: "Merci de renseigner votre prénom, nom, adresse e-mail et mot de passe." },
         { status: 400 }
       );
     }
@@ -26,22 +27,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return NextResponse.json(
+        { error: `Votre mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.` },
+        { status: 400 }
+      );
+    }
+
     const supabase = createServiceSupabaseClient();
-    const passwordSetupToken = randomBytes(24).toString("hex");
-    const generatedPassword = randomBytes(16).toString("base64url");
     const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
     const normalizedEmail = email.trim().toLowerCase();
 
     const { data: userData, error: createUserError } =
       await supabase.auth.admin.createUser({
         email: normalizedEmail,
-        password: generatedPassword,
+        password,
         email_confirm: true,
         user_metadata: {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           name: fullName,
-          passwordConfigured: false,
+          passwordConfigured: true,
         },
       });
 
@@ -75,7 +81,7 @@ export async function POST(req: NextRequest) {
             name: fullName,
             email: normalizedEmail,
             role: "student",
-            password_setup_token: passwordSetupToken,
+            password_setup_token: null,
           },
         ],
         { onConflict: "id" }
@@ -96,12 +102,6 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-
-    const confirmationUrl = `http://localhost:3000/register/set-password?token=${passwordSetupToken}`;
-    // Simulate sending email by logging the confirmation URL.
-    console.log(
-      `[Sociosim] Lien de validation pour ${normalizedEmail}: ${confirmationUrl}`
-    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

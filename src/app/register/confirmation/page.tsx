@@ -7,14 +7,13 @@ export default function RegisterConfirmationPage() {
   return (
     <Container py={16} maxW="lg">
       <Stack gap={6} textAlign="center">
-        <Heading size="lg">Confirmez votre adresse e-mail</Heading>
+        <Heading size="lg">Compte créé</Heading>
         <Text color="gray.600">
-          Nous venons d&apos;envoyer un lien de validation à votre adresse e-mail.
-          Cliquez sur le lien pour activer votre compte Sociosim. Pensez à vérifier
-          vos spams si vous ne voyez rien apparaître.
+          Votre compte Sociosim est prêt. Vous pouvez vous connecter avec votre adresse e-mail et
+          le mot de passe choisi.
         </Text>
         <Button asChild colorPalette="blue" variant="outline">
-          <NextLink href="/login">Retour à la connexion</NextLink>
+          <NextLink href="/login">Aller à la connexion</NextLink>
         </Button>
       </Stack>
     </Container>
