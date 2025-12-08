@@ -12,4 +12,5 @@ services:
       - .env.local
     environment:
       NODE_ENV: production   # keep this as production even on local
+      NEXT_RUNTIME_LOGGING: debug
     command: node server.js
