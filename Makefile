@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup start start-logs dev build lint format clean db-start db-stop db-reset docker-up docker-up-detached docker-down docker-build docker-logs
+.PHONY: help setup start start-logs dev build lint format clean supa-start supa-stop supa-reset docker-up docker-up-detached docker-down docker-build docker-logs
 
 help: ## Show available make targets.
 	@echo "Available make targets:"
@@ -49,42 +49,42 @@ format-fix: ## Auto-format code with Prettier.
 	npm run format:fix
 
 # Docker
-
+# note: explcitely passing  .env.local is required to pass env vars to docker-compose at build time. alt is to name .env.local as .env
 docker-up: ## Build and run the app in Docker using .env.local for env vars.
 	docker compose --env-file .env.local up --build
 
 docker-up-detached: ## Build and run the app in Docker (detached).
-	docker compose --env-file .env.local up --build -d
+	docker compose --env-file .env.local up -d
 
 docker-down: ## Stop Docker containers.
-	docker compose down
+	docker compose --env-file .env.local down
 
 docker-build: ## Build Docker images without starting containers.
-	docker compose build
+	docker compose  --env-file .env.local  build
 
 docker-logs: ## Tail Docker logs.
-	docker compose logs -f
+	docker compose  --env-file .env.local  logs -f
 
 # Database
 
-db-start: ## Start Supabase locally.
+supa-start: ## Start Supabase locally.
 	supabase start
 
-db-stop: ## Stop Supabase.
+supa-stop: ## Stop Supabase.
 	supabase stop
 
-db-reset: ## Reset Supabase (clears all data, re-applies migrations).
+supa-reset: ## Reset Supabase (clears all data, re-applies migrations).
 	supabase stop
 	rm -rf .supabase/
 	supabase start
 
-db-status: ## Check Supabase status.
+supa-status: ## Check Supabase status.
 	supabase status
 
-db-push: ## Push local migrations to Supabase.
+supa-push: ## Push local migrations to Supabase.
 	supabase db push
 
-db-pull: ## Pull remote database changes.
+supa-pull: ## Pull remote database changes.
 	supabase db pull
 
 # Cleanup

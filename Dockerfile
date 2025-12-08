@@ -35,7 +35,9 @@ ENV NEXT_PUBLIC_ADK_BASE_URL=${NEXT_PUBLIC_ADK_BASE_URL}
 ENV SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./public/.next/static
+# Static assets need to live under .next/static (where Next.js expects them),
+# not under public/. Otherwise _next/static/* requests 404 and the app won't hydrate.
+COPY --from=builder /app/.next/static ./.next/static
 
 EXPOSE 3000
 CMD ["node", "server.js"]
