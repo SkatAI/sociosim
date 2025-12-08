@@ -11,5 +11,5 @@ services:
     env_file:
       - .env.local
     environment:
-      NODE_ENV: production
+      NODE_ENV: production   # keep this as production even on local
     command: node server.js

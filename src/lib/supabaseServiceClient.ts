@@ -1,11 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 
 export const createServiceSupabaseClient = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  // Prefer an internal URL so server-side calls work from inside the container.
+  const supabaseUrl =
+    process.env.SUPABASE_SERVICE_URL ||
+    process.env.SUPABASE_INTERNAL_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL is not defined");
+    throw new Error("Supabase URL is not defined");
   }
 
   if (!serviceRoleKey) {
