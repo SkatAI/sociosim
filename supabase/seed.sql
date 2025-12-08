@@ -45,7 +45,7 @@ begin
         jsonb_build_object('provider', 'email', 'providers', to_jsonb(array['email'])),
         'authenticated',
         'authenticated',
-        crypt(seed_user.raw_password, gen_salt('bf')),
+        extensions.crypt(seed_user.raw_password, extensions.gen_salt('bf')),
         timezone('CET', now()),
         timezone('CET', now()),
         timezone('CET', now()),
