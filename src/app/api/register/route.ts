@@ -6,6 +6,8 @@ const MIN_PASSWORD_LENGTH = 8;
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("[register] Incoming request");
+
     const { firstName, lastName, email, password } = (await req.json()) as {
       firstName?: string;
       lastName?: string;
@@ -37,6 +39,7 @@ export async function POST(req: NextRequest) {
     const supabase = createServiceSupabaseClient();
     const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
     const normalizedEmail = email.trim().toLowerCase();
+    console.log("[register] Creating auth user", { email: normalizedEmail });
 
     const { data: userData, error: createUserError } =
       await supabase.auth.admin.createUser({
@@ -71,6 +74,7 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = userData.user.id;
+    console.log("[register] Auth user created", { userId, email: normalizedEmail });
 
     const { error: upsertError } = await supabase
       .from("users")
@@ -103,6 +107,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log("[register] Profile upserted", { userId });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Erreur lors de la création de compte:", error);
