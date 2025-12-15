@@ -43,12 +43,17 @@ function LoginPageInner() {
     setError(null);
     setIsSubmitting(true);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    console.log("[login] Attempting sign in with:", form.email);
+
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
       email: form.email,
       password: form.password,
     });
 
+    console.log("[login] Sign in response - session:", !!data?.session, "error:", signInError?.message);
+
     if (signInError) {
+      console.error("[login] Sign in error:", signInError);
       setError(
         signInError.message === "Invalid login credentials"
           ? "Identifiants incorrects. Merci de vérifier votre email et votre mot de passe."
@@ -58,6 +63,7 @@ function LoginPageInner() {
       return;
     }
 
+    console.log("[login] Sign in successful, redirecting to dashboard");
     router.replace("/dashboard");
   };
 
