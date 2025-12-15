@@ -343,6 +343,48 @@ Future testing strategy (from specs):
 - E2E: Playwright for critical flows (login, interview creation, chat)
 - Unit: Focus on interview logic; colocate tests with components (`*.test.tsx`)
 
+## Docker Development
+
+### Prerequisites
+Start Supabase locally before running Docker:
+```bash
+supabase start
+```
+
+### Development Mode (Hot Reload)
+```bash
+make docker-dev              # Start dev environment with hot reload
+make docker-dev-detached     # Start in background
+make docker-down             # Stop containers
+make docker-logs             # View logs
+```
+
+Uses `Dockerfile.dev` with:
+- All dev dependencies installed
+- Source code mounted as volumes for instant hot reload
+- Panda CSS watcher enabled
+- Next.js dev server running
+- Connects to host's local Supabase (port 54321)
+
+### Production Mode (Testing)
+```bash
+make docker-prod             # Build and run production image
+make docker-prod-detached    # Run in background
+make docker-prod-build       # Build without starting
+```
+
+Uses `Dockerfile` (multi-stage build) with optimized standalone output.
+
+### How It Works
+- **Next.js:** Runs in Docker container on port 3000
+- **Supabase:** Runs on host machine (`supabase start` on port 54321)
+- **Browser client:** Uses `localhost:54321` (from .env.local)
+- **Server-side code:** Can use `host.docker.internal:54321` if needed
+- **Code changes:** Trigger hot reload automatically via volume mounts
+- **Source sync:** `src/`, `public/`, config files mounted as volumes for live updates
+
+---
+
 ## Deployment & Environments
 
 - **Development:** Local Supabase instance (port 54321)

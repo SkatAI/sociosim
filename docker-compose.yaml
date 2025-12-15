@@ -2,15 +2,30 @@ services:
   web:
     build:
       context: .
-      args:
-        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-        NEXT_PUBLIC_ADK_BASE_URL: ${NEXT_PUBLIC_ADK_BASE_URL}
+      dockerfile: Dockerfile.dev
+    container_name: sociosim-web
     ports:
       - "3000:3000"
     env_file:
       - .env.local
     environment:
-      NODE_ENV: production   # keep this as production even on local
+      NODE_ENV: development
       NEXT_RUNTIME_LOGGING: debug
-    command: node server.js
+    extra_hosts:
+      # Enable host.docker.internal on Linux (macOS/Windows have it by default)
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./supabase:/app/supabase
+      - ./panda.config.ts:/app/panda.config.ts
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./next.config.ts:/app/next.config.ts
+      - ./eslint.config.mjs:/app/eslint.config.mjs
+
+      # Prevent overwriting these (use container's built versions)
+      - /app/node_modules
+      - /app/.next
+      - /app/styled-system
+    command: npm run dev
