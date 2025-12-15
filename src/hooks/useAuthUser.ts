@@ -22,9 +22,12 @@ export function useAuthUser(): AuthState {
 
     const loadSession = async () => {
       try {
+        console.log("[useAuthUser] Loading session...");
         const {
           data: { session: currentSession },
         } = await supabase.auth.getSession();
+
+        console.log("[useAuthUser] Session loaded - has session:", !!currentSession, "user:", currentSession?.user?.id);
 
         if (!isMounted) return;
 
@@ -32,8 +35,10 @@ export function useAuthUser(): AuthState {
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user?.id) {
+          console.log("[useAuthUser] Fetching user role for:", currentSession.user.id);
           await fetchUserRole(currentSession.user.id);
         } else {
+          console.log("[useAuthUser] No user found in session");
           setRole(null);
         }
       } catch (error) {
