@@ -63,14 +63,14 @@ export default function Header() {
           color="inherit"
           _hover={{ opacity: 0.8 }}
         >
-          Sociosim hhh
+          Sociosim
         </Link>
 
         <HStack gap={4}>
           {!isLoading && userInfo ? (
             <HStack gap={4}>
               <Link as={NextLink} href="/dashboard" fontWeight="medium" color="gray.700" _hover={{ color: "blue.600" }}>
-                Tableau de bord 2
+                Tableau de bord
               </Link>
               <HStack gap={2}>
                 <Text fontWeight="medium" color="gray.700">
