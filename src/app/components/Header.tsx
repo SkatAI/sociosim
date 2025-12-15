@@ -7,14 +7,17 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
 
+type UserRole = "student" | "teacher" | "admin";
+
 type UserInfo = {
   firstName: string;
   lastName: string;
+  role: UserRole | null;
 } | null;
 
 export default function Header() {
   const router = useRouter();
-  const { user, isLoading } = useAuthUser();
+  const { user, isLoading, role } = useAuthUser();
   const [userInfo, setUserInfo] = useState<UserInfo>(null);
 
   const handleLogout = async () => {
@@ -36,11 +39,11 @@ export default function Header() {
     const firstName = (user.user_metadata?.firstName as string) || "";
     const lastName = (user.user_metadata?.lastName as string) || "";
     if (firstName && lastName) {
-      setUserInfo({ firstName, lastName });
+      setUserInfo({ firstName, lastName, role });
     } else {
       setUserInfo(null);
     }
-  }, [user]);
+  }, [user, role]);
 
   return (
     <Box as="header" bg="white" borderBottomWidth="1px">
@@ -60,18 +63,18 @@ export default function Header() {
           color="inherit"
           _hover={{ opacity: 0.8 }}
         >
-          Sociosim
+          Sociosim hhh
         </Link>
 
         <HStack gap={4}>
           {!isLoading && userInfo ? (
             <HStack gap={4}>
               <Link as={NextLink} href="/dashboard" fontWeight="medium" color="gray.700" _hover={{ color: "blue.600" }}>
-                Tableau de bord
+                Tableau de bord 2
               </Link>
               <HStack gap={2}>
                 <Text fontWeight="medium" color="gray.700">
-                  {userInfo.firstName} {userInfo.lastName}
+                  {userInfo.firstName} {userInfo.lastName} ({userInfo.role})
                 </Text>
                 <IconButton
                   aria-label="Déconnexion"
