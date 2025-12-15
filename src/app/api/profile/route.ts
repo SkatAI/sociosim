@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -71,13 +71,9 @@ export async function POST(req: NextRequest) {
             console.log("[profile] Cookie get:", name, "found:", !!value);
             return value;
           },
-          set(name: string, value: string, options: any) {
+          set(name: string, value: string, options?: CookieOptions) {
             console.log("[profile] Cookie set:", name);
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            console.log("[profile] Cookie remove:", name);
-            cookieStore.set({ name, value: "", ...options, maxAge: 0 });
+            cookieStore.set({ name, value, ...(options ?? {}) });
           },
         },
       }

@@ -1,5 +1,4 @@
 import { chromium } from '@playwright/test';
-import fs from 'fs';
 import path from 'path';
 
 const screenshotBeforePath = path.join(process.cwd(), 'layout-before-message.png');
@@ -66,7 +65,7 @@ async function testLayout() {
       await page.waitForSelector('[role="article"]', { timeout: 10000 }).catch(() => {
         // Messages might not have role="article", continue anyway
       });
-    } catch (e) {
+    } catch {
       console.log('  (No article role found, continuing)');
     }
 
