@@ -1,6 +1,6 @@
 // app/components/Header.tsx
 "use client";
-import { Avatar, Box, Flex, HoverCard, HStack, IconButton, Link, Portal, Stack, Text } from "@chakra-ui/react";
+import { Avatar, Box, Flex, HoverCard, HStack, IconButton, Link, Popover, Stack, Text } from "@chakra-ui/react";
 import { LogOut } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,7 @@ export default function Header() {
   const router = useRouter();
   const { user, isLoading, role } = useAuthUser();
   const [userInfo, setUserInfo] = useState<UserInfo>(null);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -73,46 +74,53 @@ export default function Header() {
                 Tableau de bord
               </Link>
               <HStack gap={2}>
-                <HoverCard.Root size="sm" openDelay={300} closeDelay={200}>
-                  <HoverCard.Trigger asChild>
-                    <Avatar.Root size="md" cursor="pointer">
-                      <Avatar.Fallback name={`${userInfo.firstName} ${userInfo.lastName}`} />
-                    </Avatar.Root>
-                  </HoverCard.Trigger>
-                  <Portal>
-                    <HoverCard.Positioner>
-                      <HoverCard.Content>
-                        <Stack gap={2} p={3}>
-                          {/* Full name and role */}
-                          <Text fontWeight="semibold" fontSize="md">
-                            {userInfo.firstName} {userInfo.lastName}
-                            {(userInfo.role === "teacher" || userInfo.role === "admin") && (
-                              <Text as="span" fontWeight="normal" fontSize="sm" color="gray.600">
-                                {" "}({userInfo.role})
-                              </Text>
-                            )}
-                          </Text>
+                <Popover.Root
+                  open={isPopoverOpen}
+                  onOpenChange={(state) => setIsPopoverOpen(state.open)}
+                  positioning={{ placement: "bottom" }}
+                >
+                  <Popover.Trigger asChild>
+                    <Box
+                      onClick={() => setIsPopoverOpen(!isPopoverOpen)}
+                      cursor="pointer"
+                    >
+                      <Avatar.Root size="md">
+                        <Avatar.Fallback name={`${userInfo.firstName} ${userInfo.lastName}`} />
+                      </Avatar.Root>
+                    </Box>
+                  </Popover.Trigger>
+                  <Popover.Positioner>
+                    <Popover.Content>
+                      <Stack gap={2} p={3}>
+                        {/* Full name and role */}
+                        <Text fontWeight="semibold" fontSize="md">
+                          {userInfo.firstName} {userInfo.lastName}
+                          {(userInfo.role === "teacher" || userInfo.role === "admin") && (
+                            <Text as="span" fontWeight="normal" fontSize="sm" color="gray.600">
+                              {" "}({userInfo.role})
+                            </Text>
+                          )}
+                        </Text>
 
-                          {/* Email */}
-                          <Text fontSize="sm" color="gray.600">
-                            {user?.email}
-                          </Text>
+                        {/* Email */}
+                        <Text fontSize="sm" color="gray.600">
+                          {user?.email}
+                        </Text>
 
-                          {/* Modify profile link */}
-                          <Link
-                            as={NextLink}
-                            href="/profile"
-                            fontSize="sm"
-                            color="blue.600"
-                            _hover={{ textDecoration: "underline" }}
-                          >
-                            Modifier le profil
-                          </Link>
-                        </Stack>
-                      </HoverCard.Content>
-                    </HoverCard.Positioner>
-                  </Portal>
-                </HoverCard.Root>
+                        {/* Modify profile link */}
+                        <Link
+                          as={NextLink}
+                          href="/profile"
+                          fontSize="sm"
+                          color="blue.600"
+                          _hover={{ textDecoration: "underline" }}
+                        >
+                          Modifier le profil
+                        </Link>
+                      </Stack>
+                    </Popover.Content>
+                  </Popover.Positioner>
+                </Popover.Root>
 
                 <IconButton
                   aria-label="Déconnexion"
