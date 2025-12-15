@@ -1,6 +1,6 @@
 // app/components/Header.tsx
 "use client";
-import { Avatar, Box, Flex, HoverCard, HStack, IconButton, Link, Popover, Stack, Text } from "@chakra-ui/react";
+import { Avatar, Box, Flex, HStack, IconButton, Link, Popover, Stack, Text } from "@chakra-ui/react";
 import { LogOut } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
