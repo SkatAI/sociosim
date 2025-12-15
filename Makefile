@@ -49,21 +49,35 @@ format-fix: ## Auto-format code with Prettier.
 	npm run format:fix
 
 # Docker
-# note: explcitely passing  .env.local is required to pass env vars to docker-compose at build time. alt is to name .env.local as .env
-docker-up: ## Build and run the app in Docker using .env.local for env vars.
-	docker compose --env-file .env.local up --build
 
-docker-up-detached: ## Build and run the app in Docker (detached).
-	docker compose --env-file .env.local up -d
+docker-dev: ## Run development environment in Docker with hot reload.
+	docker compose -f docker-compose.yaml up --build
 
-docker-down: ## Stop Docker containers.
-	docker compose --env-file .env.local down
+docker-dev-detached: ## Run dev environment in Docker (detached).
+	docker compose -f docker-compose.yaml up -d --build
 
-docker-build: ## Build Docker images without starting containers.
-	docker compose  --env-file .env.local  build
+docker-prod: ## Run production build in Docker.
+	docker compose -f docker-compose.prod.yaml up --build
+
+docker-prod-detached: ## Run production in Docker (detached).
+	docker compose -f docker-compose.prod.yaml up -d --build
+
+docker-up: docker-dev
+
+docker-up-detached: docker-dev-detached
+
+docker-down: ## Stop all Docker containers.
+	docker compose -f docker-compose.yaml down
+	docker compose -f docker-compose.prod.yaml down 2>/dev/null || true
+
+docker-build: ## Build Docker development image without starting containers.
+	docker compose -f docker-compose.yaml build
 
 docker-logs: ## Tail Docker logs.
-	docker compose  --env-file .env.local  logs -f
+	docker compose -f docker-compose.yaml logs -f
+
+docker-prod-build: ## Build Docker production image without starting containers.
+	docker compose -f docker-compose.prod.yaml build
 
 # Database
 
