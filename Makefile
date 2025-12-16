@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup start start-logs dev build lint format clean supa-start supa-stop supa-reset docker-up docker-up-detached docker-down docker-build docker-logs
+.PHONY: help setup start start-logs dev build lint format clean supa-start supa-stop supa-reset docker-up docker-up-detached docker-down docker-build docker-logs test-e2e test-e2e-ui test-e2e-headed test-e2e-debug test-e2e-report
 
 help: ## Show available make targets.
 	@echo "Available make targets:"
@@ -47,6 +47,23 @@ format: ## Check code formatting with Prettier.
 
 format-fix: ## Auto-format code with Prettier.
 	npm run format:fix
+
+# Testing
+
+test-e2e: ## Run Playwright E2E tests.
+	npm run test:e2e
+
+test-e2e-ui: ## Run Playwright tests in UI mode (interactive debugging).
+	npm run test:e2e:ui
+
+test-e2e-headed: ## Run Playwright tests with visible browser.
+	npm run test:e2e:headed
+
+test-e2e-debug: ## Run Playwright tests in debug mode (step through).
+	npm run test:e2e:debug
+
+test-e2e-report: ## Open Playwright HTML test report.
+	npm run test:e2e:report
 
 # Docker
 
