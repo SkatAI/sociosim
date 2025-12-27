@@ -2,7 +2,6 @@ import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
 import {
   Interview,
   InterviewUsage,
-  Message,
   validateInterview,
   validateInterviewUsage,
 } from "@/lib/schemas";
@@ -82,49 +81,114 @@ export async function getInterviewWithUsage(
 export async function getUserInterviewsWithMessages(userId: string) {
   const supabase = createServiceSupabaseClient();
 
-  const { data, error } = await supabase
+  console.log(
+    "[getUserInterviewsWithMessages] Starting query for userId:",
+    userId
+  );
+
+  // Step 1: First, get the user's interview IDs via user_interview_session
+  const { data: userSessions, error: sessionError } = await supabase
+    .from("user_interview_session")
+    .select("interview_id, session_id")
+    .eq("user_id", userId);
+
+  console.log("-----------------------");
+  console.log("Data:", userSessions);
+  console.log("Error:", sessionError);
+  console.log("-----------------------");
+
+  console.log(
+    "[getUserInterviewsWithMessages] Query user_interview_session - Found sessions:",
+    userSessions?.length || 0
+  );
+
+  if (userSessions && userSessions.length > 0) {
+    console.log(
+      "[getUserInterviewsWithMessages] Session data:",
+      JSON.stringify(userSessions, null, 2)
+    );
+  }
+
+  throwIfError(sessionError, "Failed to load user interview sessions");
+
+  // If no interviews, return empty array
+  if (!userSessions || userSessions.length === 0) {
+    return [];
+  }
+
+  const interviewIds = userSessions.map((us) => us.interview_id);
+  const sessionIds = userSessions.map((us) => us.session_id);
+
+  // Step 2: Get full interview data with agent and usage
+  const { data: interviews, error: interviewError } = await supabase
     .from("interviews")
     .select(
       `
-        *,
-        agents(agent_name),
-        interview_usage(total_input_tokens, total_output_tokens),
-        user_interview_session!inner(
-          user_id,
-          sessions(
-            messages(content, role, created_at)
-          )
-        )
-      `
+      *,
+      agents(agent_name),
+      interview_usage(total_input_tokens, total_output_tokens)
+    `
     )
-    .eq("user_interview_session.user_id", userId)
+    .in("id", interviewIds)
     .order("updated_at", { ascending: false });
 
-  throwIfError(error, "Failed to load user interviews");
+  throwIfError(interviewError, "Failed to load interviews");
 
-  return (data || []).map((raw) => {
-    const interview = validateInterview(raw);
-    const usage = (raw as { interview_usage?: InterviewUsage[] }).interview_usage;
-    const agents = (raw as { agents?: { agent_name?: string } }).agents;
-    const userInterviewSession =
-      (raw as { user_interview_session?: Array<{ sessions?: { messages?: Message[] } }> })
-        .user_interview_session || [];
+  console.log(
+    "[getUserInterviewsWithMessages] Query interviews - Found interviews:",
+    interviews?.length || 0
+  );
 
-    const allMessages: Array<{ content: string; role: string; created_at: string }> = [];
-    userInterviewSession.forEach((uis) => {
-      const messages = uis.sessions?.messages;
-      if (messages) {
-        allMessages.push(...messages);
-      }
-    });
+  // Step 3: Get all messages for these sessions
+  const { data: messages, error: messageError } = await supabase
+    .from("messages")
+    .select("session_id, content, role, created_at")
+    .in("session_id", sessionIds);
 
-    allMessages.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  console.log(
+    "[getUserInterviewsWithMessages] Query messages - Found messages:",
+    messages?.length || 0
+  );
+
+  throwIfError(messageError, "Failed to load messages");
+
+  // Step 4: Build a map of messages by session
+  const messagesBySession = new Map<string, typeof messages>();
+  (messages || []).forEach((msg) => {
+    if (!messagesBySession.has(msg.session_id)) {
+      messagesBySession.set(msg.session_id, []);
+    }
+    messagesBySession.get(msg.session_id)!.push(msg);
+  });
+
+  // Step 5: Combine data
+  const result = (interviews || []).map((interview) => {
+    const sessionForInterview = userSessions.find(
+      (us) => us.interview_id === interview.id
+    );
+    const msgs = sessionForInterview
+      ? (messagesBySession.get(sessionForInterview.session_id) || [])
+      : [];
+
+    // Sort messages by date descending
+    msgs.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
 
     return {
       ...interview,
-      interview_usage: usage,
-      agents,
-      messages: allMessages,
+      interview_usage: interview.interview_usage,
+      agents: interview.agents,
+      messages: msgs,
     };
   });
+
+  console.log(
+    "[getUserInterviewsWithMessages] Final result: returning",
+    result.length,
+    "interviews with complete data"
+  );
+
+  return result;
 }

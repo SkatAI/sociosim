@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 
+// todo: def sould not be here
 type UserRole = "student" | "teacher" | "admin";
 
 type AuthContextValue = {

@@ -35,6 +35,12 @@ export async function getAgentNameById(agentId: string): Promise<string> {
     .eq("id", agentId)
     .single();
 
+  console.log("-----------------------");
+  console.log("Data:", data);
+  console.log("Error:", error);
+  console.log("-----------------------");
+
+
   throwIfError(error, `Failed to load agent with id: ${agentId}`);
 
   return ensureRecordFound(data, `Agent not found: ${agentId}`).agent_name;

@@ -10,6 +10,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
 
+    console.log("[/api/user/interviews GET] Received userId:", userId);
+
     if (!userId) {
       return NextResponse.json(
         { error: "Missing 'userId' query parameter" },
@@ -17,7 +19,14 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    console.log("[/api/user/interviews GET] Fetching interviews for user:", userId);
     const userInterviews = await interviews.getUserInterviewsWithMessages(userId);
+
+    console.log(
+      "[/api/user/interviews GET] Successfully loaded",
+      userInterviews.length,
+      "interviews"
+    );
 
     return NextResponse.json(
       { success: true, interviews: userInterviews },

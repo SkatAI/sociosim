@@ -98,6 +98,9 @@ export default function DashboardPage() {
 
     const loadData = async () => {
       try {
+        console.log("[Dashboard] User logged in with ID:", user.id);
+        console.log("[Dashboard] Fetching interviews from API...");
+
         const response = await fetch(`/api/user/interviews?userId=${user.id}`);
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
@@ -109,10 +112,20 @@ export default function DashboardPage() {
         }
 
         const data = await response.json();
+        console.log("[Dashboard] API response received:", {
+          success: data.success,
+          interviewCount: data.interviews?.length || 0,
+        });
+
         const transformedInterviews =
           (data.interviews as InterviewWithDetails[] | undefined)?.filter(
             (interview) => interview.messages && interview.messages.length > 0
           ) || [];
+
+        console.log(
+          "[Dashboard] Filtered interviews with messages:",
+          transformedInterviews.length
+        );
 
         setInterviews(transformedInterviews);
       } catch (err) {
