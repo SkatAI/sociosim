@@ -39,6 +39,7 @@ export default function Header() {
     }
     const firstName = (user.user_metadata?.firstName as string) || "";
     const lastName = (user.user_metadata?.lastName as string) || "";
+
     if (firstName && lastName) {
       setUserInfo({ firstName, lastName, role });
     } else {
