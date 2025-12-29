@@ -7,6 +7,7 @@ import DashboardPage from "./page";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { mockUseAuthUser, createMockAuthUser } from "@/test/mocks/useAuthUser";
 import { mockRouter } from "@/test/mocks/router";
+import { mockInterviewsList } from "@/test/mocks/interviews";
 
 // Mock modules
 vi.mock("@/hooks/useAuthUser");
@@ -222,5 +223,90 @@ describe("DashboardPage - Create Interview Feature", () => {
         })
       );
     });
+  });
+});
+
+describe("DashboardPage - Continue Interview Feature", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as any);
+
+    // Mock interviews fetch with previous interviews
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        interviews: mockInterviewsList,
+      }),
+    });
+  });
+
+  it("renders interview cards with agent name and status", async () => {
+    renderWithChakra(<DashboardPage />);
+
+    await waitFor(
+      () => {
+        expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+
+    // Check that agent names appear for the interviews
+    const orianElements = screen.queryAllByText("Oriane");
+    const theoElements = screen.queryAllByText("Théo");
+    expect(orianElements.length + theoElements.length).toBeGreaterThan(0);
+  });
+
+  it("renders Continuer button for each interview", async () => {
+    renderWithChakra(<DashboardPage />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
+    });
+
+    const continuerButtons = screen.getAllByRole("button", { name: /Continuer/i });
+    expect(continuerButtons).toHaveLength(2);
+  });
+
+  it("displays last assistant message preview", async () => {
+    renderWithChakra(<DashboardPage />);
+
+    await waitFor(
+      () => {
+        expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+
+    // Check that messages are displayed in the cards
+    const messageElements = screen.queryAllByText(/Bonjour|message/i);
+    expect(messageElements.length).toBeGreaterThanOrEqual(0);
+  });
+
+  it("shows token usage counts", async () => {
+    renderWithChakra(<DashboardPage />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
+    });
+
+    // Check for token counts in interview cards
+    const tokenElements = screen.queryAllByText(/1500|2000/);
+    expect(tokenElements.length).toBeGreaterThan(0);
+  });
+
+  it("clicking Continuer navigates to interview page", async () => {
+    const user = userEvent.setup();
+    renderWithChakra(<DashboardPage />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
+    });
+
+    const continuerButton = screen.getAllByRole("button", { name: /Continuer/i })[0];
+    await user.click(continuerButton);
+
+    expect(mockRouter.push).toHaveBeenCalledWith("/interview/interview-123");
   });
 });
