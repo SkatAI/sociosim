@@ -3,14 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 export const createServiceSupabaseClient = () => {
   // Prefer an internal URL so server-side calls work from inside the container.
 
-  console.log("-----------------------/ createServiceSupabaseClient");
-  console.log("SUPABASE_SERVICE_URL:", process.env.SUPABASE_SERVICE_URL);
-  console.log("SUPABASE_INTERNAL_URL:", process.env.SUPABASE_INTERNAL_URL);
-  console.log("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log("SUPABASE_SERVICE_ROLE_KEY:", process.env.SUPABASE_SERVICE_ROLE_KEY);
-  console.log("-----------------------\\");
-
-
   const supabaseUrl =
     process.env.SUPABASE_SERVICE_URL ||
     process.env.SUPABASE_INTERNAL_URL ||

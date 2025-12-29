@@ -11,6 +11,7 @@ type AuthContextValue = {
   role: UserRole | null;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
+  updateUserMetadata: (metadata: Partial<{ firstName: string; lastName: string; name: string }>) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -34,7 +35,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const syncSession = useCallback(async (nextSession: Session | null) => {
     if (!isMountedRef.current) return;
     setSession(nextSession);
-    const nextUser = nextSession?.user ?? null;
+
+    // Create a new object reference to force React re-render when metadata changes
+    const nextUser = nextSession?.user
+      ? { ...nextSession.user, user_metadata: { ...nextSession.user.user_metadata } }
+      : null;
+
     setUser(nextUser);
 
     if (nextUser?.id) {
@@ -48,11 +54,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loadSession = useCallback(async () => {
+    console.log("[loadSession] Starting session load...");
     setIsLoading(true);
     try {
       const {
         data: { session: currentSession },
       } = await supabase.auth.getSession();
+
+      console.log("[loadSession] Got session from Supabase:", {
+        hasSession: !!currentSession,
+        userId: currentSession?.user?.id,
+        userMetadata: currentSession?.user?.user_metadata,
+      });
+
       await syncSession(currentSession);
     } catch (error) {
       console.error("[AuthProvider] Failed to load session:", error);
@@ -65,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (isMountedRef.current) {
         setIsLoading(false);
       }
+      console.log("[loadSession] Finished");
     }
   }, [syncSession]);
 
@@ -84,8 +99,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [loadSession, syncSession]);
 
+  const updateUserMetadata = useCallback(
+    (metadata: Partial<{ firstName: string; lastName: string; name: string }>) => {
+      setUser((currentUser) => {
+        if (!currentUser) {
+          console.warn("[updateUserMetadata] Called with no user logged in");
+          return currentUser;
+        }
+
+        // Create new object references to trigger React re-renders
+        const updatedUser = {
+          ...currentUser,
+          user_metadata: {
+            ...currentUser.user_metadata,
+            ...metadata,
+          },
+        };
+
+        console.log("[updateUserMetadata] Updated user metadata:", {
+          userId: updatedUser.id,
+          firstName: updatedUser.user_metadata?.firstName,
+          lastName: updatedUser.user_metadata?.lastName,
+          name: updatedUser.user_metadata?.name,
+        });
+
+        return updatedUser;
+      });
+    },
+    []
+  );
+
   const refreshUser = useCallback(async () => {
+    console.log("[refreshUser] Called - reloading session...");
     await loadSession();
+    console.log("[refreshUser] Completed");
   }, [loadSession]);
 
   const value = useMemo(
@@ -95,8 +142,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role,
       isLoading,
       refreshUser,
+      updateUserMetadata,
     }),
-    [user, session, role, isLoading, refreshUser]
+    [user, session, role, isLoading, refreshUser, updateUserMetadata]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

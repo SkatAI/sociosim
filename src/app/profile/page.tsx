@@ -30,7 +30,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, isLoading: isAuthLoading, refreshUser } = useAuthUser();
+  const { user, isLoading: isAuthLoading, updateUserMetadata } = useAuthUser();
   const [form, setForm] = useState<ProfileFormState>({
     firstName: "",
     lastName: "",
@@ -153,8 +153,12 @@ export default function ProfilePage() {
             : "Profil mis à jour avec succès.")
       );
 
-      // Rafraîchir la session pour mettre à jour l'avatar et les métadonnées immédiatement.
-      await refreshUser();
+      // Update the user state directly with new metadata
+      updateUserMetadata({
+        firstName: trimmedFirst,
+        lastName: trimmedLast,
+        name: `${trimmedFirst} ${trimmedLast}`,
+      });
     } catch (error) {
       console.error("Erreur lors de la mise à jour du profil:", error);
       setServerError("Une erreur inattendue est survenue. Merci de réessayer.");
