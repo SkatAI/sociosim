@@ -45,3 +45,7 @@
 ## Configuration & Secrets
 
 - Never commit secrets. Keep environment values in `.env.local`; update `.env.local.example` when new vars are required. Ensure Next.js settings align after env changes.
+
+# Changelog
+
+Always update changelog.md for major changes and document them there.
