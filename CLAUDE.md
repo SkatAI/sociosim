@@ -429,3 +429,7 @@ Uses `Dockerfile` (multi-stage build) with optimized standalone output.
 - **Project Specs:** `/docs/specs/specification_stack_and_tools.md`
 - **Chakra v3 Migration:** `/docs/chakra-v3/`
 - **Development Guidelines:** `/AGENTS.md`
+
+# Changelog
+
+Always update changelog.md for major changes and document them there.
