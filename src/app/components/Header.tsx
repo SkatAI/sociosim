@@ -21,6 +21,7 @@ export default function Header() {
   const { user, isLoading, role } = useAuthUser();
   const [userInfo, setUserInfo] = useState<UserInfo>(null);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [fontSize, setFontSize] = useState<"md" | "lg" | "xl">("md");
 
   const handleLogout = async () => {
     try {
@@ -47,6 +48,31 @@ export default function Header() {
       setUserInfo(null);
     }
   }, [user, role]);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem("fontSize") as "md" | "lg" | "xl" | null;
+    if (stored === "lg" || stored === "xl") {
+      setFontSize(stored);
+      document.documentElement.dataset.font = stored;
+    }
+  }, []);
+
+  const handleToggleFontSize = () => {
+    const next =
+      fontSize === "md" ? "lg" : fontSize === "lg" ? "xl" : "md";
+    setFontSize(next);
+    if (next === "md") {
+      delete document.documentElement.dataset.font;
+    } else {
+      document.documentElement.dataset.font = next;
+    }
+    window.localStorage.setItem("fontSize", next);
+  };
+
+  const fontSizeLabel =
+    fontSize === "md" ? "Taille de texte normale" : fontSize === "lg"
+      ? "Taille de texte grande"
+      : "Taille de texte très grande";
 
   return (
     <Box as="header" bg="bg.surface" borderBottomWidth="1px" borderBottomColor="border.muted">
@@ -99,7 +125,7 @@ export default function Header() {
                   </Popover.Trigger>
                   <Popover.Positioner>
                     <Popover.Content>
-                      <Stack gap={2} p={3}>
+                      <Stack gap={3} p={3}>
                         {/* Full name and role */}
                         <Text fontWeight="semibold" fontSize="md">
                           {userInfo.firstName} {userInfo.lastName}
@@ -125,6 +151,32 @@ export default function Header() {
                         >
                           Modifier le profil
                         </Link>
+
+                        <Stack gap={2}>
+                          <HStack justify="space-between">
+                            <Text fontSize="sm" color="fg.muted">
+                              Texte
+                            </Text>
+                            <IconButton
+                              aria-label={fontSizeLabel}
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleToggleFontSize}
+                              title={fontSizeLabel}
+                            >
+                              <HStack gap={0.5}>
+                                <Text fontSize="xs">A</Text>
+                                <Text fontSize="md">A</Text>
+                              </HStack>
+                            </IconButton>
+                          </HStack>
+                          <HStack justify="space-between">
+                            <Text fontSize="sm" color="fg.muted">
+                              Thème
+                            </Text>
+                            <ColorModeButton />
+                          </HStack>
+                        </Stack>
                       </Stack>
                     </Popover.Content>
                   </Popover.Positioner>
@@ -146,7 +198,6 @@ export default function Header() {
               Se connecter
             </Link>
           )}
-          <ColorModeButton />
         </HStack>
       </Flex>
     </Box>
