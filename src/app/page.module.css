@@ -17,6 +17,18 @@
   background-color: var(--background);
 }
 
+:global(.dark) .page {
+  --background: #0b1020;
+  --foreground: #0f172a;
+
+  --text-primary: #e2e8f0;
+  --text-secondary: #cbd5e1;
+
+  --button-primary-hover: #3b82f6;
+  --button-secondary-hover: #111827;
+  --button-secondary-border: #1f2937;
+}
+
 .main {
   display: flex;
   min-height: 100vh;

@@ -41,7 +41,7 @@ export default function Home() {
       <Stack gap={8}>
         <Stack gap={4}>
           <Heading size="lg">Bienvenue sur Sociosim</Heading>
-          <Text fontSize="lg" color="gray.600">
+          <Text fontSize="lg" color="fg.muted">
             Entraînez-vous à mener des entretiens de sociologie.
           </Text>
           <Stack direction={{ base: "column", sm: "row" }} gap={3}>
@@ -51,8 +51,8 @@ export default function Home() {
               size="lg"
               px={6}
               borderRadius="md"
-              borderColor="blue.500"
-              color="blue.700"
+              borderColor="accent.primary"
+              color="accent.primary"
               fontWeight="semibold"
             >
               <NextLink href="/register">Créer un compte</NextLink>

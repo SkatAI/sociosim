@@ -14,6 +14,16 @@ interface ChatMessageProps {
  */
 export function ChatMessage({ role, text, timestamp }: ChatMessageProps) {
   const isUser = role === "user";
+  const avatarBg = isUser
+    ? { base: "blue.200", _dark: "blue.800" }
+    : { base: "gray.200", _dark: "gray.700" };
+  const bubbleBg = isUser
+    ? { base: "blue.100", _dark: "blue.900" }
+    : { base: "gray.100", _dark: "gray.800" };
+  const bubbleColor = isUser
+    ? { base: "blue.900", _dark: "blue.50" }
+    : { base: "gray.900", _dark: "gray.100" };
+  const timestampColor = { base: "gray.500", _dark: "gray.400" };
 
   return (
     <HStack
@@ -28,7 +38,7 @@ export function ChatMessage({ role, text, timestamp }: ChatMessageProps) {
           minWidth={8}
           height={8}
           borderRadius="50%"
-          backgroundColor="gray.200"
+          backgroundColor={avatarBg}
           display="flex"
           alignItems="center"
           justifyContent="center"
@@ -43,15 +53,15 @@ export function ChatMessage({ role, text, timestamp }: ChatMessageProps) {
         <Box
           padding={3}
           borderRadius="md"
-          backgroundColor={isUser ? "blue.100" : "gray.100"}
-          color={isUser ? "blue.900" : "gray.900"}
+          backgroundColor={bubbleBg}
+          color={bubbleColor}
         >
           <Text fontSize="sm" whiteSpace="pre-wrap">
             {text}
           </Text>
         </Box>
         {timestamp && (
-          <Text fontSize="xs" color="gray.500" marginTop={1}>
+          <Text fontSize="xs" color={timestampColor} marginTop={1}>
             {timestamp}
           </Text>
         )}
@@ -62,7 +72,7 @@ export function ChatMessage({ role, text, timestamp }: ChatMessageProps) {
           minWidth={8}
           height={8}
           borderRadius="50%"
-          backgroundColor="blue.200"
+          backgroundColor={avatarBg}
           display="flex"
           alignItems="center"
           justifyContent="center"

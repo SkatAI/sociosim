@@ -172,7 +172,7 @@ export default function ProfilePage() {
       <Container py={16} maxW="lg" centerContent mx="auto">
         <Stack gap={4} alignItems="center" textAlign="center">
           <Heading size="md">Chargement du profil...</Heading>
-          <Text color="gray.600">Merci de patienter.</Text>
+          <Text color="fg.muted">Merci de patienter.</Text>
         </Stack>
       </Container>
     );
@@ -183,7 +183,7 @@ export default function ProfilePage() {
       <Stack gap={8}>
         <Stack gap={1}>
           <Heading size="lg">Mon profil</Heading>
-          <Text color="gray.600">Mettez à jour vos informations personnelles.</Text>
+          <Text color="fg.muted">Mettez à jour vos informations personnelles.</Text>
         </Stack>
 
         {serverError ? (
@@ -254,7 +254,7 @@ export default function ProfilePage() {
             />
             {fieldErrors.email ? <Field.ErrorText>{fieldErrors.email}</Field.ErrorText> : null}
             {initialEmail && form.email.trim().toLowerCase() !== initialEmail.toLowerCase() ? (
-              <Text color="gray.600" fontSize="sm" marginTop={2}>
+              <Text color="fg.muted" fontSize="sm" marginTop={2}>
                 Modifier l&apos;e-mail peut nécessiter une confirmation par lien reçu dans votre boîte mail.
               </Text>
             ) : null}
@@ -265,7 +265,7 @@ export default function ProfilePage() {
               Enregistrer les changements
             </Button>
             <Box textAlign="center">
-              <Link as={NextLink} href="/dashboard" color="blue.600" fontWeight="semibold">
+              <Link as={NextLink} href="/dashboard" color="accent.primary" fontWeight="semibold">
                 Retour au tableau de bord
               </Link>
             </Box>

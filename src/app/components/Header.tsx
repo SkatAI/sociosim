@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ColorModeButton } from "@/components/ui/color-mode";
 import { useAuthUser } from "@/hooks/useAuthUser";
 
 type UserRole = "student" | "teacher" | "admin";
@@ -48,7 +49,7 @@ export default function Header() {
   }, [user, role]);
 
   return (
-    <Box as="header" bg="white" borderBottomWidth="1px">
+    <Box as="header" bg="bg.surface" borderBottomWidth="1px" borderBottomColor="border.muted">
       <Flex
         maxW="6xl"
         mx="auto"
@@ -71,7 +72,13 @@ export default function Header() {
         <HStack gap={4}>
           {!isLoading && userInfo ? (
             <HStack gap={4}>
-              <Link as={NextLink} href="/dashboard" fontWeight="medium" color="gray.700" _hover={{ color: "blue.600" }}>
+              <Link
+                as={NextLink}
+                href="/dashboard"
+                fontWeight="medium"
+                color="fg.muted"
+                _hover={{ color: "accent.primary" }}
+              >
                 Tableau de bord
               </Link>
               <HStack gap={2}>
@@ -97,14 +104,14 @@ export default function Header() {
                         <Text fontWeight="semibold" fontSize="md">
                           {userInfo.firstName} {userInfo.lastName}
                           {(userInfo.role === "teacher" || userInfo.role === "admin") && (
-                            <Text as="span" fontWeight="normal" fontSize="sm" color="gray.600">
+                            <Text as="span" fontWeight="normal" fontSize="sm" color="fg.subtle">
                               {" "}({userInfo.role})
                             </Text>
                           )}
                         </Text>
 
                         {/* Email */}
-                        <Text fontSize="sm" color="gray.600">
+                        <Text fontSize="sm" color="fg.subtle">
                           {user?.email}
                         </Text>
 
@@ -113,7 +120,7 @@ export default function Header() {
                           as={NextLink}
                           href="/profile"
                           fontSize="sm"
-                          color="blue.600"
+                          color="accent.primary"
                           _hover={{ textDecoration: "underline" }}
                         >
                           Modifier le profil
@@ -135,10 +142,11 @@ export default function Header() {
               </HStack>
             </HStack>
           ) : (
-            <Link as={NextLink} href="/login" fontWeight="medium" color="gray.700">
+            <Link as={NextLink} href="/login" fontWeight="medium" color="fg.muted">
               Se connecter
             </Link>
           )}
+          <ColorModeButton />
         </HStack>
       </Flex>
     </Box>

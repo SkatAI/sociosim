@@ -285,13 +285,13 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
 
   // Main interview interface
   return (
-    <Box height="100vh" display="flex" flexDirection="column" backgroundColor="white">
+    <Box height="100vh" display="flex" flexDirection="column" backgroundColor="bg.surface">
       {/* Interview header */}
       <Box
         padding={4}
         borderBottom="1px solid"
-        borderBottomColor="gray.200"
-        backgroundColor="white"
+        borderBottomColor="border.muted"
+        backgroundColor="bg.surface"
         zIndex={10}
       >
         {agentError ? (
@@ -300,10 +300,10 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
           </Heading>
         ) : (
           <Heading as="h1" size="lg">
-            {agentInfo ? `Entretien avec ${agentInfo.agent_name}` : "Chargement de l'agent..."} {agentInfo && isResume && <Text as="span" fontSize="sm" color="blue.600"> (reprise)</Text>}
+            {agentInfo ? `Entretien avec ${agentInfo.agent_name}` : "Chargement de l'agent..."} {agentInfo && isResume && <Text as="span" fontSize="sm" color="accent.primary"> (reprise)</Text>}
           </Heading>
         )}
-        <Text fontSize="sm" color="gray.600" marginTop={1}>
+        <Text fontSize="sm" color="fg.muted" marginTop={1}>
           Session: {session?.sessionId}
         </Text>
       </Box>
@@ -317,10 +317,10 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
           alignItems="center"
           gap={8}
           padding={4}
-          backgroundColor="white"
+          backgroundColor="bg.surface"
           paddingBottom="120px"
         >
-          <Text color="gray.500" fontSize="lg">
+          <Text color="fg.muted" fontSize="lg">
             {isResume ? "Continuer votre entretien" : "Bonjour! Cliquez ci-dessous pour commencer."}
           </Text>
           <MessageInput
@@ -332,7 +332,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         </VStack>
       ) : (
         // Active session: scrollable messages + inline input
-        <Box display="flex" flexDirection="column" flex={1} backgroundColor="white">
+        <Box display="flex" flexDirection="column" flex={1} backgroundColor="bg.surface">
           <Box
             ref={setMessagesContainerRef}
             flex={1}

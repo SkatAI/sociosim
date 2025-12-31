@@ -104,7 +104,7 @@ function SetPasswordPageInner() {
       <Stack gap={8}>
         <Stack gap={2} textAlign="center">
           <Heading size="lg">Définir votre mot de passe</Heading>
-          <Text color="gray.600">
+          <Text color="fg.muted">
             Choisissez un mot de passe pour finaliser l&apos;activation de votre compte.
           </Text>
         </Stack>
@@ -193,7 +193,7 @@ export default function SetPasswordPage() {
         <Container py={16} maxW="lg">
           <Stack gap={4} alignItems="center" textAlign="center">
             <Heading size="md">Chargement...</Heading>
-            <Text color="gray.600">Merci de patienter.</Text>
+            <Text color="fg.muted">Merci de patienter.</Text>
           </Stack>
         </Container>
       }
