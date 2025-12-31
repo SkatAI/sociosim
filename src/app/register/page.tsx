@@ -241,9 +241,9 @@ export default function RegisterPage() {
           </Button>
         </chakra.form>
 
-        <Text textAlign="center" color="gray.600">
+        <Text textAlign="center" color="fg.muted">
           Vous avez un compte ?{" "}
-          <Link as={NextLink} href="/login" color="blue.600" fontWeight="semibold">
+          <Link as={NextLink} href="/login" color="accent.primary" fontWeight="semibold">
             Se connecter
           </Link>
         </Text>

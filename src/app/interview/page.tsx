@@ -291,13 +291,13 @@ function InterviewPageInner() {
 
   // Main interview interface
   return (
-    <Box height="100vh" display="flex" flexDirection="column" backgroundColor="white">
+    <Box height="100vh" display="flex" flexDirection="column" backgroundColor="bg.surface">
       {/* Interview header */}
       <Box
         padding={4}
         borderBottom="1px solid"
-        borderBottomColor="gray.200"
-        backgroundColor="white"
+        borderBottomColor="border.muted"
+        backgroundColor="bg.surface"
         zIndex={10}
       >
         {agentError ? (
@@ -309,7 +309,7 @@ function InterviewPageInner() {
             {agentInfo ? `Entretien avec ${agentInfo.agent_name}` : "Chargement de l'agent..."}
           </Heading>
         )}
-        <Text fontSize="sm" color="gray.600" marginTop={1}>
+        <Text fontSize="sm" color="fg.muted" marginTop={1}>
           Session: {session?.sessionId}
         </Text>
       </Box>
@@ -323,12 +323,12 @@ function InterviewPageInner() {
           alignItems="center"
           gap={8}
           padding={4}
-          backgroundColor="white"
+          backgroundColor="bg.surface"
           paddingBottom="120px"
           // maxWidth="840px"
           marginX="auto"
         >
-          <Text color="gray.500" fontSize="lg">
+          <Text color="fg.muted" fontSize="lg">
             Bonjour! Cliquez ci-dessous pour commencer.
           </Text>
           <MessageInput
@@ -343,7 +343,7 @@ function InterviewPageInner() {
           ref={setMessagesContainerRef}
           flex={1}
           overflowY="auto"
-          backgroundColor="white"
+          backgroundColor="bg.surface"
           paddingX={4}
           paddingBottom={6}
           // maxWidth="840px"

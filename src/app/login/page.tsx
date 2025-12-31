@@ -74,7 +74,7 @@ function LoginPageInner() {
       <Stack gap={8} alignItems="center">
         <Stack gap={2} textAlign="center" maxW="lg" width="full">
           <Heading size="lg">Se connecter</Heading>
-          <Text color="gray.600">
+          <Text color="fg.muted">
             Accédez à votre espace Sociosim pour continuer vos simulations.
           </Text>
         </Stack>
@@ -156,15 +156,15 @@ function LoginPageInner() {
         </form>
 
         <Stack gap={2} width="full" textAlign="center">
-          <Text color="gray.600">
+          <Text color="fg.muted">
             Mot de passe oublié ?{" "}
-            <Link as={NextLink} href="/reset-password" color="blue.600" fontWeight="semibold">
+            <Link as={NextLink} href="/reset-password" color="accent.primary" fontWeight="semibold">
               Réinitialiser
             </Link>
           </Text>
-          <Text color="gray.600">
+          <Text color="fg.muted">
             Pas encore de compte ?{" "}
-            <Link as={NextLink} href="/register" color="blue.600" fontWeight="semibold">
+            <Link as={NextLink} href="/register" color="accent.primary" fontWeight="semibold">
               Créer un compte
             </Link>
           </Text>
@@ -181,7 +181,7 @@ export default function LoginPage() {
         <Container py={16} maxW="lg" centerContent mx="auto">
           <Stack gap={4} alignItems="center">
             <Heading size="md">Chargement de la page de connexion...</Heading>
-            <Text color="gray.600">Merci de patienter.</Text>
+            <Text color="fg.muted">Merci de patienter.</Text>
           </Stack>
         </Container>
       }

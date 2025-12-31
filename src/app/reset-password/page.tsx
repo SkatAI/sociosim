@@ -49,7 +49,7 @@ export default function ResetPasswordPage() {
       <Stack gap={8} alignItems="center">
         <Stack gap={2} textAlign="center" maxW="lg" width="full">
           <Heading size="lg">Réinitialiser votre mot de passe</Heading>
-          <Text color="gray.600">
+          <Text color="fg.muted">
             Entrez votre adresse e-mail pour recevoir un lien de réinitialisation.
           </Text>
         </Stack>
@@ -97,9 +97,9 @@ export default function ResetPasswordPage() {
           </>
         )}
 
-        <Text textAlign="center" color="gray.600">
+        <Text textAlign="center" color="fg.muted">
           Vous vous souvenez de votre mot de passe ?{" "}
-          <Link as={NextLink} href="/login" color="blue.600" fontWeight="semibold">
+          <Link as={NextLink} href="/login" color="accent.primary" fontWeight="semibold">
             Se connecter
           </Link>
         </Text>

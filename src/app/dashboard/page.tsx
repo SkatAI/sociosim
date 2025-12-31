@@ -206,7 +206,7 @@ export default function DashboardPage() {
       <Container maxWidth="4xl" height="100vh" display="flex" alignItems="center" justifyContent="center">
         <VStack gap={4}>
           <Spinner size="lg" color="blue.500" />
-          <Text>Chargement de vos entretiens...</Text>
+          <Text color="fg.muted">Chargement de vos entretiens...</Text>
         </VStack>
       </Container>
     );
@@ -234,7 +234,7 @@ export default function DashboardPage() {
                     </Text>
                     <Text
                       fontSize="sm"
-                      color="gray.600"
+                      color="fg.muted"
                       textAlign="center"
                       // noOfLines={3}
                       // minH="4.2em"
@@ -263,13 +263,13 @@ export default function DashboardPage() {
         {/* Error State */}
         {error && (
           <Box
-            backgroundColor="red.50"
+            backgroundColor={{ base: "red.50", _dark: "red.900" }}
             borderRadius="md"
             padding={4}
             borderLeft="4px solid"
             borderLeftColor="red.500"
           >
-            <Text color="red.700">{error}</Text>
+            <Text color={{ base: "red.700", _dark: "red.200" }}>{error}</Text>
           </Box>
         )}
 
@@ -280,12 +280,12 @@ export default function DashboardPage() {
             alignItems="center"
             paddingY={12}
             borderRadius="md"
-            backgroundColor="gray.50"
+            backgroundColor="bg.subtle"
           >
-            <Text color="gray.600" fontSize="lg">
+            <Text color="fg.muted" fontSize="lg">
               Vous n&apos;avez pas encore d&apos;entretiens
             </Text>
-            <Text color="gray.500" fontSize="sm">
+            <Text color="fg.subtle" fontSize="sm">
               Cliquez sur le bouton ci-dessus pour créer votre première simulation.
             </Text>
           </VStack>
@@ -310,7 +310,7 @@ export default function DashboardPage() {
                 <Box
                   key={interview.id}
                   borderWidth="1px"
-                  borderColor="gray.200"
+                  borderColor="border.muted"
                   borderRadius="md"
                   padding={4}
                   transition="all 0.2s"
@@ -325,7 +325,7 @@ export default function DashboardPage() {
                         {getStatusLabel(interview.status)}
                       </Badge>
                     </HStack>
-                    <Text fontSize="sm" color="gray.600">
+                    <Text fontSize="sm" color="fg.muted">
                       {formatDate(interview.updated_at)}
                     </Text>
                   </HStack>
@@ -340,10 +340,10 @@ export default function DashboardPage() {
                       paddingRight={2}
                       paddingLeft={2}
                       cursor="pointer"
-                      _hover={{ color: "gray.800" }}
+                      _hover={{ color: "fg.default" }}
                     >
                       <Text
-                        color="gray.700"
+                        color="fg.muted"
                         fontSize="sm"
                         flex="1"
                         whiteSpace={isExpanded ? "pre-wrap" : "nowrap"}
@@ -360,13 +360,13 @@ export default function DashboardPage() {
                     <HStack align="center" justify="space-between" gap={4}>
                       {usage ? (
                         <HStack justify="flex-start" gap={4}>
-                          <Text fontSize="xs" color="gray.600">
+                          <Text fontSize="xs" color="fg.muted">
                             <Text as="span" fontWeight="semibold">
                               {usage.total_input_tokens}
                             </Text>{" "}
                             tokens entrée
                           </Text>
-                          <Text fontSize="xs" color="gray.600">
+                          <Text fontSize="xs" color="fg.muted">
                             <Text as="span" fontWeight="semibold">
                               {usage.total_output_tokens}
                             </Text>{" "}

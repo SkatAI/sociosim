@@ -104,7 +104,7 @@ function ResetPasswordConfirmPageInner() {
       <Stack gap={8} alignItems="center">
         <Stack gap={2} textAlign="center" maxW="lg" width="full">
           <Heading size="lg">Créer un nouveau mot de passe</Heading>
-          <Text color="gray.600">
+          <Text color="fg.muted">
             Choisissez un mot de passe pour réinitialiser l&apos;accès à votre compte.
           </Text>
         </Stack>
@@ -193,7 +193,7 @@ export default function ResetPasswordConfirmPage() {
         <Container py={16} maxW="lg" centerContent mx="auto">
           <Stack gap={4} alignItems="center">
             <Heading size="md">Chargement...</Heading>
-            <Text color="gray.600">Merci de patienter.</Text>
+            <Text color="fg.muted">Merci de patienter.</Text>
           </Stack>
         </Container>
       }

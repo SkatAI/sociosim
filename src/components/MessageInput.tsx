@@ -49,8 +49,8 @@ export function MessageInput({
         padding={4}
         gap={2}
         borderTop="1px solid"
-        borderTopColor="gray.200"
-        backgroundColor="white"
+        borderTopColor="border.muted"
+        backgroundColor="bg.surface"
         flexShrink={0}
       >
         <Textarea
@@ -64,6 +64,10 @@ export function MessageInput({
           maxHeight={32}
           resize="vertical"
           flexGrow={1}
+          backgroundColor="bg.surface"
+          color="fg.default"
+          borderColor="border.muted"
+          _placeholder={{ color: "fg.subtle" }}
         />
         <Button
           onClick={handleSendMessage}

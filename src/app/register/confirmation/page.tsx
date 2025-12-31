@@ -8,7 +8,7 @@ export default function RegisterConfirmationPage() {
     <Container py={16} maxW="lg">
       <Stack gap={6} textAlign="center">
         <Heading size="lg">Compte créé</Heading>
-        <Text color="gray.600">
+        <Text color="fg.muted">
           Votre compte Sociosim est prêt. Vous pouvez vous connecter avec votre adresse e-mail et
           le mot de passe choisi.
         </Text>
