@@ -11,8 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
 import { interviews, sessions } from "@/lib/data";
-import { getAgentIdByName, getInterviewWithAgent } from "@/lib/data/agents";
-import { isValidAgentName, type AgentName } from "@/lib/agents";
+import { getAgentByName, getInterviewWithAgent } from "@/lib/data/agents";
 
 const adkClient = new AdkClient();
 
@@ -39,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     let finalInterviewId = interviewId;
     let isResume = false;
-    let validAgentName: AgentName;
+    let validAgentName: string;
     let agentId: string;
 
     // Check if this is a resume request (interviewId provided) or new interview
@@ -68,29 +67,36 @@ export async function POST(req: NextRequest) {
       const agentInfo = await getInterviewWithAgent(interviewId);
       const agentNameFromDb = agentInfo.agents?.agent_name;
 
-      if (!agentNameFromDb || !isValidAgentName(agentNameFromDb)) {
+      if (!agentNameFromDb) {
         return NextResponse.json(
           { error: "Interview agent is invalid or missing" },
           { status: 500 }
         );
       }
 
-      validAgentName = agentNameFromDb as AgentName;
+      validAgentName = agentNameFromDb;
       isResume = true;
     } else {
       console.log("--- NEW MODE");
       // NEW MODE: Validate agent_name from request
-      if (!isValidAgentName(agentNameFromRequest)) {
+      if (typeof agentNameFromRequest !== "string" || agentNameFromRequest.trim().length === 0) {
         return NextResponse.json(
-          { error: "Missing or invalid 'agent_name' field (must be one of: oriane, theo, jade)" },
+          { error: "Missing or invalid 'agent_name' field" },
           { status: 400 }
         );
       }
 
-      validAgentName = agentNameFromRequest as AgentName;
+      validAgentName = agentNameFromRequest;
 
       // Look up agent UUID from database
-      agentId = await getAgentIdByName(validAgentName);
+      const agentRecord = await getAgentByName(validAgentName);
+      if (!agentRecord) {
+        return NextResponse.json(
+          { error: "Unknown agent_name" },
+          { status: 400 }
+        );
+      }
+      agentId = agentRecord.id;
       console.log("--- api session routes agentId:", agentId);
 
       // Create new interview with agent_id

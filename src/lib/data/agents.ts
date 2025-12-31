@@ -6,21 +6,52 @@ import { throwIfError, ensureRecordFound } from "./errors";
  * Maps between agent names (oriane, theo, jade) and their database UUIDs.
  */
 
+export interface AgentRecord {
+  id: string;
+  agent_name: string;
+  description: string | null;
+}
+
 /**
- * Look up agent UUID by name (oriane, theo, jade)
+ * Fetch all agents with display data.
  */
-export async function getAgentIdByName(name: string): Promise<string> {
+export async function getAgents(): Promise<AgentRecord[]> {
   const supabase = createServiceSupabaseClient();
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id")
+    .select("id, agent_name, description")
+    .order("agent_name");
+
+  throwIfError(error, "Failed to load agents");
+
+  return (data || []) as AgentRecord[];
+}
+
+/**
+ * Look up agent by name (oriane, theo, jade)
+ */
+export async function getAgentByName(name: string): Promise<AgentRecord | null> {
+  const supabase = createServiceSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("agents")
+    .select("id, agent_name, description")
     .eq("agent_name", name)
-    .single();
+    .maybeSingle();
 
   throwIfError(error, `Failed to load agent with name: ${name}`);
 
-  return ensureRecordFound(data, `Agent not found: ${name}`).id;
+  return data as AgentRecord | null;
+}
+
+/**
+ * Look up agent UUID by name (oriane, theo, jade)
+ */
+export async function getAgentIdByName(name: string): Promise<string> {
+  const agent = await getAgentByName(name);
+
+  return ensureRecordFound(agent, `Agent not found: ${name}`).id;
 }
 
 /**
@@ -34,12 +65,6 @@ export async function getAgentNameById(agentId: string): Promise<string> {
     .select("agent_name")
     .eq("id", agentId)
     .single();
-
-  console.log("-----------------------");
-  console.log("Data:", data);
-  console.log("Error:", error);
-  console.log("-----------------------");
-
 
   throwIfError(error, `Failed to load agent with id: ${agentId}`);
 

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
 import InterviewPage from "./page";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
@@ -15,35 +15,46 @@ import { createMockStreamingResponse } from "@/test/helpers/streaming";
 vi.mock("@/hooks/useAuthUser");
 vi.mock("@/hooks/useInterviewSession");
 vi.mock("next/navigation");
-vi.mock("@/lib/agents", () => ({
-  getAgentById: vi.fn((agentName) => ({
-    id: agentName,
-    name: agentName === "oriane" ? "Oriane" : "Agent",
-  })),
+vi.mock("@/lib/supabaseClient", () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue({
+            data: { agents: { agent_name: "oriane", description: null } },
+            error: null,
+          }),
+        })),
+      })),
+    })),
+  },
 }));
 
 function renderWithChakra(component: React.ReactElement) {
   return render(<ChakraProvider value={defaultSystem}>{component}</ChakraProvider>);
 }
 
+async function renderInterviewPage() {
+  await act(async () => {
+    renderWithChakra(<InterviewPage />);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+}
+
 describe("InterviewPage - Authentication & Session Setup", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser);
-    vi.mocked(useRouter).mockReturnValue(mockRouter as any);
-    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams());
+    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser as ReturnType<typeof useAuthUser>);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
+    vi.mocked(useSearchParams).mockReturnValue(
+      new URLSearchParams() as unknown as ReadonlyURLSearchParams
+    );
     vi.mocked(useInterviewSession).mockReturnValue({
       ...mockUseInterviewSession,
       isResume: false,
-    } as any);
+    } as ReturnType<typeof useInterviewSession>);
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        agent_id: "agent-oriane",
-        agents: { agent_name: "oriane" },
-      }),
-    });
+    global.fetch = vi.fn().mockResolvedValue({ ok: true });
   });
 
   it("redirects to login when user not authenticated", async () => {
@@ -51,11 +62,9 @@ describe("InterviewPage - Authentication & Session Setup", () => {
       ...mockUseAuthUser,
       user: null,
       isLoading: false,
-    } as any);
+    } as ReturnType<typeof useAuthUser>);
 
-    renderWithChakra(<InterviewPage />);
-
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await renderInterviewPage();
 
     expect(mockRouter.push).toHaveBeenCalledWith("/login");
   });
@@ -67,11 +76,11 @@ describe("InterviewPage - Authentication & Session Setup", () => {
       adkSessionId: "adk-789",
     });
 
-    vi.mocked(useSearchParams).mockReturnValue(mockSearchParams);
+    vi.mocked(useSearchParams).mockReturnValue(
+      mockSearchParams as unknown as ReadonlyURLSearchParams
+    );
 
-    renderWithChakra(<InterviewPage />);
-
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await renderInterviewPage();
 
     // Should call useInterviewSession with null when URL params exist (null means: don't create new session)
     expect(vi.mocked(useInterviewSession)).toHaveBeenCalledWith(null);
@@ -79,25 +88,13 @@ describe("InterviewPage - Authentication & Session Setup", () => {
 
   it("creates session automatically when no URL parameters", async () => {
     const mockSearchParams = new URLSearchParams();
-    vi.mocked(useSearchParams).mockReturnValue(mockSearchParams);
+    vi.mocked(useSearchParams).mockReturnValue(
+      mockSearchParams as unknown as ReadonlyURLSearchParams
+    );
 
-    const mockFetch = vi.fn()
-      .mockImplementationOnce(async () => ({
-        ok: true,
-        json: async () => ({
-          agent_id: "agent-oriane",
-          agents: { agent_name: "oriane" },
-        }),
-      }))
-      .mockImplementationOnce(async () => ({
-        ok: true,
-      }));
+    global.fetch = vi.fn().mockResolvedValue({ ok: true });
 
-    global.fetch = mockFetch;
-
-    renderWithChakra(<InterviewPage />);
-
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await renderInterviewPage();
 
     // Should call useInterviewSession hook when no URL params
     expect(vi.mocked(useInterviewSession)).toHaveBeenCalledWith("test-user-123");
@@ -107,9 +104,9 @@ describe("InterviewPage - Authentication & Session Setup", () => {
     vi.mocked(useAuthUser).mockReturnValue({
       ...mockUseAuthUser,
       isLoading: true,
-    } as any);
+    } as ReturnType<typeof useAuthUser>);
 
-    renderWithChakra(<InterviewPage />);
+    await renderInterviewPage();
 
     // Loading spinner should be displayed
     expect(screen.getByText(/Vérification d'authentification/)).toBeInTheDocument();
@@ -119,27 +116,21 @@ describe("InterviewPage - Authentication & Session Setup", () => {
 describe("InterviewPage - Agent Loading", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser);
-    vi.mocked(useRouter).mockReturnValue(mockRouter as any);
+    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser as ReturnType<typeof useAuthUser>);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
     vi.mocked(useSearchParams).mockReturnValue(
       new URLSearchParams({
         interviewId: "interview-123",
         sessionId: "session-456",
         adkSessionId: "adk-789",
-      })
+      }) as unknown as ReadonlyURLSearchParams
     );
     vi.mocked(useInterviewSession).mockReturnValue({
       ...mockUseInterviewSession,
       isResume: false,
-    } as any);
+    } as ReturnType<typeof useInterviewSession>);
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        agent_id: "agent-oriane",
-        agents: { agent_name: "oriane" },
-      }),
-    });
+    global.fetch = vi.fn().mockResolvedValue({ ok: true });
   });
 
   it("loads agent name from interview session", async () => {
@@ -149,11 +140,11 @@ describe("InterviewPage - Agent Loading", () => {
       adkSessionId: "adk-789",
     });
 
-    vi.mocked(useSearchParams).mockReturnValue(mockSearchParams);
+    vi.mocked(useSearchParams).mockReturnValue(
+      mockSearchParams as unknown as ReadonlyURLSearchParams
+    );
 
-    renderWithChakra(<InterviewPage />);
-
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await renderInterviewPage();
 
     // Agent name should be displayed in header (loaded asynchronously)
     // The mock doesn't return agent data, so it will show "Chargement de l'agent..."
@@ -176,34 +167,26 @@ describe("InterviewPage - Agent Loading", () => {
 describe("InterviewPage - Chat Interaction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser);
-    vi.mocked(useRouter).mockReturnValue(mockRouter as any);
+    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser as ReturnType<typeof useAuthUser>);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
     vi.mocked(useSearchParams).mockReturnValue(
       new URLSearchParams({
         interviewId: "interview-123",
         sessionId: "session-456",
         adkSessionId: "adk-789",
-      })
+      }) as unknown as ReadonlyURLSearchParams
     );
     vi.mocked(useInterviewSession).mockReturnValue({
       ...mockUseInterviewSession,
       isResume: false,
-    } as any);
+    } as ReturnType<typeof useInterviewSession>);
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        agent_id: "agent-oriane",
-        agents: { agent_name: "oriane" },
-      }),
-    });
+    global.fetch = vi.fn().mockResolvedValue({ ok: true });
   });
 
   it("can type in message input", async () => {
     const user = userEvent.setup();
-    renderWithChakra(<InterviewPage />);
-
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await renderInterviewPage();
 
     const input = screen.getByPlaceholderText(/Tapez votre message/);
     await user.type(input, "Test message");
@@ -215,18 +198,9 @@ describe("InterviewPage - Chat Interaction", () => {
     const user = userEvent.setup();
 
     global.fetch = vi.fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          agent_id: "agent-oriane",
-          agents: { agent_name: "oriane" },
-        }),
-      })
       .mockResolvedValueOnce(createMockStreamingResponse("Assistant response"));
 
-    renderWithChakra(<InterviewPage />);
-
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await renderInterviewPage();
 
     const input = screen.getByPlaceholderText(/Tapez votre message/);
     const sendButton = screen.getByRole("button", { name: /Envoyer/i });
@@ -244,22 +218,11 @@ describe("InterviewPage - Chat Interaction", () => {
     const user = userEvent.setup();
 
     const mockFetch = vi.fn();
-    // First call: agent fetch (Supabase)
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        agent_id: "agent-oriane",
-        agents: { agent_name: "oriane" },
-      }),
-    });
-    // Second call: chat API
     mockFetch.mockResolvedValueOnce(createMockStreamingResponse("Response"));
 
     global.fetch = mockFetch;
 
-    renderWithChakra(<InterviewPage />);
-
-    await new Promise(resolve => setTimeout(resolve, 150));
+    await renderInterviewPage();
 
     const input = screen.getByPlaceholderText(/Tapez votre message/);
     const sendButton = screen.getByRole("button", { name: /Envoyer/i });
@@ -271,7 +234,7 @@ describe("InterviewPage - Chat Interaction", () => {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // Check that /api/chat was called with correct data
-    const chatCalls = mockFetch.mock.calls.filter((call: any) =>
+    const chatCalls = mockFetch.mock.calls.filter((call) =>
       call[0] === "/api/chat"
     );
     expect(chatCalls.length).toBeGreaterThan(0);
@@ -281,20 +244,11 @@ describe("InterviewPage - Chat Interaction", () => {
     const user = userEvent.setup();
 
     const mockFetch = vi.fn();
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        agent_id: "agent-oriane",
-        agents: { agent_name: "oriane" },
-      }),
-    });
     mockFetch.mockResolvedValueOnce(createMockStreamingResponse("Réponse"));
 
     global.fetch = mockFetch;
 
-    renderWithChakra(<InterviewPage />);
-
-    await new Promise(resolve => setTimeout(resolve, 150));
+    await renderInterviewPage();
 
     const input = screen.getByPlaceholderText(/Tapez votre message/);
     const sendButton = screen.getByRole("button", { name: /Envoyer/i });
@@ -323,51 +277,39 @@ describe("InterviewPage - Chat Interaction", () => {
 describe("InterviewPage - UI States", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser);
-    vi.mocked(useRouter).mockReturnValue(mockRouter as any);
+    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser as ReturnType<typeof useAuthUser>);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
     vi.mocked(useSearchParams).mockReturnValue(
       new URLSearchParams({
         interviewId: "interview-123",
         sessionId: "session-456",
         adkSessionId: "adk-789",
-      })
+      }) as unknown as ReadonlyURLSearchParams
     );
     vi.mocked(useInterviewSession).mockReturnValue({
       ...mockUseInterviewSession,
       isResume: false,
-    } as any);
+    } as ReturnType<typeof useInterviewSession>);
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        agent_id: "agent-oriane",
-        agents: { agent_name: "oriane" },
-      }),
-    });
+    global.fetch = vi.fn().mockResolvedValue({ ok: true });
   });
 
   it("shows empty state with welcome message before first message", async () => {
-    renderWithChakra(<InterviewPage />);
-
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await renderInterviewPage();
 
     // Empty state message should be visible
     expect(screen.getByText(/Bonjour! Cliquez ci-dessous pour commencer/)).toBeInTheDocument();
   });
 
   it("displays session ID in header", async () => {
-    renderWithChakra(<InterviewPage />);
-
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await renderInterviewPage();
 
     // Session ID should be displayed
     expect(screen.getByText("Session: session-456")).toBeInTheDocument();
   });
 
   it("has messageInput component for sending messages", async () => {
-    renderWithChakra(<InterviewPage />);
-
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await renderInterviewPage();
 
     const input = screen.getByPlaceholderText(/Tapez votre message/);
     expect(input).toBeInTheDocument();
@@ -377,18 +319,9 @@ describe("InterviewPage - UI States", () => {
     const user = userEvent.setup();
 
     global.fetch = vi.fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          agent_id: "agent-oriane",
-          agents: { agent_name: "oriane" },
-        }),
-      })
       .mockResolvedValueOnce(createMockStreamingResponse("Response"));
 
-    renderWithChakra(<InterviewPage />);
-
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await renderInterviewPage();
 
     const input = screen.getByPlaceholderText(/Tapez votre message/);
     const sendButton = screen.getByRole("button", { name: /Envoyer/i });

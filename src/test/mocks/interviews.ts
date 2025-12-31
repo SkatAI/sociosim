@@ -1,5 +1,3 @@
-import { vi } from "vitest";
-
 export const mockInterview = {
   id: "interview-123",
   status: "in_progress",

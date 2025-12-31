@@ -12,31 +12,32 @@ import { mockInterviewsList } from "@/test/mocks/interviews";
 // Mock modules
 vi.mock("@/hooks/useAuthUser");
 vi.mock("next/navigation");
-vi.mock("@/lib/agents", () => ({
-  AGENTS: [
-    {
-      id: "oriane",
-      name: "Oriane",
-      description: "Master 1 EOS\nUtilisatrice pragmatique de l'IA",
-    },
-    {
-      id: "theo",
-      name: "Théo",
-      description: "M2 Math. App. et Socio Quantitative\nPassionné de technologie",
-    },
-    {
-      id: "jade",
-      name: "Jade",
-      description: "M2 Sociologie et études de genre\nTechno sceptique",
-    },
-  ],
-  getAgentById: vi.fn((id) =>
-    [
-      { id: "oriane", name: "Oriane", description: "Master 1 EOS\nUtilisatrice pragmatique de l'IA" },
-      { id: "theo", name: "Théo", description: "M2 Math. App. et Socio Quantitative\nPassionné de technologie" },
-      { id: "jade", name: "Jade", description: "M2 Sociologie et études de genre\nTechno sceptique" },
-    ].find((agent) => agent.id === id)
-  ),
+const mockAgents = [
+  {
+    id: "agent-oriane",
+    agent_name: "oriane",
+    description: "Master 1 EOS\nUtilisatrice pragmatique de l'IA",
+  },
+  {
+    id: "agent-theo",
+    agent_name: "theo",
+    description: "M2 Math. App. et Socio Quantitative\nPassionné de technologie",
+  },
+  {
+    id: "agent-jade",
+    agent_name: "jade",
+    description: "M2 Sociologie et études de genre\nTechno sceptique",
+  },
+];
+
+vi.mock("@/lib/supabaseClient", () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        order: vi.fn().mockResolvedValue({ data: mockAgents, error: null }),
+      })),
+    })),
+  },
 }));
 
 // Helper function to render with ChakraProvider
@@ -48,7 +49,7 @@ describe("DashboardPage - Create Interview Feature", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser);
-    vi.mocked(useRouter).mockReturnValue(mockRouter as any);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
 
     // Mock interviews fetch (empty list)
     global.fetch = vi.fn().mockResolvedValue({
@@ -64,9 +65,9 @@ describe("DashboardPage - Create Interview Feature", () => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
     });
 
-    expect(screen.getByText("Oriane")).toBeInTheDocument();
-    expect(screen.getByText("Théo")).toBeInTheDocument();
-    expect(screen.getByText("Jade")).toBeInTheDocument();
+    expect(screen.getByText("oriane")).toBeInTheDocument();
+    expect(screen.getByText("theo")).toBeInTheDocument();
+    expect(screen.getByText("jade")).toBeInTheDocument();
     expect(screen.getByText(/Master 1 EOS/)).toBeInTheDocument();
     expect(screen.getByText(/Utilisatrice pragmatique de l'IA/)).toBeInTheDocument();
   });
@@ -230,7 +231,7 @@ describe("DashboardPage - Continue Interview Feature", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser);
-    vi.mocked(useRouter).mockReturnValue(mockRouter as any);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
 
     // Mock interviews fetch with previous interviews
     global.fetch = vi.fn().mockResolvedValue({
@@ -253,8 +254,8 @@ describe("DashboardPage - Continue Interview Feature", () => {
     );
 
     // Check that agent names appear for the interviews
-    const orianElements = screen.queryAllByText("Oriane");
-    const theoElements = screen.queryAllByText("Théo");
+    const orianElements = screen.queryAllByText("oriane");
+    const theoElements = screen.queryAllByText("theo");
     expect(orianElements.length + theoElements.length).toBeGreaterThan(0);
   });
 
