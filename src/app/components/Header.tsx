@@ -96,6 +96,15 @@ export default function Header() {
         </Link>
 
         <HStack gap={4}>
+          <Link
+            as={NextLink}
+            href="/guide-entretien"
+            fontWeight="medium"
+            color="fg.muted"
+            _hover={{ color: "accent.primary" }}
+          >
+            Guide d&apos;entretien
+          </Link>
           {!isLoading && userInfo ? (
             <HStack gap={4}>
               <Link

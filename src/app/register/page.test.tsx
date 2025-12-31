@@ -20,7 +20,6 @@ describe("RegisterPage", () => {
   });
 
   it("shows validation errors for empty form", async () => {
-    const user = userEvent.setup();
     renderWithChakra(<RegisterPage />);
 
     const form = document.querySelector("form");
