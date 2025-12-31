@@ -1,0 +1,30 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond dégradé clair -->
+  <rect width="100" height="100" fill="url(#grad)" />
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0f8ff" />
+      <stop offset="100%" stop-color="#e6f2ff" />
+    </linearGradient>
+  </defs>
+
+  <!-- Visage asymétrique -->
+  <path d="M55,45 C60,35 70,40 70,50 C70,60 60,65 55,65 C50,65 40,60 40,50 C40,40 50,35 55,45"
+        fill="none" stroke="#5d9cec" stroke-width="1.2" stroke-linecap="round" />
+
+  <!-- Œil gauche (fermé) -->
+  <path d="M48,45 C50,44 52,44 53,45" stroke="#5d9cec" stroke-width="1" fill="none" />
+
+  <!-- Œil droit (ouvert) -->
+  <path d="M60,44 C62,43 64,43 65,44" stroke="#5d9cec" stroke-width="1" fill="none" />
+
+  <!-- Sourcil -->
+  <path d="M48,42 C50,40 52,40 53,42" stroke="#5d9cec" stroke-width="0.8" fill="none" />
+
+  <!-- Lèvre supérieure -->
+  <path d="M50,55 C52,56 54,56 56,55" stroke="#5d9cec" stroke-width="0.8" fill="none" />
+
+  <!-- Cheveux (esquisse légère) -->
+  <path d="M45,35 L48,30 L52,32 L55,30 L58,33 L60,30"
+        stroke="#5d9cec" stroke-width="0.8" fill="none" stroke-linecap="round" />
+</svg>
