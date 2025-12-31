@@ -3,7 +3,7 @@
 import { IconButton, type IconButtonProps } from "@chakra-ui/react";
 import { Moon, Sun } from "lucide-react";
 import { ThemeProvider, useTheme } from "next-themes";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 export type ColorModeProviderProps = React.ComponentProps<typeof ThemeProvider>;
 
@@ -40,11 +40,7 @@ export function useColorModeValue<T>(light: T, dark: T) {
 
 export function ColorModeButton(props: Omit<IconButtonProps, "aria-label">) {
   const { colorMode, toggleColorMode } = useColorMode();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const isClient = typeof window !== "undefined";
 
   return (
     <IconButton
@@ -55,7 +51,7 @@ export function ColorModeButton(props: Omit<IconButtonProps, "aria-label">) {
       title="Basculer le theme"
       {...props}
     >
-      {mounted && colorMode === "light" ? <Moon size={18} /> : <Sun size={18} />}
+      {isClient && colorMode === "light" ? <Moon size={18} /> : <Sun size={18} />}
     </IconButton>
   );
 }
