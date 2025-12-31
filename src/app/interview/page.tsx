@@ -291,7 +291,7 @@ function InterviewPageInner() {
 
   // Main interview interface
   return (
-    <Box height="100vh" display="flex" flexDirection="column" backgroundColor="bg.surface">
+    <Box flex={1} minHeight={0} display="flex" flexDirection="column" backgroundColor="bg.surface">
       {/* Interview header */}
       <Box
         padding={4}
@@ -314,42 +314,25 @@ function InterviewPageInner() {
         </Text>
       </Box>
 
-      {/* Messages Container */}
-      {messages.length === 0 ? (
-        // Empty state: centered layout with input in the middle
-        <VStack
-          flex={1}
-          justifyContent="center"
-          alignItems="center"
-          gap={8}
-          padding={4}
-          backgroundColor="bg.surface"
-          paddingBottom="120px"
-          // maxWidth="840px"
-          marginX="auto"
-        >
-          <Text color="fg.muted" fontSize="lg">
-            Bonjour! Cliquez ci-dessous pour commencer.
-          </Text>
-          <MessageInput
-            onSendMessage={handleSendMessage}
-            isLoading={isStreaming}
-            placeholder="Tapez votre message..."
-          />
-        </VStack>
-      ) : (
-        // Active session: scrollable messages
+      {/* Messages + Input */}
+      <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
         <Box
           ref={setMessagesContainerRef}
           flex={1}
           overflowY="auto"
           backgroundColor="bg.surface"
           paddingX={4}
-          paddingBottom={6}
-          // maxWidth="840px"
+          paddingY={4}
           marginX="auto"
+          width="100%"
         >
-          <VStack align="stretch" gap={4} paddingY={4}>
+          {messages.length === 0 ? (
+            <VStack align="center" justify="center" height="100%" gap={4}>
+              <Text color="fg.muted" fontSize="lg">
+                Bonjour! Cliquez ci-dessous pour commencer.
+              </Text>
+            </VStack>
+          ) : (
             <Stack gap={0}>
               {messages.map((msg) => (
                 <ChatMessage
@@ -360,15 +343,14 @@ function InterviewPageInner() {
                 />
               ))}
             </Stack>
-
-            <MessageInput
-              onSendMessage={handleSendMessage}
-              isLoading={isStreaming}
-              placeholder="Tapez votre message..."
-            />
-          </VStack>
+          )}
         </Box>
-      )}
+        <MessageInput
+          onSendMessage={handleSendMessage}
+          isLoading={isStreaming}
+          placeholder="Tapez votre message..."
+        />
+      </Box>
 
     </Box>
   );

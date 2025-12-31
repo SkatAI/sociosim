@@ -285,7 +285,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
 
   // Main interview interface
   return (
-    <Box height="100vh" display="flex" flexDirection="column" backgroundColor="bg.surface">
+    <Box flex={1} minHeight={0} display="flex" flexDirection="column" backgroundColor="bg.surface">
       {/* Interview header */}
       <Box
         padding={4}
@@ -308,39 +308,23 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         </Text>
       </Box>
 
-      {/* Messages Container */}
-      {messages.length === 0 ? (
-        // Empty state: centered layout with input in the middle
-        <VStack
+      {/* Messages + Input */}
+      <Box display="flex" flexDirection="column" flex={1} minHeight={0} backgroundColor="bg.surface">
+        <Box
+          ref={setMessagesContainerRef}
           flex={1}
-          justifyContent="center"
-          alignItems="center"
-          gap={8}
-          padding={4}
-          backgroundColor="bg.surface"
-          paddingBottom="120px"
+          overflowY="auto"
+          paddingX={4}
+          paddingY={4}
         >
-          <Text color="fg.muted" fontSize="lg">
-            {isResume ? "Continuer votre entretien" : "Bonjour! Cliquez ci-dessous pour commencer."}
-          </Text>
-          <MessageInput
-            onSendMessage={handleSendMessage}
-            isLoading={isStreaming}
-            placeholder="Tapez votre message..."
-            containerProps={{ maxWidth: "600px" }}
-          />
-        </VStack>
-      ) : (
-        // Active session: scrollable messages + inline input
-        <Box display="flex" flexDirection="column" flex={1} backgroundColor="bg.surface">
-          <Box
-            ref={setMessagesContainerRef}
-            flex={1}
-            overflowY="auto"
-            paddingX={4}
-            paddingBottom={4}
-          >
-            <Stack gap={0} paddingY={4}>
+          {messages.length === 0 ? (
+            <VStack align="center" justify="center" height="100%" gap={4}>
+              <Text color="fg.muted" fontSize="lg">
+                {isResume ? "Continuer votre entretien" : "Bonjour! Cliquez ci-dessous pour commencer."}
+              </Text>
+            </VStack>
+          ) : (
+            <Stack gap={0}>
               {messages.map((msg) => (
                 <ChatMessage
                   key={msg.id}
@@ -350,14 +334,15 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
                 />
               ))}
             </Stack>
-          </Box>
-          <MessageInput
-            onSendMessage={handleSendMessage}
-            isLoading={isStreaming}
-            placeholder="Tapez votre message..."
-          />
+          )}
         </Box>
-      )}
+        <MessageInput
+          onSendMessage={handleSendMessage}
+          isLoading={isStreaming}
+          placeholder="Tapez votre message..."
+          containerProps={{ width: "100%" }}
+        />
+      </Box>
     </Box>
   );
 }
