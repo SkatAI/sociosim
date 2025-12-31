@@ -1,12 +1,8 @@
 import { Box, Container } from "@chakra-ui/react";
-import { readFile } from "fs/promises";
-import path from "path";
-import { marked } from "marked";
+import { renderMarkdownFromPublic } from "@/lib/markdown";
 
 export default async function GuideEntretienPage() {
-  const filePath = path.join(process.cwd(), "public/docs/guide_entretien.md");
-  const markdown = await readFile(filePath, "utf8");
-  const html = marked.parse(markdown);
+  const html = await renderMarkdownFromPublic("docs/guide_entretien.md");
 
   return (
     <Container maxW="4xl" py={12}>

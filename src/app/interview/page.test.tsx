@@ -30,6 +30,13 @@ vi.mock("@/lib/supabaseClient", () => ({
   },
 }));
 
+function createMarkdownResponse(markdown = "Guide court") {
+  return {
+    ok: true,
+    text: async () => markdown,
+  };
+}
+
 function renderWithChakra(component: React.ReactElement) {
   return render(<ChakraProvider value={defaultSystem}>{component}</ChakraProvider>);
 }
@@ -54,7 +61,7 @@ describe("InterviewPage - Authentication & Session Setup", () => {
       isResume: false,
     } as ReturnType<typeof useInterviewSession>);
 
-    global.fetch = vi.fn().mockResolvedValue({ ok: true });
+    global.fetch = vi.fn().mockResolvedValue(createMarkdownResponse());
   });
 
   it("redirects to login when user not authenticated", async () => {
@@ -92,7 +99,7 @@ describe("InterviewPage - Authentication & Session Setup", () => {
       mockSearchParams as unknown as ReadonlyURLSearchParams
     );
 
-    global.fetch = vi.fn().mockResolvedValue({ ok: true });
+    global.fetch = vi.fn().mockResolvedValue(createMarkdownResponse());
 
     await renderInterviewPage();
 
@@ -130,7 +137,7 @@ describe("InterviewPage - Agent Loading", () => {
       isResume: false,
     } as ReturnType<typeof useInterviewSession>);
 
-    global.fetch = vi.fn().mockResolvedValue({ ok: true });
+    global.fetch = vi.fn().mockResolvedValue(createMarkdownResponse());
   });
 
   it("loads agent name from interview session", async () => {
@@ -181,7 +188,7 @@ describe("InterviewPage - Chat Interaction", () => {
       isResume: false,
     } as ReturnType<typeof useInterviewSession>);
 
-    global.fetch = vi.fn().mockResolvedValue({ ok: true });
+    global.fetch = vi.fn().mockResolvedValue(createMarkdownResponse());
   });
 
   it("can type in message input", async () => {
@@ -198,6 +205,7 @@ describe("InterviewPage - Chat Interaction", () => {
     const user = userEvent.setup();
 
     global.fetch = vi.fn()
+      .mockResolvedValueOnce(createMarkdownResponse())
       .mockResolvedValueOnce(createMockStreamingResponse("Assistant response"));
 
     await renderInterviewPage();
@@ -218,7 +226,9 @@ describe("InterviewPage - Chat Interaction", () => {
     const user = userEvent.setup();
 
     const mockFetch = vi.fn();
-    mockFetch.mockResolvedValueOnce(createMockStreamingResponse("Response"));
+    mockFetch
+      .mockResolvedValueOnce(createMarkdownResponse())
+      .mockResolvedValueOnce(createMockStreamingResponse("Response"));
 
     global.fetch = mockFetch;
 
@@ -244,7 +254,9 @@ describe("InterviewPage - Chat Interaction", () => {
     const user = userEvent.setup();
 
     const mockFetch = vi.fn();
-    mockFetch.mockResolvedValueOnce(createMockStreamingResponse("Réponse"));
+    mockFetch
+      .mockResolvedValueOnce(createMarkdownResponse())
+      .mockResolvedValueOnce(createMockStreamingResponse("Réponse"));
 
     global.fetch = mockFetch;
 
@@ -291,14 +303,14 @@ describe("InterviewPage - UI States", () => {
       isResume: false,
     } as ReturnType<typeof useInterviewSession>);
 
-    global.fetch = vi.fn().mockResolvedValue({ ok: true });
+    global.fetch = vi.fn().mockResolvedValue(createMarkdownResponse());
   });
 
   it("shows empty state with welcome message before first message", async () => {
     await renderInterviewPage();
 
     // Empty state message should be visible
-    expect(screen.getByText(/Bonjour! Cliquez ci-dessous pour commencer/)).toBeInTheDocument();
+    expect(screen.getByText(/Guide court/)).toBeInTheDocument();
   });
 
   it("displays session ID in header", async () => {
@@ -319,6 +331,7 @@ describe("InterviewPage - UI States", () => {
     const user = userEvent.setup();
 
     global.fetch = vi.fn()
+      .mockResolvedValueOnce(createMarkdownResponse())
       .mockResolvedValueOnce(createMockStreamingResponse("Response"));
 
     await renderInterviewPage();

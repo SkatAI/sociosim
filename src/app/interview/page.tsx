@@ -1,8 +1,10 @@
 "use client";
 
-import { Box, Container, Heading, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
+import { Box, Container, Heading, HStack, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { marked } from "marked";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { ChatMessage } from "@/components/ChatMessage";
 import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
@@ -21,6 +23,10 @@ function InterviewPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading: isAuthLoading } = useAuthUser();
+
+  const [introHtml, setIntroHtml] = useState<string>("");
+  const [introPreview, setIntroPreview] = useState<string>("");
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   // Extract session info from URL (passed from dashboard for new interviews)
   const interviewIdParam = searchParams.get("interviewId");
@@ -107,6 +113,49 @@ function InterviewPageInner() {
       router.push("/login");
     }
   }, [isAuthLoading, user?.id, router]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadIntro() {
+      try {
+        const response = await fetch("/docs/guide_entretien_court.md");
+        if (!response.ok) {
+          throw new Error("Failed to load interview guide");
+        }
+        const markdown = await response.text();
+        if (isMounted) {
+          const lines = markdown.split(/\r?\n/);
+          const firstLineIndex = lines.findIndex((line) => line.trim().length > 0);
+          const previewLine = firstLineIndex >= 0 ? lines[firstLineIndex].trim() : "";
+          const remainingLines =
+            firstLineIndex >= 0 ? lines.slice(firstLineIndex + 1) : [];
+          if (remainingLines[0]?.trim() === "") {
+            remainingLines.shift();
+          }
+          const remainingMarkdown = remainingLines.join("\n");
+          const parsed = remainingMarkdown.trim()
+            ? await marked.parse(remainingMarkdown)
+            : "";
+          setIntroPreview(previewLine);
+          setIntroHtml(parsed);
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error("[Interview] Failed to load guide:", errorMessage);
+        if (isMounted) {
+          setIntroPreview("");
+          setIntroHtml("");
+        }
+      }
+    }
+
+    loadIntro();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -328,9 +377,83 @@ function InterviewPageInner() {
         >
           {messages.length === 0 ? (
             <VStack align="center" justify="center" height="100%" gap={4}>
-              <Text color="fg.muted" fontSize="lg">
-                Bonjour! Cliquez ci-dessous pour commencer.
-              </Text>
+              {introPreview ? (
+                <>
+                  <Box
+                    width="100%"
+                    maxWidth="3xl"
+                    paddingX={3}
+                    paddingY={2}
+                    borderWidth="1px"
+                    borderStyle="solid"
+                    borderColor="border.muted"
+                    borderRadius="md"
+                    backgroundColor="bg.surface"
+                    color="fg.muted"
+                    textAlign="left"
+                  >
+                    <Box width="100%">
+                      <button
+                        type="button"
+                        onClick={() => setIsGuideOpen((prev) => !prev)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setIsGuideOpen((prev) => !prev);
+                          }
+                        }}
+                        aria-expanded={isGuideOpen}
+                        aria-controls="interview-guide"
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          background: "transparent",
+                          border: "none",
+                          padding: 0,
+                          margin: 0,
+                          cursor: "pointer",
+                          color: "inherit",
+                          font: "inherit",
+                        }}
+                      >
+                    <HStack
+                      width="100%"
+                      justifyContent="space-between"
+                      alignItems="baseline"
+                      fontWeight="500"
+                        cursor="pointer"
+                      >
+                        <Text as="span">{introPreview}</Text>
+                        {isGuideOpen ? (
+                          <ChevronUp size={18} aria-hidden="true" />
+                        ) : (
+                          <ChevronDown size={18} aria-hidden="true" />
+                        )}
+                      </HStack>
+                      </button>
+                    </Box>
+                    {isGuideOpen && introHtml && (
+                    <Box
+                      id="interview-guide"
+                      paddingTop={2}
+                      css={{
+                        "& h2": { marginTop: "1.5rem", fontWeight: "600", color: "fg.default" },
+                        "& h3": { marginTop: "1rem", fontWeight: "600", color: "fg.default" },
+                        "& ul": { paddingLeft: "1.25rem", marginTop: "0.75rem" },
+                        "& li": { marginBottom: "0.5rem" },
+                        "& p": { marginBottom: "0.75rem" },
+                        "& strong": { color: "fg.default" },
+                      }}
+                      dangerouslySetInnerHTML={{ __html: introHtml }}
+                    />
+                    )}
+                  </Box>
+                </>
+              ) : (
+                <Text color="fg.muted">
+                  Chargement du guide d&apos;entretien...
+                </Text>
+              )}
             </VStack>
           ) : (
             <Stack gap={0}>
