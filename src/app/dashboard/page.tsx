@@ -18,7 +18,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
-import { AGENTS, type AgentName, getAgentById } from "@/lib/agents";
+import { type Agent } from "@/lib/agents";
+import { supabase } from "@/lib/supabaseClient";
 
 interface InterviewWithDetails {
   id: string;
@@ -83,6 +84,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, isLoading: isAuthLoading } = useAuthUser();
   const [interviews, setInterviews] = useState<InterviewWithDetails[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedInterviewId, setExpandedInterviewId] = useState<string | null>(null);
@@ -100,6 +102,17 @@ export default function DashboardPage() {
       try {
         console.log("[Dashboard] User logged in with ID:", user.id);
         console.log("[Dashboard] Fetching interviews from API...");
+
+        const { data: agentsData, error: agentsError } = await supabase
+          .from("agents")
+          .select("id, agent_name, description")
+          .order("agent_name");
+        if (agentsError) {
+          console.error("Error fetching agents:", agentsError);
+          setError("Impossible de charger les agents");
+        } else {
+          setAgents((agentsData || []) as Agent[]);
+        }
 
         const response = await fetch(`/api/user/interviews?userId=${user.id}`);
         if (!response.ok) {
@@ -139,7 +152,7 @@ export default function DashboardPage() {
     loadData();
   }, [isAuthLoading, user, router]);
 
-  const handleSelectAgent = async (agentName: AgentName) => {
+  const handleSelectAgent = async (agentName: string) => {
     try {
       setIsCreatingSession(true);
 
@@ -209,15 +222,15 @@ export default function DashboardPage() {
         {/* Agent Selection Cards */}
         <Box>
           <Grid gridTemplateColumns="repeat(3, 1fr)" gap={6}>
-            {AGENTS.map((agent) => (
+            {agents.map((agent) => (
               <Card.Root key={agent.id}>
                 <Card.Body display="flex" flexDirection="column" alignItems="center" gap={4} py={6} px={4}>
                   <Avatar.Root size="lg">
-                    <Avatar.Fallback>{agent.name.charAt(0)}</Avatar.Fallback>
+                    <Avatar.Fallback>{agent.agent_name.charAt(0)}</Avatar.Fallback>
                   </Avatar.Root>
                   <VStack gap={2} alignItems="center">
                     <Text fontWeight="semibold" fontSize="md">
-                      {agent.name}
+                      {agent.agent_name}
                     </Text>
                     <Text
                       fontSize="sm"
@@ -228,11 +241,11 @@ export default function DashboardPage() {
                       lineHeight="1.4"
                       whiteSpace="pre-line"
                     >
-                      {agent.description}
+                      {agent.description || ""}
                     </Text>
                   </VStack>
                   <Button
-                    onClick={() => handleSelectAgent(agent.id)}
+                    onClick={() => handleSelectAgent(agent.agent_name)}
                     colorPalette="blue"
                     size="sm"
                     // width="full"
@@ -306,7 +319,7 @@ export default function DashboardPage() {
                   <HStack justify="space-between" marginBottom={3}>
                     <HStack gap={3}>
                       <Text fontWeight="semibold" fontSize="md">
-                        {getAgentById(interview.agents?.agent_name as AgentName)?.name || "Agent"}
+                        {interview.agents?.agent_name || "Agent"}
                       </Text>
                       <Badge colorPalette={getStatusColor(interview.status)}>
                         {getStatusLabel(interview.status)}

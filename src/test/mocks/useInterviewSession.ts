@@ -1,4 +1,3 @@
-import { vi } from "vitest";
 import { mockMessages } from "./messages";
 
 export const mockUseInterviewSession = {

@@ -15,7 +15,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
 import { messages, usage } from "@/lib/data";
 import { getInterviewWithAgent } from "@/lib/data/agents";
-import { type AgentName } from "@/lib/agents";
 
 const adkClient = new AdkClient();
 
@@ -64,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     // Load interview with agent from database
     const interview = await getInterviewWithAgent(interviewId);
-    const agentName = interview.agents.agent_name as AgentName;
+    const agentName = interview.agents.agent_name;
     console.log("[/api/chat POST] Loaded agent from DB:", agentName);
 
     // Determine if streaming or not (default: streaming)
@@ -95,7 +94,7 @@ function handleStreamingResponse(
   userId: string,
   sessionId: string,
   adkSessionId: string,
-  agentName: AgentName,
+  agentName: string,
   interviewId?: string
 ) {
   console.log("[/api/chat] Starting stream:", { message, userId, sessionId, adkSessionId });
@@ -280,7 +279,7 @@ async function handleBatchResponse(
   userId: string,
   sessionId: string,
   adkSessionId: string,
-  agentName: AgentName,
+  agentName: string,
   interviewId?: string
 ) {
   try {

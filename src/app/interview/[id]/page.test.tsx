@@ -1,47 +1,41 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
 import { useParams, useRouter } from "next/navigation";
-import ResumeInterviewPage from "./page";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
 import { mockUseAuthUser } from "@/test/mocks/useAuthUser";
 import { mockRouter } from "@/test/mocks/router";
 import { mockUseInterviewSession } from "@/test/mocks/useInterviewSession";
-import { createMockStreamingResponse } from "@/test/helpers/streaming";
 
 // Mock modules
 vi.mock("@/hooks/useAuthUser");
 vi.mock("@/hooks/useInterviewSession");
 vi.mock("next/navigation");
-vi.mock("@/lib/agents", () => ({
-  getAgentById: vi.fn((agentName) => ({
-    id: agentName,
-    name: agentName === "oriane" ? "Oriane" : "Théo",
-  })),
+vi.mock("@/lib/supabaseClient", () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue({
+            data: { agents: { agent_name: "oriane", description: null } },
+            error: null,
+          }),
+        })),
+      })),
+    })),
+  },
 }));
-
-function renderWithChakra(component: React.ReactElement) {
-  return render(<ChakraProvider value={defaultSystem}>{component}</ChakraProvider>);
-}
 
 describe("ResumeInterviewPage - Load Previous Messages", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser);
-    vi.mocked(useRouter).mockReturnValue(mockRouter as any);
-    vi.mocked(useParams).mockReturnValue({ id: "interview-123" } as any);
-    vi.mocked(useInterviewSession).mockReturnValue(mockUseInterviewSession as any);
+    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser as ReturnType<typeof useAuthUser>);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
+    vi.mocked(useParams).mockReturnValue({ id: "interview-123" } as ReturnType<typeof useParams>);
+    vi.mocked(useInterviewSession).mockReturnValue(
+      mockUseInterviewSession as ReturnType<typeof useInterviewSession>
+    );
 
-    // Mock Supabase agent fetch
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        agent_id: "agent-oriane",
-        agents: { agent_name: "oriane" },
-      }),
-    });
+    global.fetch = vi.fn().mockResolvedValue({ ok: true });
   });
 
   it("useInterviewSession hook provides session with sessionId", () => {
@@ -78,18 +72,14 @@ describe("ResumeInterviewPage - Load Previous Messages", () => {
 describe("ResumeInterviewPage - Send New Messages", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser);
-    vi.mocked(useRouter).mockReturnValue(mockRouter as any);
-    vi.mocked(useParams).mockReturnValue({ id: "interview-123" } as any);
-    vi.mocked(useInterviewSession).mockReturnValue(mockUseInterviewSession as any);
+    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser as ReturnType<typeof useAuthUser>);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
+    vi.mocked(useParams).mockReturnValue({ id: "interview-123" } as ReturnType<typeof useParams>);
+    vi.mocked(useInterviewSession).mockReturnValue(
+      mockUseInterviewSession as ReturnType<typeof useInterviewSession>
+    );
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        agent_id: "agent-oriane",
-        agents: { agent_name: "oriane" },
-      }),
-    });
+    global.fetch = vi.fn().mockResolvedValue({ ok: true });
   });
 
   it("session has sessionId for chat API requests", () => {

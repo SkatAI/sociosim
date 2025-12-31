@@ -8,7 +8,6 @@ import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
 import { generateUuid } from "@/lib/uuid";
 import { UIMessage } from "@/types/ui";
-import { getAgentById, type AgentName } from "@/lib/agents";
 import { useAuthUser } from "@/hooks/useAuthUser";
 
 /**
@@ -30,7 +29,10 @@ function InterviewPageInner() {
   const hasSessionParams = !!(interviewIdParam && sessionIdParam && adkSessionIdParam);
 
   // Agent state - loaded from database (stored in interview)
-  const [agentName, setAgentName] = useState<AgentName | null>(null);
+  const [agentInfo, setAgentInfo] = useState<{
+    agent_name: string;
+    description: string | null;
+  } | null>(null);
   const [agentError, setAgentError] = useState<string | null>(null);
 
   // Session management
@@ -71,16 +73,19 @@ function InterviewPageInner() {
         const { supabase: sb } = await import("@/lib/supabaseClient");
         const { data, error } = await sb
           .from("interviews")
-          .select("agent_id, agents(agent_name)")
+          .select("agent_id, agents(agent_name, description)")
           .eq("id", session.interviewId)
           .single();
 
         if (error) throw error;
-        const agentData = (data as { agents?: { agent_name?: string } })?.agents;
+        const agentData = (data as { agents?: { agent_name?: string; description?: string | null } })?.agents;
         if (!agentData?.agent_name) {
           throw new Error("Agent information missing from interview");
         }
-        setAgentName(agentData.agent_name as AgentName);
+        setAgentInfo({
+          agent_name: agentData.agent_name,
+          description: agentData.description ?? null,
+        });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("[Interview] Failed to load agent:", errorMessage);
@@ -301,7 +306,7 @@ function InterviewPageInner() {
           </Heading>
         ) : (
           <Heading as="h1" size="lg">
-            {agentName ? `Entretien avec ${getAgentById(agentName)?.name || "Agent"}` : "Chargement de l'agent..."}
+            {agentInfo ? `Entretien avec ${agentInfo.agent_name}` : "Chargement de l'agent..."}
           </Heading>
         )}
         <Text fontSize="sm" color="gray.600" marginTop={1}>
