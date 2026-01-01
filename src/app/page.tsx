@@ -9,32 +9,29 @@ import {
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function Home() {
   const router = useRouter();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (session?.user?.id) {
-        router.replace("/dashboard");
-      } else {
-        setIsCheckingAuth(false);
+        if (session?.user?.id) {
+          router.replace("/dashboard");
+        }
+      } catch (error) {
+        console.error("[home] Failed to check session", error);
       }
     };
 
     checkAuth();
   }, [router]);
-
-  if (isCheckingAuth) {
-    return null;
-  }
 
   return (
     <Container py={16}>

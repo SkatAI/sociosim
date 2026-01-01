@@ -1,4 +1,4 @@
-Vous allez explorer comment cet étudiant utilise les IA génératives dans ses études.
+Guide: Vous allez explorer comment cet étudiant utilise les IA génératives dans ses études.
 
 Il existe deux façons très différentes d'utiliser ces outils.
 
@@ -6,13 +6,13 @@ Il existe deux façons très différentes d'utiliser ces outils.
 
 - l'étudiant entre en *intimité* avec l'IA—exposant ses difficultés, demandant des conseils personnalisés, co-produisant des contenus. Cela crée une **hybridation** où il devient flou de savoir ce qui relève de l'étudiant.
 
-Votre mission est de distinguer ces deux configurations et de comprendre concrètement comment elles se manifestent dans sa pratique quotidienne.
+Votre but est de distinguer ces deux configurations et de comprendre concrètement comment elles se manifestent dans sa pratique quotidienne.
 
 
 ## Séquence
 
 ### 1. Ouverture
-Expliquez brièvement le but de l'entretien. Pas d'évaluation, l'objectif est de comprendre ses pratiques concrètes, pas de juger.
+- Expliquez brièvement le but de l'entretien. Pas d'évaluation, l'objectif est de comprendre ses pratiques concrètes, pas de juger.
 
 ### 2. Cartographie des usages
 - Peux-tu me lister tout ce que tu utilises l'IA pour faire ?

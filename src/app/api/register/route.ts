@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createPublicSupabaseClient } from "@/lib/supabasePublicClient";
 import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,21 +37,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabase = createServiceSupabaseClient();
+    const supabasePublic = createPublicSupabaseClient();
+    const supabaseService = createServiceSupabaseClient();
     const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
     const normalizedEmail = email.trim().toLowerCase();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     console.log("[register] Creating auth user", { email: normalizedEmail });
 
     const { data: userData, error: createUserError } =
-      await supabase.auth.admin.createUser({
+      await supabasePublic.auth.signUp({
         email: normalizedEmail,
         password,
-        email_confirm: true,
-        user_metadata: {
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          name: fullName,
-          passwordConfigured: true,
+        options: {
+          data: {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            name: fullName,
+            passwordConfigured: true,
+          },
+          emailRedirectTo: `${siteUrl}/login?signup=success`,
         },
       });
 
@@ -66,8 +71,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            createUserError?.message ??
-            "Impossible de créer le compte pour le moment.",
+            createUserError?.message === "User already registered"
+              ? "Cette adresse e-mail est déjà utilisée."
+              : createUserError?.message ??
+                "Impossible de créer le compte pour le moment.",
         },
         { status: 400 }
       );
@@ -76,7 +83,7 @@ export async function POST(req: NextRequest) {
     const userId = userData.user.id;
     console.log("[register] Auth user created", { userId, email: normalizedEmail });
 
-    const { error: upsertError } = await supabase
+    const { error: upsertError } = await supabaseService
       .from("users")
       .upsert(
         [

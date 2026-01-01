@@ -1,6 +1,5 @@
-import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
+import { createPublicSupabaseClient } from "@/lib/supabasePublicClient";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -25,47 +24,26 @@ export async function POST(req: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const supabase = createServiceSupabaseClient();
+    const supabase = createPublicSupabaseClient();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("id")
-      .eq("email", normalizedEmail)
-      .maybeSingle();
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+      normalizedEmail,
+      {
+        redirectTo: `${siteUrl}/reset-password/confirm`,
+      }
+    );
 
-    if (userError || !user) {
-      console.warn(
-        `[Sociosim] Tentative de réinitialisation pour e-mail inexistant: ${normalizedEmail}`
-      );
-      return NextResponse.json(
-        { error: "Si cet e-mail existe, vous recevrez un lien de réinitialisation." },
-        { status: 200 }
-      );
-    }
-
-    const resetToken = randomBytes(24).toString("hex");
-
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({ password_setup_token: resetToken })
-      .eq("id", user.id);
-
-    if (updateError) {
-      console.error("Erreur lors de la mise à jour du token de réinitialisation:", {
+    if (resetError) {
+      console.error("Erreur lors de l'envoi de l'email de réinitialisation:", {
         email: normalizedEmail,
-        errorMessage: updateError.message,
-        errorCode: updateError.code,
+        errorMessage: resetError.message,
       });
       return NextResponse.json(
-        { error: "Impossible de traiter votre demande. Veuillez réessayer." },
+        { error: "Impossible d'envoyer l'e-mail de réinitialisation." },
         { status: 500 }
       );
     }
-
-    const resetUrl = `http://localhost:3000/reset-password/confirm?token=${resetToken}`;
-    console.log(
-      `[Sociosim] Lien de réinitialisation pour ${normalizedEmail}: ${resetUrl}`
-    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

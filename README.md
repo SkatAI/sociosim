@@ -168,6 +168,13 @@ npm run format:fix   # Prettier auto-fix
 - No emails actually sent - all captured locally
 - Stops when you run `supabase stop`
 
+### Local SMTP Hostname Note
+In local Docker setups, Supabase Auth sends emails via SMTP using the `auth.email.smtp.host`
+value in `supabase/config.toml`. The hostname must match the inbucket container name.
+For this project (`project_id = "sociosim"`), the inbucket container is
+`supabase_inbucket_sociosim`. If the host is wrong (e.g. `supabase-inbucket`), reset/signup
+emails will fail with `Error sending recovery email`. After updating, restart Supabase.
+
 ## Documentation
 
 - `docs/cahierdescharges_sociobot.pdf` - Functional requirements (French)

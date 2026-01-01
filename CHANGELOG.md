@@ -8,12 +8,14 @@ All notable changes to this project will be documented in this file.
 - **Test Coverage:** Add comprehensive test suite for main interview page (`/interview`) with 16 tests covering authentication, session creation, agent loading, and chat interaction.
 - **Auth Flow Tests:** Add tests for registration, login, password reset, and logout with invalid input coverage.
 - **Guide Page:** Add `/guide-entretien` rendered from `public/docs/guide_entretien.md` and link it in the header.
+- **Auth Emails:** Send signup confirmations and password reset emails via Supabase Auth (Inbucket in local dev).
 ### Changed
 - **Tests:** Auth flow tests now pass with bad input assertions and coverage reporting.
 - **Interview Intro:** Render the new interview intro from `public/docs/guide_entretien_court.md`.
 - **Interview Intro:** Make the guide collapsible for faster starts.
 - **Interview Intro:** Show only the first line by default with click-to-expand text.
 - **Interview Intro:** Allow font size settings to scale the intro text.
+- **Auth Redirects:** Update local Supabase SMTP host and redirect allowlist to support email-based flows.
 
 ### Changed
 - **Agents Data Source:** Load agent_name and description from `public.agents` instead of static in-code definitions.
