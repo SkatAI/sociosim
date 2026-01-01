@@ -13,8 +13,9 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { Eye, EyeOff } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -25,8 +26,6 @@ type PasswordFormState = {
 
 function ResetPasswordConfirmPageInner() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token") ?? "";
   const [form, setForm] = useState<PasswordFormState>({
     password: "",
     confirmation: "",
@@ -35,8 +34,79 @@ function ResetPasswordConfirmPageInner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");
 
-  const isTokenMissing = useMemo(() => token.length === 0, [token]);
+  useEffect(() => {
+    let isActive = true;
+
+    const finalize = (nextStatus: "ready" | "invalid") => {
+      if (!isActive) return;
+      setStatus(nextStatus);
+      if (nextStatus === "invalid") {
+        setError("Ce lien de validation est invalide ou expiré.");
+      }
+    };
+
+    const hydrateSessionFromUrl = async () => {
+      try {
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
+
+        if (code) {
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) {
+            finalize("invalid");
+            return;
+          }
+          url.searchParams.delete("code");
+          window.history.replaceState({}, document.title, url.toString());
+        }
+
+        if (window.location.hash.includes("access_token=")) {
+          const params = new URLSearchParams(window.location.hash.slice(1));
+          const accessToken = params.get("access_token");
+          const refreshToken = params.get("refresh_token");
+
+          if (accessToken && refreshToken) {
+            const { error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (sessionError) {
+              finalize("invalid");
+              return;
+            }
+          }
+
+          url.hash = "";
+          window.history.replaceState({}, document.title, url.toString());
+        }
+
+        const { data } = await supabase.auth.getSession();
+        finalize(data.session ? "ready" : "invalid");
+      } catch (sessionError) {
+        console.error("[reset-password] Failed to hydrate session", sessionError);
+        finalize("invalid");
+      }
+    };
+
+    hydrateSessionFromUrl();
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isActive) return;
+      if (session) {
+        setStatus("ready");
+        setError(null);
+      }
+    });
+
+    return () => {
+      isActive = false;
+      subscription?.subscription.unsubscribe();
+    };
+  }, []);
+
+  const isTokenMissing = status !== "ready";
 
   const handleChange =
     (field: keyof PasswordFormState) =>
@@ -78,25 +148,26 @@ function ResetPasswordConfirmPageInner() {
 
     setIsSubmitting(true);
 
-    const response = await fetch("/api/reset-password/confirm", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, password: form.password }),
-    });
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: form.password,
+      });
 
-    if (response.ok) {
+      if (updateError) {
+        setError(
+          updateError.message ?? "Impossible de réinitialiser votre mot de passe."
+        );
+        return;
+      }
+
+      await supabase.auth.signOut();
       router.replace("/login?password=reset");
-      return;
+    } catch (submitError) {
+      console.error("[reset-password] Failed to update password", submitError);
+      setError("Impossible de réinitialiser votre mot de passe.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const payload = (await response.json().catch(() => null)) as
-      | { error?: string }
-      | null;
-
-    setError(
-      payload?.error ?? "Impossible de réinitialiser votre mot de passe."
-    );
-    setIsSubmitting(false);
   };
 
   return (
@@ -142,6 +213,7 @@ function ResetPasswordConfirmPageInner() {
                   onChange={handleChange("password")}
                   placeholder="Au moins 8 caractères"
                   disabled={isTokenMissing}
+                  autoComplete="new-password"
                 />
               </InputGroup>
             </Field.Root>
@@ -167,6 +239,7 @@ function ResetPasswordConfirmPageInner() {
                   onChange={handleChange("confirmation")}
                   placeholder="Répétez votre mot de passe"
                   disabled={isTokenMissing}
+                  autoComplete="new-password"
                 />
               </InputGroup>
             </Field.Root>

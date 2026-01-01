@@ -28,6 +28,7 @@ function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const passwordJustCreated = searchParams.get("password") === "created";
+  const passwordJustReset = searchParams.get("password") === "reset";
   const signupSuccess = searchParams.get("signup") === "success";
   const [form, setForm] = useState<AuthState>({ email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,7 +80,7 @@ function LoginPageInner() {
           </Text>
         </Stack>
 
-        {passwordJustCreated || signupSuccess ? (
+        {passwordJustCreated || passwordJustReset || signupSuccess ? (
           <Alert.Root status="success" borderRadius="md">
             <Alert.Indicator />
             <Alert.Content>
@@ -87,7 +88,9 @@ function LoginPageInner() {
               <Alert.Description>
                 {passwordJustCreated
                   ? "Vous pouvez maintenant vous connecter avec votre adresse e-mail et le mot de passe défini."
-                  : "Votre compte a été créé. Connectez-vous pour commencer."}
+                  : passwordJustReset
+                    ? "Votre mot de passe a été réinitialisé. Connectez-vous pour continuer."
+                    : "Votre compte a été créé. Vérifiez vos e-mails pour confirmer votre inscription, puis connectez-vous."}
               </Alert.Description>
             </Alert.Content>
           </Alert.Root>
