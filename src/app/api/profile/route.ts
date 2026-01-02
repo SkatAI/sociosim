@@ -3,30 +3,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export async function POST(req: NextRequest) {
   console.log("[profile] POST request received");
 
   try {
-    const { firstName, lastName, email } = (await req.json()) as {
+    const { firstName, lastName } = (await req.json()) as {
       firstName?: string;
       lastName?: string;
-      email?: string;
     };
 
-    console.log("[profile] Request body:", { firstName, lastName, email });
+    console.log("[profile] Request body:", { firstName, lastName });
 
-    if (!firstName?.trim() || !lastName?.trim() || !email?.trim()) {
+    if (!firstName?.trim() || !lastName?.trim()) {
       return NextResponse.json(
-        { error: "Merci de renseigner votre prénom, nom et adresse e-mail." },
-        { status: 400 }
-      );
-    }
-
-    if (!emailRegex.test(email.trim())) {
-      return NextResponse.json(
-        { error: "Le format de l'adresse e-mail est invalide." },
+        { error: "Merci de renseigner votre prénom et nom." },
         { status: 400 }
       );
     }
@@ -104,11 +94,9 @@ export async function POST(req: NextRequest) {
 
     const trimmedFirst = firstName.trim();
     const trimmedLast = lastName.trim();
-    const trimmedEmail = email.trim().toLowerCase();
     const fullName = `${trimmedFirst} ${trimmedLast}`.trim();
 
     const { error: authError } = await supabaseAuth.auth.updateUser({
-      email: trimmedEmail === (user.email || "") ? undefined : trimmedEmail,
       data: {
         firstName: trimmedFirst,
         lastName: trimmedLast,
@@ -140,7 +128,7 @@ export async function POST(req: NextRequest) {
     }
     const { error: profileError } = await supabaseService
       .from("users")
-      .update({ name: fullName, email: trimmedEmail })
+      .update({ name: fullName })
       .eq("id", user.id);
 
     if (profileError) {
@@ -153,10 +141,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message:
-        trimmedEmail !== (user.email || "")
-          ? "Profil mis à jour. Vérifiez vos e-mails pour confirmer la nouvelle adresse."
-          : "Profil mis à jour avec succès.",
+      message: "Profil mis à jour avec succès.",
     });
   } catch (error) {
     console.error("[profile] Unexpected error while updating profile:", error);
