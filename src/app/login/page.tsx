@@ -46,26 +46,42 @@ function LoginPageInner() {
 
     console.log("[login] Attempting sign in with:", form.email);
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email: form.email,
-      password: form.password,
-    });
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: form.email,
+        password: form.password,
+      });
 
-    console.log("[login] Sign in response - session:", !!data?.session, "error:", signInError?.message);
-
-    if (signInError) {
-      console.error("[login] Sign in error:", signInError);
-      setError(
-        signInError.message === "Invalid login credentials"
-          ? "Identifiants incorrects. Merci de vérifier votre email et votre mot de passe."
-          : "Impossible de vous connecter pour le moment. Veuillez réessayer."
+      console.log(
+        "[login] Sign in response - session:",
+        !!data?.session,
+        "error:",
+        signInError?.message
       );
-      setIsSubmitting(false);
-      return;
-    }
 
-    console.log("[login] Sign in successful, redirecting to dashboard");
-    router.replace("/dashboard");
+      if (signInError) {
+        console.error("[login] Sign in error:", signInError);
+        setError(
+          signInError.message === "Invalid login credentials"
+            ? "Identifiants incorrects. Merci de vérifier votre email et votre mot de passe."
+            : "Impossible de vous connecter pour le moment. Veuillez réessayer."
+        );
+        return;
+      }
+
+      if (!data?.session?.user?.id) {
+        setError("Impossible de vous connecter pour le moment. Veuillez réessayer.");
+        return;
+      }
+
+      console.log("[login] Sign in successful, redirecting to dashboard");
+      router.replace("/dashboard");
+    } catch (submitError) {
+      console.error("[login] Sign in failed:", submitError);
+      setError("Impossible de vous connecter pour le moment. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const hasError = Boolean(error);
