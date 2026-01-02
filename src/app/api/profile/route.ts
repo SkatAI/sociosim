@@ -7,18 +7,34 @@ export async function POST(req: NextRequest) {
   console.log("[profile] POST request received");
 
   try {
-    const { firstName, lastName } = (await req.json()) as {
+    const { firstName, lastName, password } = (await req.json()) as {
       firstName?: string;
       lastName?: string;
+      password?: string;
     };
 
-    console.log("[profile] Request body:", { firstName, lastName });
+    console.log("[profile] Request body:", { firstName, lastName, hasPassword: Boolean(password) });
 
     if (!firstName?.trim() || !lastName?.trim()) {
       return NextResponse.json(
         { error: "Merci de renseigner votre prénom et nom." },
         { status: 400 }
       );
+    }
+
+    if (password !== undefined) {
+      if (!password.trim()) {
+        return NextResponse.json(
+          { error: "Votre mot de passe est requis." },
+          { status: 400 }
+        );
+      }
+      if (password.length < 8) {
+        return NextResponse.json(
+          { error: "Votre mot de passe doit contenir au moins 8 caractères." },
+          { status: 400 }
+        );
+      }
     }
 
     // Use SUPABASE_INTERNAL_URL for Docker networking
@@ -97,6 +113,7 @@ export async function POST(req: NextRequest) {
     const fullName = `${trimmedFirst} ${trimmedLast}`.trim();
 
     const { error: authError } = await supabaseAuth.auth.updateUser({
+      ...(password ? { password } : {}),
       data: {
         firstName: trimmedFirst,
         lastName: trimmedLast,

@@ -111,7 +111,9 @@ describe("DashboardPage - Create Interview Feature", () => {
     await user.click(interviewerButtons[0]);
 
     // Check that at least one loading state appears
-    expect(screen.queryAllByText("Création...")).toHaveLength(3);
+    await waitFor(() => {
+      expect(screen.queryAllByText("Création...")).toHaveLength(3);
+    });
   });
 
   it("successful API response navigates to interview page", async () => {
