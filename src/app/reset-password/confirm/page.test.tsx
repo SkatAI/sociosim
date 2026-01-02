@@ -1,46 +1,83 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
-import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import ResetPasswordConfirmPage from "./page";
 import { mockRouter } from "@/test/mocks/router";
 
 vi.mock("next/navigation");
+const setSession = vi.fn();
+const exchangeCodeForSession = vi.fn();
+const getSession = vi.fn();
+const updateUser = vi.fn();
+const signOut = vi.fn();
+const unsubscribe = vi.fn();
+const onAuthStateChange = vi.fn().mockReturnValue({
+  data: {
+    subscription: { unsubscribe },
+  },
+});
+
+vi.mock("@/lib/supabaseClient", () => ({
+  supabase: {
+    auth: {
+      setSession: (...args: unknown[]) => setSession(...args),
+      exchangeCodeForSession: (...args: unknown[]) => exchangeCodeForSession(...args),
+      getSession: (...args: unknown[]) => getSession(...args),
+      updateUser: (...args: unknown[]) => updateUser(...args),
+      signOut: (...args: unknown[]) => signOut(...args),
+      onAuthStateChange: (...args: unknown[]) => onAuthStateChange(...args),
+    },
+  },
+}));
 
 function renderWithChakra(component: React.ReactElement) {
   return render(<ChakraProvider value={defaultSystem}>{component}</ChakraProvider>);
 }
 
 describe("ResetPasswordConfirmPage", () => {
+  const waitForFormReady = async () => {
+    await waitFor(() => {
+      expect(screen.getByLabelText("Nouveau mot de passe")).not.toBeDisabled();
+    });
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
-    global.fetch = vi.fn();
+    setSession.mockResolvedValue({ error: null });
+    exchangeCodeForSession.mockResolvedValue({ error: null });
+    getSession.mockResolvedValue({ data: { session: null } });
+    updateUser.mockResolvedValue({ error: null });
+    signOut.mockResolvedValue({ error: null });
+    onAuthStateChange.mockReturnValue({
+      data: {
+        subscription: { unsubscribe },
+      },
+    });
+    window.history.replaceState({}, document.title, "http://localhost:3000/reset-password/confirm");
   });
 
   it("shows error when token is missing", async () => {
-    vi.mocked(useSearchParams).mockReturnValue(
-      new URLSearchParams() as unknown as ReadonlyURLSearchParams
-    );
-
     renderWithChakra(<ResetPasswordConfirmPage />);
-
-    const form = document.querySelector("form");
-    expect(form).not.toBeNull();
-    fireEvent.submit(form as HTMLFormElement);
 
     expect(await screen.findByText(/invalide ou expiré/i)).toBeInTheDocument();
   });
 
   it("shows validation error for short password", async () => {
     const user = userEvent.setup();
-    vi.mocked(useSearchParams).mockReturnValue(
-      new URLSearchParams({ token: "token-123" }) as unknown as ReadonlyURLSearchParams
-    );
+    window.location.hash = "#access_token=token-123&refresh_token=refresh-123";
+    getSession.mockResolvedValue({
+      data: {
+        session: { user: { id: "user-1" } },
+      },
+    });
 
     renderWithChakra(<ResetPasswordConfirmPage />);
 
+    expect(screen.getByLabelText("Nouveau mot de passe")).toBeDisabled();
+    await waitForFormReady();
     await user.type(screen.getByLabelText("Nouveau mot de passe"), "short");
     await user.type(screen.getByLabelText("Confirmez le mot de passe"), "short");
     await user.click(screen.getByRole("button", { name: /Réinitialiser/i }));
@@ -48,14 +85,32 @@ describe("ResetPasswordConfirmPage", () => {
     expect(await screen.findByText(/au moins 8 caractères/i)).toBeInTheDocument();
   });
 
-  it("shows validation error when confirmation mismatches", async () => {
-    const user = userEvent.setup();
-    vi.mocked(useSearchParams).mockReturnValue(
-      new URLSearchParams({ token: "token-123" }) as unknown as ReadonlyURLSearchParams
-    );
+  it("clears the recovery hash after session hydration", async () => {
+    window.location.hash = "#access_token=token-123&refresh_token=refresh-123";
+    getSession.mockResolvedValue({
+      data: {
+        session: { user: { id: "user-1" } },
+      },
+    });
 
     renderWithChakra(<ResetPasswordConfirmPage />);
 
+    await waitForFormReady();
+    expect(window.location.hash).toBe("");
+  });
+
+  it("shows validation error when confirmation mismatches", async () => {
+    const user = userEvent.setup();
+    window.location.hash = "#access_token=token-123&refresh_token=refresh-123";
+    getSession.mockResolvedValue({
+      data: {
+        session: { user: { id: "user-1" } },
+      },
+    });
+
+    renderWithChakra(<ResetPasswordConfirmPage />);
+
+    await waitForFormReady();
     await user.type(screen.getByLabelText("Nouveau mot de passe"), "longenough");
     await user.type(screen.getByLabelText("Confirmez le mot de passe"), "different");
     await user.click(screen.getByRole("button", { name: /Réinitialiser/i }));
@@ -66,36 +121,45 @@ describe("ResetPasswordConfirmPage", () => {
   it("redirects on success", async () => {
     const user = userEvent.setup();
     vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
-    vi.mocked(useSearchParams).mockReturnValue(
-      new URLSearchParams({ token: "token-123" }) as unknown as ReadonlyURLSearchParams
-    );
-    global.fetch = vi.fn().mockResolvedValue({ ok: true });
-
-    renderWithChakra(<ResetPasswordConfirmPage />);
-
-    await user.type(screen.getByLabelText("Nouveau mot de passe"), "longenough");
-    await user.type(screen.getByLabelText("Confirmez le mot de passe"), "longenough");
-    await user.click(screen.getByRole("button", { name: /Réinitialiser/i }));
-
-    expect(mockRouter.replace).toHaveBeenCalledWith("/login?password=reset");
-  });
-
-  it("shows API error message on failure", async () => {
-    const user = userEvent.setup();
-    vi.mocked(useSearchParams).mockReturnValue(
-      new URLSearchParams({ token: "token-123" }) as unknown as ReadonlyURLSearchParams
-    );
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      json: async () => ({ error: "Lien invalide" }),
+    window.location.hash = "#access_token=token-123&refresh_token=refresh-123";
+    getSession.mockResolvedValue({
+      data: {
+        session: { user: { id: "user-1" } },
+      },
     });
 
     renderWithChakra(<ResetPasswordConfirmPage />);
 
+    await waitForFormReady();
+    await user.type(screen.getByLabelText("Nouveau mot de passe"), "longenough");
+    await user.type(screen.getByLabelText("Confirmez le mot de passe"), "longenough");
+    await user.click(screen.getByRole("button", { name: /Réinitialiser/i }));
+
+    await waitFor(() => {
+      expect(mockRouter.replace).toHaveBeenCalledWith("/login?password=reset");
+    });
+  });
+
+  it("shows error message on update failure", async () => {
+    const user = userEvent.setup();
+    window.location.hash = "#access_token=token-123&refresh_token=refresh-123";
+    getSession.mockResolvedValue({
+      data: {
+        session: { user: { id: "user-1" } },
+      },
+    });
+    updateUser.mockResolvedValue({ error: { message: "Lien invalide" } });
+
+    renderWithChakra(<ResetPasswordConfirmPage />);
+
+    await waitForFormReady();
     await user.type(screen.getByLabelText("Nouveau mot de passe"), "longenough");
     await user.type(screen.getByLabelText("Confirmez le mot de passe"), "longenough");
     await user.click(screen.getByRole("button", { name: /Réinitialiser/i }));
 
     expect(await screen.findByText("Lien invalide")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Réinitialiser/i })).not.toBeDisabled();
+    });
   });
 });

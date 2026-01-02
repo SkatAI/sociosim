@@ -70,18 +70,17 @@ describe("RegisterPage", () => {
     await user.click(screen.getByRole("button", { name: /Créer mon compte/i }));
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        "/api/register",
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({
-            firstName: "Ada",
-            lastName: "Lovelace",
-            email: "ada@example.com",
-            password: "longenough",
-          }),
-        })
-      );
+      expect(global.fetch).toHaveBeenCalled();
+    });
+
+    const [url, options] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0] ?? [];
+    expect(url).toBe("/api/register");
+    expect(options?.method).toBe("POST");
+    expect(JSON.parse(options?.body)).toEqual({
+      firstName: "Ada",
+      lastName: "Lovelace",
+      email: "ada@example.com",
+      password: "longenough",
     });
     expect(mockRouter.replace).toHaveBeenCalledWith("/login?signup=success");
   });
