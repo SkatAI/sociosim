@@ -21,12 +21,9 @@ import { useAuthUser } from "@/hooks/useAuthUser";
 type ProfileFormState = {
   firstName: string;
   lastName: string;
-  email: string;
 };
 
 type FieldErrors = Partial<Record<keyof ProfileFormState, string>>;
-
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -34,15 +31,12 @@ export default function ProfilePage() {
   const [form, setForm] = useState<ProfileFormState>({
     firstName: "",
     lastName: "",
-    email: "",
   });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPrefilling, setIsPrefilling] = useState(true);
-
-  const initialEmail = user?.email ?? "";
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -56,7 +50,6 @@ export default function ProfilePage() {
     setForm({
       firstName: (metadata.firstName as string) || "",
       lastName: (metadata.lastName as string) || "",
-      email: user.email || "",
     });
     setIsPrefilling(false);
   }, [isAuthLoading, router, user]);
@@ -80,12 +73,6 @@ export default function ProfilePage() {
       errors.lastName = "Votre nom est requis.";
     }
 
-    if (!form.email.trim()) {
-      errors.email = "Votre adresse e-mail est requise.";
-    } else if (!emailRegex.test(form.email.trim())) {
-      errors.email = "Merci de fournir une adresse e-mail valide.";
-    }
-
     return errors;
   };
 
@@ -96,10 +83,9 @@ export default function ProfilePage() {
     const currentLast = (metadata.lastName as string) || "";
     return (
       form.firstName.trim() !== currentFirst ||
-      form.lastName.trim() !== currentLast ||
-      form.email.trim() !== (user.email || "")
+      form.lastName.trim() !== currentLast
     );
-  }, [form.email, form.firstName, form.lastName, user]);
+  }, [form.firstName, form.lastName, user]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -121,8 +107,6 @@ export default function ProfilePage() {
 
     const trimmedFirst = form.firstName.trim();
     const trimmedLast = form.lastName.trim();
-    const trimmedEmail = form.email.trim().toLowerCase();
-
     try {
       const response = await fetch("/api/profile", {
         method: "POST",
@@ -130,7 +114,6 @@ export default function ProfilePage() {
         body: JSON.stringify({
           firstName: trimmedFirst,
           lastName: trimmedLast,
-          email: trimmedEmail,
         }),
       });
 
@@ -146,12 +129,7 @@ export default function ProfilePage() {
         return;
       }
 
-      setSuccessMessage(
-        payload?.message ??
-          (trimmedEmail !== initialEmail
-            ? "Profil mis à jour. Vérifiez vos e-mails pour confirmer la nouvelle adresse."
-            : "Profil mis à jour avec succès.")
-      );
+      setSuccessMessage(payload?.message ?? "Profil mis à jour avec succès.");
 
       // Update the user state directly with new metadata
       updateUserMetadata({
@@ -240,23 +218,6 @@ export default function ProfilePage() {
             />
             {fieldErrors.lastName ? (
               <Field.ErrorText>{fieldErrors.lastName}</Field.ErrorText>
-            ) : null}
-          </Field.Root>
-
-          <Field.Root required invalid={Boolean(fieldErrors.email)}>
-            <Field.Label>Adresse e-mail</Field.Label>
-            <Input
-              type="email"
-              value={form.email}
-              onChange={handleChange("email")}
-              placeholder="exemple@universite.fr"
-              disabled={isSubmitting}
-            />
-            {fieldErrors.email ? <Field.ErrorText>{fieldErrors.email}</Field.ErrorText> : null}
-            {initialEmail && form.email.trim().toLowerCase() !== initialEmail.toLowerCase() ? (
-              <Text color="fg.muted" fontSize="sm" marginTop={2}>
-                Modifier l&apos;e-mail peut nécessiter une confirmation par lien reçu dans votre boîte mail.
-              </Text>
             ) : null}
           </Field.Root>
 
