@@ -80,13 +80,14 @@ export default function ResetPasswordPage() {
               <Stack gap={6}>
                 <Field.Root required>
                   <Field.Label>Adresse e-mail</Field.Label>
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="exemple@universite.fr"
-                    disabled={isSubmitting}
-                  />
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="exemple@universite.fr"
+                  autoComplete="email"
+                  disabled={isSubmitting}
+                />
                 </Field.Root>
 
                 <Button type="submit" colorPalette="blue" loading={isSubmitting}>

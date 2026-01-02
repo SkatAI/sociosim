@@ -130,6 +130,7 @@ function LoginPageInner() {
               value={form.email}
               onChange={handleChange("email")}
               placeholder="exemple@universite.fr"
+              autoComplete="email"
             />
           </Field.Root>
 
@@ -152,6 +153,7 @@ function LoginPageInner() {
                 value={form.password}
                 onChange={handleChange("password")}
                 placeholder="Votre mot de passe"
+                autoComplete="current-password"
               />
             </InputGroup>
             {hasError ? <Field.ErrorText>{error}</Field.ErrorText> : null}
