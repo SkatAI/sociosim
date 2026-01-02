@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - **Interview Intro:** Show only the first line by default with click-to-expand text.
 - **Interview Intro:** Allow font size settings to scale the intro text.
 - **Auth Redirects:** Update local Supabase SMTP host and redirect allowlist to support email-based flows.
+- **Dashboard:** Split the dashboard into dedicated Personnas and Mes entretiens pages.
 
 ### Changed
 - **Agents Data Source:** Load agent_name and description from `public.agents` instead of static in-code definitions.
