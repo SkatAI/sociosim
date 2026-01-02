@@ -53,6 +53,9 @@ format-fix: ## Auto-format code with Prettier.
 docker-dev: ## Run development environment in Docker with hot reload.
 	docker compose -f docker-compose.yaml up --build
 
+docker-up-detached: ## Run development environment in Docker with hot reload.
+	docker compose -f docker-compose.yaml up -d
+
 docker-prod: ## Run production build in Docker.
 	docker compose -f docker-compose.prod.yaml up --build
 

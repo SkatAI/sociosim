@@ -132,12 +132,11 @@ export default function Header() {
                   open={isPopoverOpen}
                   onOpenChange={(state) => setIsPopoverOpen(state.open)}
                   positioning={{ placement: "bottom" }}
+                  lazyMount
+                  unmountOnExit
                 >
                   <Popover.Trigger asChild>
-                    <Box
-                      onClick={() => setIsPopoverOpen(!isPopoverOpen)}
-                      cursor="pointer"
-                    >
+                    <Box cursor="pointer">
                       <Avatar.Root size="md">
                         <Avatar.Fallback name={`${userInfo.firstName} ${userInfo.lastName}`} />
                       </Avatar.Root>
