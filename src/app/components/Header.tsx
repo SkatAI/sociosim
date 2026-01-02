@@ -84,18 +84,17 @@ export default function Header() {
         align="center"
         justify="space-between"
       >
-        <Link
-          as={NextLink}
-          href={!isLoading && user ? "/dashboard" : "/"}
-          fontWeight="bold"
-          fontSize="lg"
-          color="inherit"
-          _hover={{ opacity: 0.8 }}
-        >
-          Sociosim
-        </Link>
-
-        <HStack gap={4}>
+        <HStack gap={6}>
+          <Link
+            as={NextLink}
+            href={!isLoading && user ? "/dashboard" : "/"}
+            fontWeight="bold"
+            fontSize="3xl"
+            color="inherit"
+            _hover={{ opacity: 0.8 }}
+          >
+            Sociosim
+          </Link>
           <Link
             as={NextLink}
             href="/guide-entretien"
@@ -105,8 +104,20 @@ export default function Header() {
           >
             Guide d&apos;entretien
           </Link>
+        </HStack>
+
+        <HStack gap={4}>
           {!isLoading && userInfo ? (
             <HStack gap={4}>
+              <Link
+                as={NextLink}
+                href="/personnas"
+                fontWeight="medium"
+                color="fg.muted"
+                _hover={{ color: "accent.primary" }}
+              >
+                Personnas
+              </Link>
               <Link
                 as={NextLink}
                 href="/dashboard"
@@ -114,7 +125,7 @@ export default function Header() {
                 color="fg.muted"
                 _hover={{ color: "accent.primary" }}
               >
-                Tableau de bord
+                Mes entretiens
               </Link>
               <HStack gap={2}>
                 <Popover.Root

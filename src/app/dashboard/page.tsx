@@ -5,21 +5,19 @@ import {
   Button,
   Container,
   Heading,
-  Stack,
+  Link,
   Text,
   VStack,
   HStack,
   Badge,
   Spinner,
-  Grid,
   Card,
-  Avatar,
+  NativeSelect,
 } from "@chakra-ui/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import NextLink from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
-import { type Agent } from "@/lib/agents";
-import { supabase } from "@/lib/supabaseClient";
 
 interface InterviewWithDetails {
   id: string;
@@ -82,13 +80,15 @@ const getLatestAssistantMessage = (
 
 export default function DashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading: isAuthLoading } = useAuthUser();
   const [interviews, setInterviews] = useState<InterviewWithDetails[]>([]);
-  const [agents, setAgents] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedInterviewId, setExpandedInterviewId] = useState<string | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState("Tous");
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const hasAppliedAgentParam = useRef(false);
 
   // Check authentication and fetch interviews
   useEffect(() => {
@@ -102,17 +102,6 @@ export default function DashboardPage() {
       try {
         console.log("[Dashboard] User logged in with ID:", user.id);
         console.log("[Dashboard] Fetching interviews from API...");
-
-        const { data: agentsData, error: agentsError } = await supabase
-          .from("agents")
-          .select("id, agent_name, description")
-          .order("agent_name");
-        if (agentsError) {
-          console.error("Error fetching agents:", agentsError);
-          setError("Impossible de charger les agents");
-        } else {
-          setAgents((agentsData || []) as Agent[]);
-        }
 
         const response = await fetch(`/api/user/interviews?userId=${user.id}`);
         if (!response.ok) {
@@ -152,11 +141,18 @@ export default function DashboardPage() {
     loadData();
   }, [isAuthLoading, user, router]);
 
-  const handleSelectAgent = async (agentName: string) => {
+  const toggleExpanded = (interviewId: string) => {
+    setExpandedInterviewId((current) => (current === interviewId ? null : interviewId));
+  };
+
+  const handleNewInterview = async () => {
+    if (selectedAgent === "Tous") {
+      router.push("/personnas");
+      return;
+    }
+
     try {
       setIsCreatingSession(true);
-
-      console.log("--- handleSelectAgent:", agentName);
 
       if (!user?.id) {
         router.push("/login");
@@ -168,7 +164,7 @@ export default function DashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.id,
-          agent_name: agentName,
+          agent_name: selectedAgent,
         }),
       });
 
@@ -182,24 +178,48 @@ export default function DashboardPage() {
 
       const data = await response.json();
 
-      console.log("--- handleSelectAgent: data", data);
-
-      // Redirect to new interview page with session info (avoid duplicate session creation)
-      // Agent is now stored in database, no need to pass in URL
       router.push(
         `/interview?interviewId=${data.interviewId}&sessionId=${data.sessionId}&adkSessionId=${data.adkSessionId}`
       );
     } catch (err) {
-      console.error("Error selecting agent:", err);
+      console.error("Error creating session:", err);
       setError("Une erreur est survenue lors de la création de la session");
     } finally {
       setIsCreatingSession(false);
     }
   };
 
-  const toggleExpanded = (interviewId: string) => {
-    setExpandedInterviewId((current) => (current === interviewId ? null : interviewId));
-  };
+  const agentNames = Array.from(
+    new Set(
+      interviews
+        .map((interview) => interview.agents?.agent_name)
+        .filter((name): name is string => Boolean(name))
+    )
+  );
+  const hasMultipleAgents = agentNames.length > 1;
+  const filteredInterviews =
+    selectedAgent === "Tous"
+      ? interviews
+      : interviews.filter((interview) => interview.agents?.agent_name === selectedAgent);
+
+  useEffect(() => {
+    if (!hasMultipleAgents) {
+      setSelectedAgent("Tous");
+      return;
+    }
+    if (selectedAgent !== "Tous" && !agentNames.includes(selectedAgent)) {
+      setSelectedAgent("Tous");
+    }
+  }, [agentNames, hasMultipleAgents, selectedAgent]);
+
+  useEffect(() => {
+    const agentParam = searchParams.get("agent");
+    if (!agentParam || hasAppliedAgentParam.current || agentNames.length === 0) return;
+    if (agentNames.includes(agentParam)) {
+      setSelectedAgent(agentParam);
+    }
+    hasAppliedAgentParam.current = true;
+  }, [agentNames, searchParams]);
 
   if (isLoading) {
     return (
@@ -215,50 +235,43 @@ export default function DashboardPage() {
   return (
     <Container maxWidth="4xl" py={8} px={{ base: 4, md: 6 }}>
       <VStack gap={8} alignItems="stretch">
-        <Heading size="lg" marginBottom={0}>
-          Choisissez un personnage
-        </Heading>
-
-        {/* Agent Selection Cards */}
-        <Box>
-          <Grid gridTemplateColumns="repeat(3, 1fr)" gap={6}>
-            {agents.map((agent) => (
-              <Card.Root key={agent.id}>
-                <Card.Body display="flex" flexDirection="column" alignItems="center" gap={4} py={6} px={4}>
-                  <Avatar.Root size="lg">
-                    <Avatar.Fallback>{agent.agent_name.charAt(0)}</Avatar.Fallback>
-                  </Avatar.Root>
-                  <VStack gap={2} alignItems="center">
-                    <Text fontWeight="semibold" fontSize="md">
-                      {agent.agent_name}
-                    </Text>
-                    <Text
-                      fontSize="sm"
-                      color="fg.muted"
-                      textAlign="center"
-                      // noOfLines={3}
-                      // minH="4.2em"
-                      lineHeight="1.4"
-                      whiteSpace="pre-line"
-                    >
-                      {agent.description || ""}
-                    </Text>
-                  </VStack>
-                  <Button
-                    onClick={() => handleSelectAgent(agent.agent_name)}
-                    colorPalette="blue"
-                    size="sm"
-                    // width="full"
-                    padding={4}
-                    disabled={isCreatingSession}
-                  >
-                    {isCreatingSession ? "Création..." : "Interviewer"}
-                  </Button>
-                </Card.Body>
-              </Card.Root>
-            ))}
-          </Grid>
-        </Box>
+        <HStack align="center" justify="space-between" gap={6} width="full">
+          <HStack align="center" gap={6}>
+            <Heading size="lg" marginBottom={0}>
+              Mes entretiens
+            </Heading>
+            {hasMultipleAgents && (
+              <NativeSelect.Root>
+                <NativeSelect.Field
+                  value={selectedAgent}
+                  onChange={(event) => setSelectedAgent(event.target.value)}
+                  fontSize="sm"
+                  borderWidth="1px"
+                  borderColor="border.muted"
+                  borderRadius="md"
+                  backgroundColor="bg.surface"
+                >
+                  <option value="Tous">Tous</option>
+                  {agentNames.map((agentName) => (
+                    <option key={agentName} value={agentName}>
+                      {agentName}
+                    </option>
+                  ))}
+                </NativeSelect.Field>
+                <NativeSelect.Indicator />
+              </NativeSelect.Root>
+            )}
+          </HStack>
+          <Button
+            colorPalette="blue"
+            size="sm"
+            paddingInline={4}
+            onClick={handleNewInterview}
+            disabled={isCreatingSession}
+          >
+            {isCreatingSession ? "Création..." : "Nouvel entretien"}
+          </Button>
+        </HStack>
 
         {/* Error State */}
         {error && (
@@ -274,7 +287,7 @@ export default function DashboardPage() {
         )}
 
         {/* Empty State */}
-        {interviews.length === 0 && !error && (
+        {filteredInterviews.length === 0 && !error && (
           <VStack
             gap={4}
             alignItems="center"
@@ -283,23 +296,27 @@ export default function DashboardPage() {
             backgroundColor="bg.subtle"
           >
             <Text color="fg.muted" fontSize="lg">
-              Vous n&apos;avez pas encore d&apos;entretiens
+              {selectedAgent === "Tous"
+                ? "Vous n&apos;avez pas encore d&apos;entretiens"
+                : "Aucun entretien pour ce personna"}
             </Text>
-            <Text color="fg.subtle" fontSize="sm">
-              Cliquez sur le bouton ci-dessus pour créer votre première simulation.
-            </Text>
+            {selectedAgent === "Tous" && (
+              <Text color="fg.subtle" fontSize="sm">
+                Rendez-vous sur{" "}
+                <Link as={NextLink} href="/personnas" color="accent.primary" fontWeight="semibold">
+                  Personnas
+                </Link>{" "}
+                pour démarrer votre première simulation.
+              </Text>
+            )}
           </VStack>
         )}
 
         {/* Interviews List */}
-        {interviews.length > 0 && (
-
-          <Stack gap={4}>
-            <Heading size="lg" marginBottom={0}>
-              Vos derniers entretiens
-            </Heading>
-
-            {interviews.map((interview) => {
+        {filteredInterviews.length > 0 && (
+          <Card.Root>
+            <Card.Body display="flex" flexDirection="column" gap={4}>
+            {filteredInterviews.map((interview) => {
               const usage = interview.interview_usage?.[0];
               const latestAssistant = getLatestAssistantMessage(interview.messages || []);
               const firstLine =
@@ -392,7 +409,8 @@ export default function DashboardPage() {
                 </Box>
               );
             })}
-          </Stack>
+            </Card.Body>
+          </Card.Root>
         )}
       </VStack>
     </Container>
