@@ -40,6 +40,7 @@ export default function PersonnasPage() {
   useEffect(() => {
     if (isAuthLoading) return;
     if (!user) {
+      setIsLoading(false);
       router.push("/login");
       return;
     }
@@ -47,7 +48,11 @@ export default function PersonnasPage() {
     const loadData = async () => {
       try {
         const [agentsResult, interviewsResult] = await Promise.allSettled([
-          supabase.from("agents").select("id, agent_name, description").order("agent_name"),
+          supabase
+            .from("agents")
+            .select("id, agent_name, description, agent_prompts!inner(published)")
+            .eq("agent_prompts.published", true)
+            .order("agent_name"),
           fetch(`/api/user/interviews?userId=${user.id}`),
         ]);
 
@@ -57,7 +62,11 @@ export default function PersonnasPage() {
             console.error("Error fetching agents:", agentsError);
             setError("Impossible de charger les agents");
           } else {
-            setAgents((agentsData || []) as Agent[]);
+            const uniqueAgents = new Map<string, Agent>();
+            (agentsData || []).forEach((agent) => {
+              uniqueAgents.set(agent.id, agent as Agent);
+            });
+            setAgents(Array.from(uniqueAgents.values()));
           }
         } else {
           console.error("Error fetching agents:", agentsResult.reason);

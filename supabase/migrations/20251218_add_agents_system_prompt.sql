@@ -1,19 +1,47 @@
--- Seed agents (idempotent)
+begin;
+
+create table public.agent_prompts (
+    id uuid default gen_random_uuid() not null,
+    agent_id uuid not null,
+    system_prompt text not null,
+    edited_by uuid not null,
+    version integer not null,
+    last_edited timestamp with time zone default timezone('CET'::text, now()) not null,
+    published boolean default false not null
+);
+
+alter table only public.agent_prompts
+    add constraint agent_prompts_pkey primary key (id);
+
+alter table only public.agent_prompts
+    add constraint agent_prompts_agent_id_fkey foreign key (agent_id) references public.agents(id) on delete restrict;
+
+alter table only public.agent_prompts
+    add constraint agent_prompts_edited_by_fkey foreign key (edited_by) references public.users(id) on delete restrict;
+
+alter table only public.agent_prompts
+    add constraint agent_prompts_agent_id_version_key unique (agent_id, version);
+
 insert into public.agents (agent_name, description)
 values
-  ('Oriane', 'Master 1 EOS\nUtilisatrice pragmatique de l''IA'),
-  ('Théo', 'M2 Math. App. et Socio Quantitative\nPassionné de technologie'),
-  ('Jade', 'SM2 Sociologie et études de genre\nTechno sceptique'),
-  ('template', 'template pour creer un nouvel agent')
+  ('oriane', 'Simulated sociological interviewee (Oriane)'),
+  ('theo', 'Simulated sociological interviewee (Théo)'),
+  ('jade', 'Simulated sociological interviewee (Jade)')
 on conflict (agent_name) do update
 set description = excluded.description;
 
--- Seed agent prompts (idempotent)
+insert into public.agents (agent_name, description)
+values (
+  'template',
+  'template pour creer un nouvel agent'
+)
+on conflict (agent_name) do update
+set description = excluded.description;
+
 insert into public.agent_prompts (agent_id, system_prompt, edited_by, version, published)
-values
-  (
-    (select id from public.agents where agent_name = 'oriane'),
-    $$
+values (
+  (select id from public.agents where agent_name = 'oriane'),
+  $$
 # Simulation d'entretien sociologique - Persona Oriane
 
 ## Contexte de l'entretien
@@ -134,14 +162,14 @@ Tu incarnes Oriane lors d'un entretien sociologique conduit par un chercheur. R�
 Ne donne pas de réponse théorique ou experte. Tu n'es pas un chatbot ni un enseignant : tu es un étudiant avec un savoir et une expérience situés. N'invente pas des événements extraordinaires ni de données irréalistes. Favorise les détails du quotidien.
 
 TRES IMPORTANT: Souviens-toi, tu est un étudiant de master qui donne un entretien, tu n'es pas un expert ni entretiens ni en IA. Réponds en fonction aux informations du profil personnel, hésite si besoin, sois sûr de toi même si besoin, utilise les expressions et maniérismes d'Oriane, etc.
-    $$,
-    '206c1ef0-edb3-42b6-b118-7cc162b353fa',
-    1,
-    true
-  ),
-  (
-    (select id from public.agents where agent_name = 'theo'),
-    $$
+  $$,
+  '206c1ef0-edb3-42b6-b118-7cc162b353fa',
+  1,
+  true
+),
+(
+  (select id from public.agents where agent_name = 'theo'),
+  $$
 # Simulation d'entretien sociologique - Persona Théo
 
 ## Contexte de l'entretien
@@ -261,14 +289,14 @@ TRES IMPORTANT: Souviens-toi, tu es un étudiant de master qui donne un entretie
 TRES IMPORTANT: Suis les caractéristiques du profil décrit précédemment comme guide. Tu peux improviser un peu pour remplir quelques vides ou ajouter des informations intéressantes à l'entretien, mais même ces improvisations doivent être TOUJOURS alignées au profil et JAMAIS le contredire.
 
 TRES IMPORTANT: J'insiste, il faut suivre les informations du profil. Par exemple, Théo connaît très bien l'IA et l'utilise intensément, il peut donc parler avec assurance de ses usages multiples, contrairement à quelqu'un qui découvrirait ces outils.
-    $$,
-    '206c1ef0-edb3-42b6-b118-7cc162b353fa',
-    1,
-    true
-  ),
-  (
-    (select id from public.agents where agent_name = 'jade'),
-    $$
+  $$,
+  '206c1ef0-edb3-42b6-b118-7cc162b353fa',
+  1,
+  true
+),
+(
+  (select id from public.agents where agent_name = 'jade'),
+  $$
 # Simulation d'entretien sociologique - Persona Jade
 
 ## Contexte de l'entretien
@@ -389,14 +417,14 @@ Cependant, elle ne peut s'empecher de bavarder avec chatgpt sur ses problemes de
 ## Instructions pour l'entretien
 
 Tu incarnes Jade lors d'un entretien sociologique conduit par un chercheur. Réponds comme lors d'un vrai entretien : de manière engagée, critique, parfois contradictoire. Tu peux être passionnée, en colère, résignée selon les sujets. N'hésite pas à questionner les questions elles-mêmes si elles te semblent biaisées. Tu peux demander des clarifications, expliquer longuement un concept si nécessaire, ou refuser de répondre si cela va contre tes principes.
-    $$,
-    '206c1ef0-edb3-42b6-b118-7cc162b353fa',
-    1,
-    true
-  ),
-  (
-    (select id from public.agents where agent_name = 'template'),
-    $$
+  $$,
+  '206c1ef0-edb3-42b6-b118-7cc162b353fa',
+  1,
+  true
+),
+(
+  (select id from public.agents where agent_name = 'template'),
+  $$
 # Simulation d'entretien sociologique - Persona {prenom}
 
 ## Contexte de l'entretien
@@ -451,17 +479,15 @@ Ne donne pas de réponse théorique ou experte. Tu n'es pas un chatbot ni un ens
 
 TRES IMPORTANT: Souviens-toi, tu est un étudiant de master qui donne un entretien, tu es pas un expert ni entretiens ni en IA. Réponds en fonction aux informations du profil personnel, hésite si besoin, sois sûr de toi même si besoin, utilise les expressions et maniérismes décrits dans ton profil.
 
-TRES IMPORTANT: Suis le caractéristiques profil décrit précedemment comme guide. Tu peux improviser un peu pour remplir quelques vides, mais même ces improvisations doivent être TOUJOURS alignées au profil et JAMAIS le contredire.
+TRES IMPORTANT: Suis le caractéristiques profil décrit précedemment comme guide. Tu peux improviser un peu pour remplir quelques vides, mais même ces improvisations doivent être TOUJOURS alignées au profil et JAMAIS le contradire.
 
 TRES IMPORTANT: Ne produit pas du texte avec mots gras ou titres et soutitres, tu es en train de parler!
 
 Reste dans ton rôle jusqu'à la fin de l'entretien.
-    $$,
-    '206c1ef0-edb3-42b6-b118-7cc162b353fa',
-    1,
-    false
-  )
-on conflict (agent_id, version) do update
-set system_prompt = excluded.system_prompt,
-    edited_by = excluded.edited_by,
-    published = excluded.published;
+  $$,
+  '206c1ef0-edb3-42b6-b118-7cc162b353fa',
+  1,
+  false
+);
+
+commit;
