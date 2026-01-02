@@ -152,6 +152,7 @@ export default function RegisterPage() {
               value={form.firstName}
               onChange={handleChange("firstName")}
               placeholder="Prénom"
+              autoComplete="given-name"
             />
             {fieldErrors.firstName ? (
               <Field.ErrorText>{fieldErrors.firstName}</Field.ErrorText>
@@ -165,6 +166,7 @@ export default function RegisterPage() {
               value={form.lastName}
               onChange={handleChange("lastName")}
               placeholder="Nom"
+              autoComplete="family-name"
             />
             {fieldErrors.lastName ? (
               <Field.ErrorText>{fieldErrors.lastName}</Field.ErrorText>
@@ -178,6 +180,7 @@ export default function RegisterPage() {
               value={form.email}
               onChange={handleChange("email")}
               placeholder="exemple@universite.fr"
+              autoComplete="email"
             />
             {fieldErrors.email ? (
               <Field.ErrorText>{fieldErrors.email}</Field.ErrorText>
@@ -203,6 +206,7 @@ export default function RegisterPage() {
                 value={form.password}
                 onChange={handleChange("password")}
                 placeholder={`Au moins ${MIN_PASSWORD_LENGTH} caractères`}
+                autoComplete="new-password"
               />
             </InputGroup>
             {fieldErrors.password ? (
@@ -229,6 +233,7 @@ export default function RegisterPage() {
                 value={form.confirmation}
                 onChange={handleChange("confirmation")}
                 placeholder="Répétez votre mot de passe"
+                autoComplete="new-password"
               />
             </InputGroup>
             {fieldErrors.confirmation ? (
