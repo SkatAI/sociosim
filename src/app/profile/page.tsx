@@ -7,12 +7,15 @@ import {
   Container,
   Field,
   Heading,
+  IconButton,
   Input,
+  InputGroup,
   Link,
   Stack,
   Text,
   chakra,
 } from "@chakra-ui/react";
+import { Eye, EyeOff } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -21,9 +24,13 @@ import { useAuthUser } from "@/hooks/useAuthUser";
 type ProfileFormState = {
   firstName: string;
   lastName: string;
+  password: string;
+  confirmation: string;
 };
 
 type FieldErrors = Partial<Record<keyof ProfileFormState, string>>;
+
+const MIN_PASSWORD_LENGTH = 8;
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -31,12 +38,16 @@ export default function ProfilePage() {
   const [form, setForm] = useState<ProfileFormState>({
     firstName: "",
     lastName: "",
+    password: "",
+    confirmation: "",
   });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPrefilling, setIsPrefilling] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -50,6 +61,8 @@ export default function ProfilePage() {
     setForm({
       firstName: (metadata.firstName as string) || "",
       lastName: (metadata.lastName as string) || "",
+      password: "",
+      confirmation: "",
     });
     setIsPrefilling(false);
   }, [isAuthLoading, router, user]);
@@ -73,6 +86,23 @@ export default function ProfilePage() {
       errors.lastName = "Votre nom est requis.";
     }
 
+    const trimmedPassword = form.password.trim();
+    const trimmedConfirmation = form.confirmation.trim();
+
+    if (trimmedPassword || trimmedConfirmation) {
+      if (!trimmedPassword) {
+        errors.password = "Votre mot de passe est requis.";
+      } else if (trimmedPassword.length < MIN_PASSWORD_LENGTH) {
+        errors.password = `Votre mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`;
+      }
+
+      if (!trimmedConfirmation) {
+        errors.confirmation = "Merci de confirmer votre mot de passe.";
+      } else if (trimmedConfirmation !== trimmedPassword) {
+        errors.confirmation = "La confirmation ne correspond pas au mot de passe.";
+      }
+    }
+
     return errors;
   };
 
@@ -83,9 +113,11 @@ export default function ProfilePage() {
     const currentLast = (metadata.lastName as string) || "";
     return (
       form.firstName.trim() !== currentFirst ||
-      form.lastName.trim() !== currentLast
+      form.lastName.trim() !== currentLast ||
+      form.password.trim().length > 0 ||
+      form.confirmation.trim().length > 0
     );
-  }, [form.firstName, form.lastName, user]);
+  }, [form.confirmation, form.firstName, form.lastName, form.password, user]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -107,6 +139,7 @@ export default function ProfilePage() {
 
     const trimmedFirst = form.firstName.trim();
     const trimmedLast = form.lastName.trim();
+    const trimmedPassword = form.password.trim();
     try {
       const response = await fetch("/api/profile", {
         method: "POST",
@@ -114,6 +147,7 @@ export default function ProfilePage() {
         body: JSON.stringify({
           firstName: trimmedFirst,
           lastName: trimmedLast,
+          password: trimmedPassword || undefined,
         }),
       });
 
@@ -137,6 +171,11 @@ export default function ProfilePage() {
         lastName: trimmedLast,
         name: `${trimmedFirst} ${trimmedLast}`,
       });
+      setForm((prev) => ({
+        ...prev,
+        password: "",
+        confirmation: "",
+      }));
     } catch (error) {
       console.error("Erreur lors de la mise à jour du profil:", error);
       setServerError("Une erreur inattendue est survenue. Merci de réessayer.");
@@ -218,6 +257,64 @@ export default function ProfilePage() {
             />
             {fieldErrors.lastName ? (
               <Field.ErrorText>{fieldErrors.lastName}</Field.ErrorText>
+            ) : null}
+          </Field.Root>
+
+          <Field.Root invalid={Boolean(fieldErrors.password)}>
+            <Field.Label>Nouveau mot de passe</Field.Label>
+            <InputGroup
+              endElement={
+                <IconButton
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  onClick={() => setShowPassword(!showPassword)}
+                  variant="ghost"
+                  size="sm"
+                  disabled={isSubmitting}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </IconButton>
+              }
+            >
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={handleChange("password")}
+                placeholder={`Au moins ${MIN_PASSWORD_LENGTH} caractères`}
+                autoComplete="new-password"
+                disabled={isSubmitting}
+              />
+            </InputGroup>
+            {fieldErrors.password ? (
+              <Field.ErrorText>{fieldErrors.password}</Field.ErrorText>
+            ) : null}
+          </Field.Root>
+
+          <Field.Root invalid={Boolean(fieldErrors.confirmation)}>
+            <Field.Label>Confirmez le mot de passe</Field.Label>
+            <InputGroup
+              endElement={
+                <IconButton
+                  aria-label={showConfirmation ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  onClick={() => setShowConfirmation(!showConfirmation)}
+                  variant="ghost"
+                  size="sm"
+                  disabled={isSubmitting}
+                >
+                  {showConfirmation ? <EyeOff size={20} /> : <Eye size={20} />}
+                </IconButton>
+              }
+            >
+              <Input
+                type={showConfirmation ? "text" : "password"}
+                value={form.confirmation}
+                onChange={handleChange("confirmation")}
+                placeholder="Répétez votre mot de passe"
+                autoComplete="new-password"
+                disabled={isSubmitting}
+              />
+            </InputGroup>
+            {fieldErrors.confirmation ? (
+              <Field.ErrorText>{fieldErrors.confirmation}</Field.ErrorText>
             ) : null}
           </Field.Root>
 
