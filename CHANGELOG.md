@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - **Auth Redirects:** Update local Supabase SMTP host and redirect allowlist to support email-based flows.
 - **Dashboard:** Split the dashboard into dedicated Personnas and Mes entretiens pages.
 - **Agents:** Add `public.agent_prompts` for versioned system prompts and seed a template persona in Supabase.
+- **Personnas:** Replace the prompt textarea with a TipTap editor that saves markdown.
 
 ### Changed
 - **Agents Data Source:** Load agent_name and description from `public.agents` instead of static in-code definitions.

@@ -60,3 +60,28 @@ textarea,
 select {
   padding: 0.5rem 0.75rem !important;
 }
+
+.tiptap-editor {
+  min-height: 480px;
+  outline: none;
+  white-space: pre-wrap;
+}
+
+.tiptap-editor h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem;
+}
+
+.tiptap-editor p {
+  margin: 0 0 0.75rem;
+}
+
+.tiptap-editor ul {
+  padding-left: 1.25rem;
+  margin: 0 0 0.75rem;
+}
+
+.tiptap-editor li {
+  margin: 0.25rem 0;
+}
