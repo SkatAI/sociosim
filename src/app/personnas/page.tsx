@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { type Agent } from "@/lib/agents";
 import { supabase } from "@/lib/supabaseClient";
+import { PenLine } from "lucide-react";
 
 interface InterviewWithDetails {
   agents?: {
@@ -199,6 +200,16 @@ export default function PersonnasPage() {
             {agents.map((agent) => (
               <Card.Root key={agent.id}>
                 <Card.Body display="flex" flexDirection="column" alignItems="center" gap={4} py={6} px={4}>
+                  <HStack width="full" justifyContent="flex-end">
+                    <Button
+                      aria-label="Modifier le prompt"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => router.push(`/personnas/${agent.id}/edit`)}
+                    >
+                      <PenLine size={18} />
+                    </Button>
+                  </HStack>
                   <Avatar.Root size="lg">
                     <Avatar.Fallback>{agent.agent_name.charAt(0)}</Avatar.Fallback>
                   </Avatar.Root>

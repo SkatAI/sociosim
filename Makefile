@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup start start-logs dev build lint format clean supa-start supa-stop supa-reset docker-up docker-up-detached docker-down docker-build docker-logs
+.PHONY: help setup start start-logs dev devrun build lint format format-fix pretty clean supa-start supa-stop supa-reset supa-status supa-push supa-pull db-start db-stop db-reset docker-dev docker-dev-detached docker-up-detached docker-prod docker-prod-detached docker-down docker-logs docker-prod-build test test-ui
 
 help: ## Show available make targets.
 	@echo "Available make targets:"
@@ -34,6 +34,9 @@ start-logs: ## Start Supabase and Next.js with logs streamed to logs/dev.log
 dev: ## Start Next.js dev server only (Supabase must be running separately).
 	npm run dev
 
+devrun: ## Start Panda watcher + Next.js dev server (alias for dev).
+	@$(MAKE) dev
+
 build: ## Build the application for production.
 	npm run build
 
@@ -48,16 +51,25 @@ format: ## Check code formatting with Prettier.
 format-fix: ## Auto-format code with Prettier.
 	npm run format:fix
 
+pretty: ## Auto-format code with Prettier (alias for format-fix).
+	@$(MAKE) format-fix
+
 # Docker
 
 docker-dev: ## Run development environment in Docker with hot reload.
 	docker compose -f docker-compose.yaml up --build
+
+docker-dev-detached: ## Run development environment in Docker with hot reload (detached).
+	@$(MAKE) docker-up-detached
 
 docker-up-detached: ## Run development environment in Docker with hot reload.
 	docker compose -f docker-compose.yaml up -d
 
 docker-prod: ## Run production build in Docker.
 	docker compose -f docker-compose.prod.yaml up --build
+
+docker-prod-detached: ## Run production build in Docker (detached).
+	docker compose -f docker-compose.prod.yaml up -d
 
 docker-down: ## Stop all Docker containers.
 	docker compose -f docker-compose.yaml down
@@ -74,13 +86,22 @@ docker-prod-build: ## Build Docker production image without starting containers.
 supa-start: ## Start Supabase locally.
 	supabase start
 
+db-start: ## Start Supabase locally (alias for supa-start).
+	@$(MAKE) supa-start
+
 supa-stop: ## Stop Supabase.
 	supabase stop
+
+db-stop: ## Stop Supabase (alias for supa-stop).
+	@$(MAKE) supa-stop
 
 supa-reset: ## Reset Supabase (clears all data, re-applies migrations).
 	supabase stop
 	rm -rf .supabase/
 	supabase start
+
+db-reset: ## Reset Supabase (alias for supa-reset).
+	@$(MAKE) supa-reset
 
 supa-status: ## Check Supabase status.
 	supabase status

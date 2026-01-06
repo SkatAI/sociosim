@@ -43,14 +43,26 @@ function LoginPageInner() {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     console.log("[login] Attempting sign in with:", form.email);
 
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      const signInPromise = supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password,
       });
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error("timeout"));
+        }, 15000);
+      });
+
+      const { data, error: signInError } = (await Promise.race([
+        signInPromise,
+        timeoutPromise,
+      ])) as Awaited<typeof signInPromise>;
+
 
       console.log(
         "[login] Sign in response - session:",
@@ -78,8 +90,16 @@ function LoginPageInner() {
       router.replace("/dashboard");
     } catch (submitError) {
       console.error("[login] Sign in failed:", submitError);
-      setError("Impossible de vous connecter pour le moment. Veuillez réessayer.");
+      const isTimeout = submitError instanceof Error && submitError.message === "timeout";
+      setError(
+        isTimeout
+          ? "La connexion a expiré. Vérifiez que Supabase est démarré puis réessayez."
+          : "Impossible de vous connecter pour le moment. Veuillez réessayer."
+      );
     } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       setIsSubmitting(false);
     }
   };
