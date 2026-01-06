@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
 import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
-import DashboardPage from "./page";
+import DashboardClient from "./DashboardClient";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { mockUseAuthUser } from "@/test/mocks/useAuthUser";
 import { mockRouter } from "@/test/mocks/router";
@@ -34,7 +34,7 @@ describe("DashboardPage", () => {
   });
 
   it("shows filter dropdown only when multiple agents exist", async () => {
-    renderWithChakra(<DashboardPage />);
+    renderWithChakra(<DashboardClient />);
 
     await waitFor(() => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
@@ -46,7 +46,7 @@ describe("DashboardPage", () => {
   it("hides the filter dropdown when only one agent exists", async () => {
     global.fetch = vi.fn().mockResolvedValue(createInterviewsResponse([mockInterview]));
 
-    renderWithChakra(<DashboardPage />);
+    renderWithChakra(<DashboardClient />);
 
     await waitFor(() => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
@@ -57,7 +57,7 @@ describe("DashboardPage", () => {
 
   it("filters interviews when an agent is selected", async () => {
     const user = userEvent.setup();
-    renderWithChakra(<DashboardPage />);
+    renderWithChakra(<DashboardClient />);
 
     await waitFor(() => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
@@ -73,7 +73,7 @@ describe("DashboardPage", () => {
 
   it("navigates to personnas when creating without a selected agent", async () => {
     const user = userEvent.setup();
-    renderWithChakra(<DashboardPage />);
+    renderWithChakra(<DashboardClient />);
 
     await waitFor(() => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
@@ -103,7 +103,7 @@ describe("DashboardPage", () => {
     });
     global.fetch = mockFetch;
 
-    renderWithChakra(<DashboardPage />);
+    renderWithChakra(<DashboardClient />);
 
     await waitFor(() => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
@@ -139,7 +139,7 @@ describe("DashboardPage", () => {
       new URLSearchParams({ agent: "theo" }) as unknown as ReadonlyURLSearchParams
     );
 
-    renderWithChakra(<DashboardPage />);
+    renderWithChakra(<DashboardClient />);
 
     await waitFor(() => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
