@@ -35,39 +35,51 @@ describe("RegisterPage", () => {
   });
 
   it("shows validation errors for invalid email and password mismatch", async () => {
-    const user = userEvent.setup();
     renderWithChakra(<RegisterPage />);
 
-    await user.type(screen.getByLabelText("Prénom"), "Ada");
-    await user.type(screen.getByLabelText("Nom"), "Lovelace");
-    await user.type(screen.getByLabelText("Adresse e-mail"), "invalid-email");
-    await user.type(screen.getByLabelText("Mot de passe"), "short");
-    await user.type(screen.getByLabelText("Confirmez le mot de passe"), "different");
+    fireEvent.change(screen.getByLabelText("Prénom"), { target: { value: "Ada" } });
+    fireEvent.change(screen.getByLabelText("Nom"), { target: { value: "Lovelace" } });
+    fireEvent.change(screen.getByLabelText("Adresse e-mail"), { target: { value: "invalid-email" } });
+    fireEvent.change(screen.getByLabelText("Mot de passe"), { target: { value: "short" } });
+    fireEvent.change(screen.getByLabelText("Confirmez le mot de passe"), {
+      target: { value: "different" },
+    });
 
     const form = document.querySelector("form");
     expect(form).not.toBeNull();
     fireEvent.submit(form as HTMLFormElement);
 
-    expect(await screen.findByText("Merci de fournir une adresse e-mail valide.")).toBeInTheDocument();
-    expect(await screen.findByText("Votre mot de passe doit contenir au moins 8 caractères.")).toBeInTheDocument();
-    expect(await screen.findByText("La confirmation ne correspond pas au mot de passe.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Merci de fournir une adresse e-mail valide.")).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByText("Votre mot de passe doit contenir au moins 8 caractères.")
+      ).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByText("La confirmation ne correspond pas au mot de passe.")
+      ).toBeInTheDocument();
+    });
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it("submits valid data and redirects on success", async () => {
-    const user = userEvent.setup();
     vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
-    global.fetch = vi.fn().mockResolvedValue({ ok: true });
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
 
     renderWithChakra(<RegisterPage />);
 
-    await user.type(screen.getByLabelText("Prénom"), " Ada ");
-    await user.type(screen.getByLabelText("Nom"), " Lovelace ");
-    await user.type(screen.getByLabelText("Adresse e-mail"), "ada@example.com ");
-    await user.type(screen.getByLabelText("Mot de passe"), "longenough");
-    await user.type(screen.getByLabelText("Confirmez le mot de passe"), "longenough");
+    fireEvent.change(screen.getByLabelText("Prénom"), { target: { value: " Ada " } });
+    fireEvent.change(screen.getByLabelText("Nom"), { target: { value: " Lovelace " } });
+    fireEvent.change(screen.getByLabelText("Adresse e-mail"), { target: { value: "ada@example.com " } });
+    fireEvent.change(screen.getByLabelText("Mot de passe"), { target: { value: "longenough" } });
+    fireEvent.change(screen.getByLabelText("Confirmez le mot de passe"), {
+      target: { value: "longenough" },
+    });
 
-    await user.click(screen.getByRole("button", { name: /Créer mon compte/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Créer mon compte/i }));
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalled();

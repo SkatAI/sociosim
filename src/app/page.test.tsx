@@ -6,6 +6,14 @@ import Home from "./page";
 import { supabase } from "@/lib/supabaseClient";
 import { mockRouter } from "@/test/mocks/router";
 
+vi.mock("@/lib/supabaseClient", () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn(),
+    },
+  },
+}));
+
 function renderWithChakra(component: React.ReactElement) {
   return render(<ChakraProvider value={defaultSystem}>{component}</ChakraProvider>);
 }

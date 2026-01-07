@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
 import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
@@ -31,7 +31,6 @@ describe("LoginPage", () => {
   });
 
   it("shows error message for invalid credentials", async () => {
-    const user = userEvent.setup();
     signInWithPassword.mockResolvedValue({
       data: { session: null },
       error: { message: "Invalid login credentials" },
@@ -39,9 +38,13 @@ describe("LoginPage", () => {
 
     renderWithChakra(<LoginPage />);
 
-    await user.type(screen.getByLabelText("Adresse e-mail"), "user@example.com");
-    await user.type(screen.getByLabelText("Mot de passe"), "wrongpass");
-    await user.click(screen.getByRole("button", { name: /Se connecter/i }));
+    fireEvent.change(screen.getByLabelText("Adresse e-mail"), {
+      target: { value: "user@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Mot de passe"), {
+      target: { value: "wrongpass" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Se connecter/i }));
 
     const errors = await screen.findAllByText(/Identifiants incorrects/i);
     expect(errors.length).toBeGreaterThan(0);

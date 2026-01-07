@@ -34,7 +34,9 @@ vi.mock("@/lib/supabaseClient", () => ({
   supabase: {
     from: vi.fn(() => ({
       select: vi.fn(() => ({
-        order: vi.fn().mockResolvedValue({ data: mockAgents, error: null }),
+        eq: vi.fn(() => ({
+          order: vi.fn().mockResolvedValue({ data: mockAgents, error: null }),
+        })),
       })),
     })),
   },

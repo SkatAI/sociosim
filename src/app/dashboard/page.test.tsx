@@ -9,7 +9,9 @@ import { mockUseAuthUser } from "@/test/mocks/useAuthUser";
 import { mockRouter } from "@/test/mocks/router";
 import { mockInterviewsList, mockInterview } from "@/test/mocks/interviews";
 
-vi.mock("@/hooks/useAuthUser");
+vi.mock("@/hooks/useAuthUser", () => ({
+  useAuthUser: vi.fn(),
+}));
 vi.mock("next/navigation");
 
 function renderWithChakra(component: React.ReactElement) {
