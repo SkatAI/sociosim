@@ -104,6 +104,9 @@ function ResetPasswordConfirmPageInner() {
           window.history.replaceState({}, document.title, url.toString());
         }
 
+        let sessionHydratedFromHash = false;
+        let setSessionTimedOut = false;
+
         if (window.location.hash.includes("access_token=")) {
           debugState.hasHashToken = true;
           const params = new URLSearchParams(window.location.hash.slice(1));
@@ -130,6 +133,7 @@ function ResetPasswordConfirmPageInner() {
                 8000
               );
             } catch {
+              setSessionTimedOut = true;
               console.error("[reset-password] setSession timed out");
             }
             const sessionError = sessionResult?.error;
@@ -141,10 +145,18 @@ function ResetPasswordConfirmPageInner() {
               return;
             }
             console.log("[reset-password] setSession succeeded");
+            sessionHydratedFromHash = true;
           }
 
           url.hash = "";
           window.history.replaceState({}, document.title, url.toString());
+        }
+
+        if (sessionHydratedFromHash || setSessionTimedOut) {
+          debugState.sessionFound = sessionHydratedFromHash;
+          setDebugDetails(debugState);
+          finalize("ready");
+          return;
         }
 
         console.log("[reset-password] Calling getSession after hydration");
