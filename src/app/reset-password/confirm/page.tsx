@@ -2,6 +2,7 @@
 
 import {
   Alert,
+  Box,
   Button,
   Container,
   Field,
@@ -35,6 +36,19 @@ function ResetPasswordConfirmPageInner() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");
+  const [debugDetails, setDebugDetails] = useState<
+    | {
+        hasCode: boolean;
+        hasHashToken: boolean;
+        accessTokenLength: number;
+        refreshTokenLength: number;
+        exchangeError?: string;
+        sessionError?: string;
+        getSessionError?: string;
+        sessionFound: boolean;
+      }
+    | null
+  >(null);
 
   useEffect(() => {
     let isActive = true;
@@ -48,13 +62,27 @@ function ResetPasswordConfirmPageInner() {
     };
 
     const hydrateSessionFromUrl = async () => {
+      const debugState = {
+        hasCode: false,
+        hasHashToken: false,
+        accessTokenLength: 0,
+        refreshTokenLength: 0,
+        exchangeError: undefined,
+        sessionError: undefined,
+        getSessionError: undefined,
+        sessionFound: false,
+      };
+
       try {
         const url = new URL(window.location.href);
         const code = url.searchParams.get("code");
+        debugState.hasCode = Boolean(code);
 
         if (code) {
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) {
+            debugState.exchangeError = exchangeError.message;
+            setDebugDetails(debugState);
             finalize("invalid");
             return;
           }
@@ -63,9 +91,12 @@ function ResetPasswordConfirmPageInner() {
         }
 
         if (window.location.hash.includes("access_token=")) {
+          debugState.hasHashToken = true;
           const params = new URLSearchParams(window.location.hash.slice(1));
           const accessToken = params.get("access_token");
           const refreshToken = params.get("refresh_token");
+          debugState.accessTokenLength = accessToken?.length ?? 0;
+          debugState.refreshTokenLength = refreshToken?.length ?? 0;
 
           if (accessToken && refreshToken) {
             const { error: sessionError } = await supabase.auth.setSession({
@@ -73,6 +104,8 @@ function ResetPasswordConfirmPageInner() {
               refresh_token: refreshToken,
             });
             if (sessionError) {
+              debugState.sessionError = sessionError.message;
+              setDebugDetails(debugState);
               finalize("invalid");
               return;
             }
@@ -82,10 +115,27 @@ function ResetPasswordConfirmPageInner() {
           window.history.replaceState({}, document.title, url.toString());
         }
 
-        const { data } = await supabase.auth.getSession();
+        const { data, error: getSessionError } = await supabase.auth.getSession();
+        if (getSessionError) {
+          debugState.getSessionError = getSessionError.message;
+        }
+        debugState.sessionFound = Boolean(data.session);
+        setDebugDetails(debugState);
         finalize(data.session ? "ready" : "invalid");
       } catch (sessionError) {
         console.error("[reset-password] Failed to hydrate session", sessionError);
+        setDebugDetails((prev) =>
+          prev ?? {
+            hasCode: false,
+            hasHashToken: false,
+            accessTokenLength: 0,
+            refreshTokenLength: 0,
+            exchangeError: undefined,
+            sessionError: undefined,
+            getSessionError: undefined,
+            sessionFound: false,
+          }
+        );
         finalize("invalid");
       }
     };
@@ -188,6 +238,34 @@ function ResetPasswordConfirmPageInner() {
               <Alert.Description>{error}</Alert.Description>
             </Alert.Content>
           </Alert.Root>
+        ) : null}
+
+        {debugDetails ? (
+          <Box
+            borderWidth="1px"
+            borderColor="border.muted"
+            borderRadius="md"
+            padding={3}
+            width="full"
+          >
+            <Text fontSize="sm" fontWeight="semibold" marginBottom={2}>
+              Debug reset (temporary)
+            </Text>
+            <Text fontSize="xs" fontFamily="mono">
+              status={status} hasCode={String(debugDetails.hasCode)} hasHashToken=
+              {String(debugDetails.hasHashToken)} accessTokenLength={debugDetails.accessTokenLength} refreshTokenLength=
+              {debugDetails.refreshTokenLength} sessionFound={String(debugDetails.sessionFound)}
+            </Text>
+            {(debugDetails.exchangeError ||
+              debugDetails.sessionError ||
+              debugDetails.getSessionError) && (
+              <Text fontSize="xs" fontFamily="mono" marginTop={2}>
+                exchangeError={debugDetails.exchangeError ?? "none"} sessionError=
+                {debugDetails.sessionError ?? "none"} getSessionError=
+                {debugDetails.getSessionError ?? "none"}
+              </Text>
+            )}
+          </Box>
         ) : null}
 
         <form onSubmit={handleSubmit} style={{ width: "100%", maxWidth: "28rem" }}>
