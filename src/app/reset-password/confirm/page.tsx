@@ -208,10 +208,36 @@ function ResetPasswordConfirmPageInner() {
     setIsSubmitting(true);
 
     try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("[reset-password] getSession before update error:", sessionError.message);
+      } else {
+        console.log("[reset-password] Session before update:", {
+          hasSession: Boolean(sessionData.session),
+          expiresAt: sessionData.session?.expires_at,
+          userId: sessionData.session?.user?.id,
+        });
+      }
+
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error("[reset-password] getUser before update error:", userError.message);
+      } else {
+        console.log("[reset-password] User before update:", {
+          userId: userData.user?.id,
+          email: userData.user?.email,
+        });
+      }
+
       console.log("[reset-password] Calling supabase.auth.updateUser");
+      const pendingTimer = window.setTimeout(() => {
+        console.warn("[reset-password] updateUser still pending after 5s");
+      }, 5000);
+
       const { error: updateError } = await supabase.auth.updateUser({
         password: form.password,
       });
+      window.clearTimeout(pendingTimer);
 
       if (updateError) {
         console.error("[reset-password] updateUser error:", updateError.message);
