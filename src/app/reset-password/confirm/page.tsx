@@ -36,19 +36,18 @@ function ResetPasswordConfirmPageInner() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");
-  const [debugDetails, setDebugDetails] = useState<
-    | {
-        hasCode: boolean;
-        hasHashToken: boolean;
-        accessTokenLength: number;
-        refreshTokenLength: number;
-        exchangeError?: string;
-        sessionError?: string;
-        getSessionError?: string;
-        sessionFound: boolean;
-      }
-    | null
-  >(null);
+  type DebugDetails = {
+    hasCode: boolean;
+    hasHashToken: boolean;
+    accessTokenLength: number;
+    refreshTokenLength: number;
+    exchangeError?: string;
+    sessionError?: string;
+    getSessionError?: string;
+    sessionFound: boolean;
+  };
+
+  const [debugDetails, setDebugDetails] = useState<DebugDetails | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -62,14 +61,11 @@ function ResetPasswordConfirmPageInner() {
     };
 
     const hydrateSessionFromUrl = async () => {
-      const debugState = {
+      const debugState: DebugDetails = {
         hasCode: false,
         hasHashToken: false,
         accessTokenLength: 0,
         refreshTokenLength: 0,
-        exchangeError: undefined,
-        sessionError: undefined,
-        getSessionError: undefined,
         sessionFound: false,
       };
 
@@ -130,9 +126,6 @@ function ResetPasswordConfirmPageInner() {
             hasHashToken: false,
             accessTokenLength: 0,
             refreshTokenLength: 0,
-            exchangeError: undefined,
-            sessionError: undefined,
-            getSessionError: undefined,
             sessionFound: false,
           }
         );

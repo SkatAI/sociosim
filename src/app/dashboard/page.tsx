@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Box, Container, Spinner, Text, VStack } from "@chakra-ui/react";
+import { Container, Spinner, Text, VStack } from "@chakra-ui/react";
 import DashboardClient from "./DashboardClient";
 
 export const dynamic = "force-dynamic";
