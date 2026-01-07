@@ -50,16 +50,16 @@ function ResetPasswordConfirmPageInner() {
   const [debugDetails, setDebugDetails] = useState<DebugDetails | null>(null);
 
   const withTimeout = async <T,>(label: string, promise: Promise<T>, ms = 5000): Promise<T> => {
-    let timeoutId: ReturnType<typeof window.setTimeout> | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     const timeoutPromise = new Promise<T>((_resolve, reject) => {
-      timeoutId = window.setTimeout(() => {
+      timeoutId = setTimeout(() => {
         reject(new Error(`${label} timed out after ${ms}ms`));
       }, ms);
     });
     try {
       return await Promise.race([promise, timeoutPromise]);
     } finally {
-      if (timeoutId) window.clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
     }
   };
 
