@@ -102,6 +102,7 @@ function ResetPasswordConfirmPageInner() {
           });
 
           if (accessToken && refreshToken) {
+            console.log("[reset-password] Calling setSession");
             const { error: sessionError } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken,
@@ -113,12 +114,14 @@ function ResetPasswordConfirmPageInner() {
               finalize("invalid");
               return;
             }
+            console.log("[reset-password] setSession succeeded");
           }
 
           url.hash = "";
           window.history.replaceState({}, document.title, url.toString());
         }
 
+        console.log("[reset-password] Calling getSession after hydration");
         const { data, error: getSessionError } = await supabase.auth.getSession();
         if (getSessionError) {
           debugState.getSessionError = getSessionError.message;
@@ -208,6 +211,7 @@ function ResetPasswordConfirmPageInner() {
     setIsSubmitting(true);
 
     try {
+      console.log("[reset-password] About to fetch session before update");
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
         console.error("[reset-password] getSession before update error:", sessionError.message);
@@ -219,6 +223,7 @@ function ResetPasswordConfirmPageInner() {
         });
       }
 
+      console.log("[reset-password] About to fetch user before update");
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) {
         console.error("[reset-password] getUser before update error:", userError.message);
