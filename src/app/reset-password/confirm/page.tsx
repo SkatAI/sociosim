@@ -36,6 +36,7 @@ function ResetPasswordConfirmPageInner() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");
+  const [recoveryAccessToken, setRecoveryAccessToken] = useState<string | null>(null);
   type DebugDetails = {
     hasCode: boolean;
     hasHashToken: boolean;
@@ -116,16 +117,27 @@ function ResetPasswordConfirmPageInner() {
           });
 
           if (accessToken && refreshToken) {
+            setRecoveryAccessToken(accessToken);
             console.log("[reset-password] Calling setSession");
-            const { error: sessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
+            let sessionResult: Awaited<ReturnType<typeof supabase.auth.setSession>> | null = null;
+            try {
+              sessionResult = await withTimeout(
+                "setSession",
+                supabase.auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken,
+                }),
+                8000
+              );
+            } catch {
+              console.error("[reset-password] setSession timed out");
+            }
+            const sessionError = sessionResult?.error;
             if (sessionError) {
               debugState.sessionError = sessionError.message;
               console.error("[reset-password] setSession error:", sessionError.message);
               setDebugDetails(debugState);
-              finalize("invalid");
+              finalize("ready");
               return;
             }
             console.log("[reset-password] setSession succeeded");
@@ -229,52 +241,107 @@ function ResetPasswordConfirmPageInner() {
 
     try {
       console.log("[reset-password] About to fetch session before update");
-      const { data: sessionData, error: sessionError } = await withTimeout(
-        "getSession before update",
-        supabase.auth.getSession()
-      );
-      if (sessionError) {
-        console.error("[reset-password] getSession before update error:", sessionError.message);
-      } else {
-        console.log("[reset-password] Session before update:", {
-          hasSession: Boolean(sessionData.session),
-          expiresAt: sessionData.session?.expires_at,
-          userId: sessionData.session?.user?.id,
-        });
+      let hasSession = false;
+      try {
+        const { data: sessionData, error: sessionError } = await withTimeout(
+          "getSession before update",
+          supabase.auth.getSession()
+        );
+        if (sessionError) {
+          console.error("[reset-password] getSession before update error:", sessionError.message);
+        } else {
+          hasSession = Boolean(sessionData.session);
+          console.log("[reset-password] Session before update:", {
+            hasSession,
+            expiresAt: sessionData.session?.expires_at,
+            userId: sessionData.session?.user?.id,
+          });
+        }
+      } catch {
+        console.error("[reset-password] getSession before update timed out");
       }
 
-      console.log("[reset-password] About to fetch user before update");
-      const { data: userData, error: userError } = await withTimeout(
-        "getUser before update",
-        supabase.auth.getUser()
-      );
-      if (userError) {
-        console.error("[reset-password] getUser before update error:", userError.message);
-      } else {
-        console.log("[reset-password] User before update:", {
-          userId: userData.user?.id,
-          email: userData.user?.email,
-        });
+      if (hasSession) {
+        console.log("[reset-password] About to fetch user before update");
+        try {
+          const { data: userData, error: userError } = await withTimeout(
+            "getUser before update",
+            supabase.auth.getUser()
+          );
+          if (userError) {
+            console.error("[reset-password] getUser before update error:", userError.message);
+          } else {
+            console.log("[reset-password] User before update:", {
+              userId: userData.user?.id,
+              email: userData.user?.email,
+            });
+          }
+        } catch {
+          console.error("[reset-password] getUser before update timed out");
+        }
       }
 
       console.log("[reset-password] Calling supabase.auth.updateUser");
-      const { error: updateError } = await withTimeout(
-        "updateUser",
-        supabase.auth.updateUser({
-          password: form.password,
-        })
-      );
+      let updateError: { message?: string } | null = null;
+      try {
+        const updateResult = await withTimeout(
+          "updateUser",
+          supabase.auth.updateUser({
+            password: form.password,
+          }),
+          10000
+        );
+        updateError = updateResult.error ?? null;
+      } catch {
+        updateError = { message: "updateUser timed out" };
+      }
 
       if (updateError) {
         console.error("[reset-password] updateUser error:", updateError.message);
-        setError(
-          updateError.message ?? "Impossible de réinitialiser votre mot de passe."
-        );
-        return;
+        if (recoveryAccessToken) {
+          console.warn("[reset-password] Falling back to direct auth API update");
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+          const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+          if (!supabaseUrl || !supabaseAnonKey) {
+            setError("Configuration Supabase manquante.");
+            return;
+          }
+
+          const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${recoveryAccessToken}`,
+              apikey: supabaseAnonKey,
+            },
+            body: JSON.stringify({ password: form.password }),
+          });
+
+          if (!response.ok) {
+            const payload = await response.json().catch(() => null);
+            const message =
+              payload?.msg ||
+              payload?.error_description ||
+              payload?.message ||
+              `Erreur ${response.status}`;
+            console.error("[reset-password] Direct update failed:", message);
+            setError(message);
+            return;
+          }
+        } else {
+          setError(
+            updateError.message ?? "Impossible de réinitialiser votre mot de passe."
+          );
+          return;
+        }
       }
 
       console.log("[reset-password] Password updated, signing out");
-      await supabase.auth.signOut();
+      try {
+        await withTimeout("signOut", supabase.auth.signOut(), 5000);
+      } catch {
+        console.warn("[reset-password] signOut timed out");
+      }
       router.replace("/login?password=reset");
     } catch (submitError) {
       console.error("[reset-password] Failed to update password", submitError);
