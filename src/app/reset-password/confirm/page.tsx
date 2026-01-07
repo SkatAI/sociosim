@@ -2,7 +2,6 @@
 
 import {
   Alert,
-  Box,
   Button,
   Container,
   Field,
@@ -37,18 +36,6 @@ function ResetPasswordConfirmPageInner() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");
   const [recoveryAccessToken, setRecoveryAccessToken] = useState<string | null>(null);
-  type DebugDetails = {
-    hasCode: boolean;
-    hasHashToken: boolean;
-    accessTokenLength: number;
-    refreshTokenLength: number;
-    exchangeError?: string;
-    sessionError?: string;
-    getSessionError?: string;
-    sessionFound: boolean;
-  };
-
-  const [debugDetails, setDebugDetails] = useState<DebugDetails | null>(null);
 
   const withTimeout = async <T,>(label: string, promise: Promise<T>, ms = 5000): Promise<T> => {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -76,27 +63,13 @@ function ResetPasswordConfirmPageInner() {
     };
 
     const hydrateSessionFromUrl = async () => {
-      const debugState: DebugDetails = {
-        hasCode: false,
-        hasHashToken: false,
-        accessTokenLength: 0,
-        refreshTokenLength: 0,
-        sessionFound: false,
-      };
-
       try {
-        console.log("[reset-password] Starting session hydration");
         const url = new URL(window.location.href);
         const code = url.searchParams.get("code");
-        debugState.hasCode = Boolean(code);
-        console.log("[reset-password] URL code present:", debugState.hasCode);
 
         if (code) {
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) {
-            debugState.exchangeError = exchangeError.message;
-            console.error("[reset-password] exchangeCodeForSession error:", exchangeError.message);
-            setDebugDetails(debugState);
             finalize("invalid");
             return;
           }
@@ -108,20 +81,12 @@ function ResetPasswordConfirmPageInner() {
         let setSessionTimedOut = false;
 
         if (window.location.hash.includes("access_token=")) {
-          debugState.hasHashToken = true;
           const params = new URLSearchParams(window.location.hash.slice(1));
           const accessToken = params.get("access_token");
           const refreshToken = params.get("refresh_token");
-          debugState.accessTokenLength = accessToken?.length ?? 0;
-          debugState.refreshTokenLength = refreshToken?.length ?? 0;
-          console.log("[reset-password] Hash token detected", {
-            accessTokenLength: debugState.accessTokenLength,
-            refreshTokenLength: debugState.refreshTokenLength,
-          });
 
           if (accessToken && refreshToken) {
             setRecoveryAccessToken(accessToken);
-            console.log("[reset-password] Calling setSession");
             let sessionResult: Awaited<ReturnType<typeof supabase.auth.setSession>> | null = null;
             try {
               sessionResult = await withTimeout(
@@ -134,17 +99,12 @@ function ResetPasswordConfirmPageInner() {
               );
             } catch {
               setSessionTimedOut = true;
-              console.error("[reset-password] setSession timed out");
             }
             const sessionError = sessionResult?.error;
             if (sessionError) {
-              debugState.sessionError = sessionError.message;
-              console.error("[reset-password] setSession error:", sessionError.message);
-              setDebugDetails(debugState);
               finalize("ready");
               return;
             }
-            console.log("[reset-password] setSession succeeded");
             sessionHydratedFromHash = true;
           }
 
@@ -153,36 +113,20 @@ function ResetPasswordConfirmPageInner() {
         }
 
         if (sessionHydratedFromHash || setSessionTimedOut) {
-          debugState.sessionFound = sessionHydratedFromHash;
-          setDebugDetails(debugState);
           finalize("ready");
           return;
         }
 
-        console.log("[reset-password] Calling getSession after hydration");
         const { data, error: getSessionError } = await withTimeout(
           "getSession after hydration",
           supabase.auth.getSession()
         );
         if (getSessionError) {
-          debugState.getSessionError = getSessionError.message;
-          console.error("[reset-password] getSession error:", getSessionError.message);
+          finalize("invalid");
+          return;
         }
-        debugState.sessionFound = Boolean(data.session);
-        console.log("[reset-password] Session found:", debugState.sessionFound);
-        setDebugDetails(debugState);
         finalize(data.session ? "ready" : "invalid");
-      } catch (sessionError) {
-        console.error("[reset-password] Failed to hydrate session", sessionError);
-        setDebugDetails((prev) =>
-          prev ?? {
-            hasCode: false,
-            hasHashToken: false,
-            accessTokenLength: 0,
-            refreshTokenLength: 0,
-            sessionFound: false,
-          }
-        );
+      } catch {
         finalize("invalid");
       }
     };
@@ -231,12 +175,6 @@ function ResetPasswordConfirmPageInner() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
-    console.log("[reset-password] Submit attempt", {
-      status,
-      isTokenMissing,
-      passwordLength: form.password.length,
-      confirmationLength: form.confirmation.length,
-    });
 
     if (isTokenMissing) {
       setError("Ce lien de validation est invalide ou expiré.");
@@ -252,48 +190,6 @@ function ResetPasswordConfirmPageInner() {
     setIsSubmitting(true);
 
     try {
-      console.log("[reset-password] About to fetch session before update");
-      let hasSession = false;
-      try {
-        const { data: sessionData, error: sessionError } = await withTimeout(
-          "getSession before update",
-          supabase.auth.getSession()
-        );
-        if (sessionError) {
-          console.error("[reset-password] getSession before update error:", sessionError.message);
-        } else {
-          hasSession = Boolean(sessionData.session);
-          console.log("[reset-password] Session before update:", {
-            hasSession,
-            expiresAt: sessionData.session?.expires_at,
-            userId: sessionData.session?.user?.id,
-          });
-        }
-      } catch {
-        console.error("[reset-password] getSession before update timed out");
-      }
-
-      if (hasSession) {
-        console.log("[reset-password] About to fetch user before update");
-        try {
-          const { data: userData, error: userError } = await withTimeout(
-            "getUser before update",
-            supabase.auth.getUser()
-          );
-          if (userError) {
-            console.error("[reset-password] getUser before update error:", userError.message);
-          } else {
-            console.log("[reset-password] User before update:", {
-              userId: userData.user?.id,
-              email: userData.user?.email,
-            });
-          }
-        } catch {
-          console.error("[reset-password] getUser before update timed out");
-        }
-      }
-
-      console.log("[reset-password] Calling supabase.auth.updateUser");
       let updateError: { message?: string } | null = null;
       try {
         const updateResult = await withTimeout(
@@ -309,9 +205,7 @@ function ResetPasswordConfirmPageInner() {
       }
 
       if (updateError) {
-        console.error("[reset-password] updateUser error:", updateError.message);
         if (recoveryAccessToken) {
-          console.warn("[reset-password] Falling back to direct auth API update");
           const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
           const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
           if (!supabaseUrl || !supabaseAnonKey) {
@@ -336,7 +230,6 @@ function ResetPasswordConfirmPageInner() {
               payload?.error_description ||
               payload?.message ||
               `Erreur ${response.status}`;
-            console.error("[reset-password] Direct update failed:", message);
             setError(message);
             return;
           }
@@ -348,15 +241,12 @@ function ResetPasswordConfirmPageInner() {
         }
       }
 
-      console.log("[reset-password] Password updated, signing out");
       try {
         await withTimeout("signOut", supabase.auth.signOut(), 5000);
       } catch {
-        console.warn("[reset-password] signOut timed out");
       }
       router.replace("/login?password=reset");
-    } catch (submitError) {
-      console.error("[reset-password] Failed to update password", submitError);
+    } catch {
       setError("Impossible de réinitialiser votre mot de passe.");
     } finally {
       setIsSubmitting(false);
@@ -381,34 +271,6 @@ function ResetPasswordConfirmPageInner() {
               <Alert.Description>{error}</Alert.Description>
             </Alert.Content>
           </Alert.Root>
-        ) : null}
-
-        {debugDetails ? (
-          <Box
-            borderWidth="1px"
-            borderColor="border.muted"
-            borderRadius="md"
-            padding={3}
-            width="full"
-          >
-            <Text fontSize="sm" fontWeight="semibold" marginBottom={2}>
-              Debug reset (temporary)
-            </Text>
-            <Text fontSize="xs" fontFamily="mono">
-              status={status} hasCode={String(debugDetails.hasCode)} hasHashToken=
-              {String(debugDetails.hasHashToken)} accessTokenLength={debugDetails.accessTokenLength} refreshTokenLength=
-              {debugDetails.refreshTokenLength} sessionFound={String(debugDetails.sessionFound)}
-            </Text>
-            {(debugDetails.exchangeError ||
-              debugDetails.sessionError ||
-              debugDetails.getSessionError) && (
-              <Text fontSize="xs" fontFamily="mono" marginTop={2}>
-                exchangeError={debugDetails.exchangeError ?? "none"} sessionError=
-                {debugDetails.sessionError ?? "none"} getSessionError=
-                {debugDetails.getSessionError ?? "none"}
-              </Text>
-            )}
-          </Box>
         ) : null}
 
         <form onSubmit={handleSubmit} style={{ width: "100%", maxWidth: "28rem" }}>
