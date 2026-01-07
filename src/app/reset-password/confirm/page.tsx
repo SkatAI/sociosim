@@ -49,6 +49,20 @@ function ResetPasswordConfirmPageInner() {
 
   const [debugDetails, setDebugDetails] = useState<DebugDetails | null>(null);
 
+  const withTimeout = async <T,>(label: string, promise: Promise<T>, ms = 5000): Promise<T> => {
+    let timeoutId: ReturnType<typeof window.setTimeout> | null = null;
+    const timeoutPromise = new Promise<T>((_resolve, reject) => {
+      timeoutId = window.setTimeout(() => {
+        reject(new Error(`${label} timed out after ${ms}ms`));
+      }, ms);
+    });
+    try {
+      return await Promise.race([promise, timeoutPromise]);
+    } finally {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    }
+  };
+
   useEffect(() => {
     let isActive = true;
 
@@ -122,7 +136,10 @@ function ResetPasswordConfirmPageInner() {
         }
 
         console.log("[reset-password] Calling getSession after hydration");
-        const { data, error: getSessionError } = await supabase.auth.getSession();
+        const { data, error: getSessionError } = await withTimeout(
+          "getSession after hydration",
+          supabase.auth.getSession()
+        );
         if (getSessionError) {
           debugState.getSessionError = getSessionError.message;
           console.error("[reset-password] getSession error:", getSessionError.message);
@@ -212,7 +229,10 @@ function ResetPasswordConfirmPageInner() {
 
     try {
       console.log("[reset-password] About to fetch session before update");
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await withTimeout(
+        "getSession before update",
+        supabase.auth.getSession()
+      );
       if (sessionError) {
         console.error("[reset-password] getSession before update error:", sessionError.message);
       } else {
@@ -224,7 +244,10 @@ function ResetPasswordConfirmPageInner() {
       }
 
       console.log("[reset-password] About to fetch user before update");
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const { data: userData, error: userError } = await withTimeout(
+        "getUser before update",
+        supabase.auth.getUser()
+      );
       if (userError) {
         console.error("[reset-password] getUser before update error:", userError.message);
       } else {
@@ -235,14 +258,12 @@ function ResetPasswordConfirmPageInner() {
       }
 
       console.log("[reset-password] Calling supabase.auth.updateUser");
-      const pendingTimer = window.setTimeout(() => {
-        console.warn("[reset-password] updateUser still pending after 5s");
-      }, 5000);
-
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: form.password,
-      });
-      window.clearTimeout(pendingTimer);
+      const { error: updateError } = await withTimeout(
+        "updateUser",
+        supabase.auth.updateUser({
+          password: form.password,
+        })
+      );
 
       if (updateError) {
         console.error("[reset-password] updateUser error:", updateError.message);
