@@ -70,14 +70,17 @@ function ResetPasswordConfirmPageInner() {
       };
 
       try {
+        console.log("[reset-password] Starting session hydration");
         const url = new URL(window.location.href);
         const code = url.searchParams.get("code");
         debugState.hasCode = Boolean(code);
+        console.log("[reset-password] URL code present:", debugState.hasCode);
 
         if (code) {
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) {
             debugState.exchangeError = exchangeError.message;
+            console.error("[reset-password] exchangeCodeForSession error:", exchangeError.message);
             setDebugDetails(debugState);
             finalize("invalid");
             return;
@@ -93,6 +96,10 @@ function ResetPasswordConfirmPageInner() {
           const refreshToken = params.get("refresh_token");
           debugState.accessTokenLength = accessToken?.length ?? 0;
           debugState.refreshTokenLength = refreshToken?.length ?? 0;
+          console.log("[reset-password] Hash token detected", {
+            accessTokenLength: debugState.accessTokenLength,
+            refreshTokenLength: debugState.refreshTokenLength,
+          });
 
           if (accessToken && refreshToken) {
             const { error: sessionError } = await supabase.auth.setSession({
@@ -101,6 +108,7 @@ function ResetPasswordConfirmPageInner() {
             });
             if (sessionError) {
               debugState.sessionError = sessionError.message;
+              console.error("[reset-password] setSession error:", sessionError.message);
               setDebugDetails(debugState);
               finalize("invalid");
               return;
@@ -114,8 +122,10 @@ function ResetPasswordConfirmPageInner() {
         const { data, error: getSessionError } = await supabase.auth.getSession();
         if (getSessionError) {
           debugState.getSessionError = getSessionError.message;
+          console.error("[reset-password] getSession error:", getSessionError.message);
         }
         debugState.sessionFound = Boolean(data.session);
+        console.log("[reset-password] Session found:", debugState.sessionFound);
         setDebugDetails(debugState);
         finalize(data.session ? "ready" : "invalid");
       } catch (sessionError) {
@@ -177,6 +187,12 @@ function ResetPasswordConfirmPageInner() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+    console.log("[reset-password] Submit attempt", {
+      status,
+      isTokenMissing,
+      passwordLength: form.password.length,
+      confirmationLength: form.confirmation.length,
+    });
 
     if (isTokenMissing) {
       setError("Ce lien de validation est invalide ou expiré.");
@@ -192,17 +208,20 @@ function ResetPasswordConfirmPageInner() {
     setIsSubmitting(true);
 
     try {
+      console.log("[reset-password] Calling supabase.auth.updateUser");
       const { error: updateError } = await supabase.auth.updateUser({
         password: form.password,
       });
 
       if (updateError) {
+        console.error("[reset-password] updateUser error:", updateError.message);
         setError(
           updateError.message ?? "Impossible de réinitialiser votre mot de passe."
         );
         return;
       }
 
+      console.log("[reset-password] Password updated, signing out");
       await supabase.auth.signOut();
       router.replace("/login?password=reset");
     } catch (submitError) {
