@@ -9,7 +9,9 @@ import { mockRouter } from "@/test/mocks/router";
 import { createMockAuthUser } from "@/test/mocks/useAuthUser";
 
 vi.mock("next/navigation");
-vi.mock("@/hooks/useAuthUser");
+vi.mock("@/hooks/useAuthUser", () => ({
+  useAuthUser: vi.fn(),
+}));
 
 function renderWithChakra(component: React.ReactElement) {
   return render(<ChakraProvider value={defaultSystem}>{component}</ChakraProvider>);

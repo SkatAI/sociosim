@@ -7,6 +7,17 @@ import Header from "@/app/components/Header";
 import { supabase } from "@/lib/supabaseClient";
 import { mockRouter } from "@/test/mocks/router";
 
+vi.mock("@/lib/supabaseClient", () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn(),
+      onAuthStateChange: vi.fn(),
+      signOut: vi.fn(),
+    },
+    from: vi.fn(),
+  },
+}));
+
 describe("Header auth integration", () => {
   const mockSupabase = supabase as unknown as {
     auth: {

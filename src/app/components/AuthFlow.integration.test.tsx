@@ -8,6 +8,18 @@ import LoginPage from "@/app/login/page";
 import { supabase } from "@/lib/supabaseClient";
 import { mockRouter } from "@/test/mocks/router";
 
+vi.mock("@/lib/supabaseClient", () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn(),
+      signInWithPassword: vi.fn(),
+      signOut: vi.fn(),
+      onAuthStateChange: vi.fn(),
+    },
+    from: vi.fn(),
+  },
+}));
+
 describe("Auth flow integration", () => {
   const mockSupabase = supabase as unknown as {
     auth: {
