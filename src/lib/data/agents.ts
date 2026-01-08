@@ -46,6 +46,23 @@ export async function getAgentByName(name: string): Promise<AgentRecord | null> 
 }
 
 /**
+ * Look up agent by id (UUID)
+ */
+export async function getAgentById(agentId: string): Promise<AgentRecord | null> {
+  const supabase = createServiceSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("agents")
+    .select("id, agent_name, description")
+    .eq("id", agentId)
+    .maybeSingle();
+
+  throwIfError(error, `Failed to load agent with id: ${agentId}`);
+
+  return data as AgentRecord | null;
+}
+
+/**
  * Look up agent UUID by name (oriane, theo, jade)
  */
 export async function getAgentIdByName(name: string): Promise<string> {
@@ -58,17 +75,9 @@ export async function getAgentIdByName(name: string): Promise<string> {
  * Get agent name by UUID
  */
 export async function getAgentNameById(agentId: string): Promise<string> {
-  const supabase = createServiceSupabaseClient();
+  const agent = await getAgentById(agentId);
 
-  const { data, error } = await supabase
-    .from("agents")
-    .select("agent_name")
-    .eq("id", agentId)
-    .single();
-
-  throwIfError(error, `Failed to load agent with id: ${agentId}`);
-
-  return ensureRecordFound(data, `Agent not found: ${agentId}`).agent_name;
+  return ensureRecordFound(agent, `Agent not found: ${agentId}`).agent_name;
 }
 
 /**

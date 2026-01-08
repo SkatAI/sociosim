@@ -21,6 +21,7 @@ import { useAuthUser } from "@/hooks/useAuthUser";
 
 interface InterviewWithDetails {
   id: string;
+  agent_id?: string;
   status: string;
   updated_at: string;
   agents?: {
@@ -149,6 +150,15 @@ export default function DashboardClient() {
       return;
     }
 
+    const selectedAgentId = interviews.find(
+      (interview) => interview.agents?.agent_name === selectedAgent
+    )?.agent_id;
+
+    if (!selectedAgentId) {
+      setError("Impossible de retrouver l'identifiant du personna");
+      return;
+    }
+
     try {
       setIsCreatingSession(true);
 
@@ -162,7 +172,7 @@ export default function DashboardClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.id,
-          agent_name: selectedAgent,
+          agent_id: selectedAgentId,
         }),
       });
 

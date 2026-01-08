@@ -31,14 +31,14 @@ export class AdkClient {
    * @param appName - Name of the app (usually "app")
    * @param userId - ID of the user
    * @param sessionId - Optional: specific session ID to use
-   * @param agentName - Agent name: oriane, theo, or jade
+   * @param agentId - Agent UUID from the database
    * @returns Session information
    * @throws AdkError if session creation fails
    */
   async createSession(
     appName: string,
     userId: string,
-    agentName: string,
+    agentId: string,
     sessionId?: string
   ): Promise<AdkSession> {
     const response = await fetch(
@@ -49,7 +49,7 @@ export class AdkClient {
         body: JSON.stringify({
           ...(sessionId && { session_id: sessionId }),
           state: {
-            agent_name: agentName,
+            agent_id: agentId,
           },
         }),
       }

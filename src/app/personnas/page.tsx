@@ -103,7 +103,7 @@ export default function PersonnasPage() {
     loadData();
   }, [isAuthLoading, user, router]);
 
-  const handleSelectAgent = async (agentName: string) => {
+  const handleSelectAgent = async (agentId: string) => {
     try {
       setIsCreatingSession(true);
 
@@ -117,7 +117,7 @@ export default function PersonnasPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.id,
-          agent_name: agentName,
+          agent_id: agentId,
         }),
       });
 
@@ -156,9 +156,14 @@ export default function PersonnasPage() {
   return (
     <Container maxWidth="4xl" py={8} px={{ base: 4, md: 6 }}>
       <VStack gap={8} alignItems="stretch">
-        <Heading size="lg" marginBottom={0}>
-          Choisissez un personnage
-        </Heading>
+        <HStack justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={3}>
+          <Heading size="lg" marginBottom={0}>
+            Choisissez un personnage
+          </Heading>
+          <Button colorPalette="blue" size="sm" onClick={() => router.push("/personnas/new")}>
+            Créer une nouvelle personna
+          </Button>
+        </HStack>
 
         {/* Error State */}
         {error && (
@@ -229,7 +234,7 @@ export default function PersonnasPage() {
                   </VStack>
                   <HStack gap={3}>
                     <Button
-                      onClick={() => handleSelectAgent(agent.agent_name)}
+                      onClick={() => handleSelectAgent(agent.id)}
                       colorPalette="blue"
                       size="sm"
                       padding={4}

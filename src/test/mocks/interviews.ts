@@ -1,5 +1,6 @@
 export const mockInterview = {
   id: "interview-123",
+  agent_id: "agent-oriane",
   status: "in_progress",
   updated_at: "2025-12-29T10:30:00Z",
   agents: {
@@ -34,6 +35,7 @@ export const mockInterviewsList = [
   mockInterview,
   createMockInterview({
     id: "interview-456",
+    agent_id: "agent-theo",
     agents: { agent_name: "theo" },
   }),
 ];

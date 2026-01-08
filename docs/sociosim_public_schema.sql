@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict HeGUd759WkqdbaRHhjCOCstSuwWeGh3CtoRZ03wiT6gdr7wTvE2i44SnqgHIzdz
+\restrict 6gvG9bcyVNJiagKGWcfElZ7JVPbVAUBXzcCKdcE5Em6LLVaoaWHGYXDhKigoJKI
 
 -- Dumped from database version 17.6
--- Dumped by pg_dump version 17.6
+-- Dumped by pg_dump version 17.7 (Homebrew)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -23,7 +23,7 @@ SET row_security = off;
 -- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
--- CREATE SCHEMA public;
+CREATE SCHEMA public;
 
 
 --
@@ -85,6 +85,21 @@ $$;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: agent_prompts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.agent_prompts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    agent_id uuid NOT NULL,
+    system_prompt text NOT NULL,
+    edited_by uuid NOT NULL,
+    version integer NOT NULL,
+    last_edited timestamp with time zone DEFAULT timezone('CET'::text, now()) NOT NULL,
+    published boolean DEFAULT false NOT NULL
+);
+
 
 --
 -- Name: agents; Type: TABLE; Schema: public; Owner: -
@@ -186,6 +201,22 @@ CREATE TABLE public.users (
     updated_at timestamp with time zone DEFAULT timezone('CET'::text, now()) NOT NULL,
     password_setup_token text
 );
+
+
+--
+-- Name: agent_prompts agent_prompts_agent_id_version_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agent_prompts
+    ADD CONSTRAINT agent_prompts_agent_id_version_key UNIQUE (agent_id, version);
+
+
+--
+-- Name: agent_prompts agent_prompts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agent_prompts
+    ADD CONSTRAINT agent_prompts_pkey PRIMARY KEY (id);
 
 
 --
@@ -318,6 +349,22 @@ CREATE TRIGGER set_users_updated_at BEFORE UPDATE ON public.users FOR EACH ROW E
 
 
 --
+-- Name: agent_prompts agent_prompts_agent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agent_prompts
+    ADD CONSTRAINT agent_prompts_agent_id_fkey FOREIGN KEY (agent_id) REFERENCES public.agents(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: agent_prompts agent_prompts_edited_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.agent_prompts
+    ADD CONSTRAINT agent_prompts_edited_by_fkey FOREIGN KEY (edited_by) REFERENCES public.users(id) ON DELETE RESTRICT;
+
+
+--
 -- Name: interview_usage interview_usage_interview_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -374,6 +421,26 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: users Users can read their own profile; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can read their own profile" ON public.users FOR SELECT USING ((auth.uid() = id));
+
+--
+-- Name: users Users can read public profile names; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can read public profile names" ON public.users FOR SELECT USING ((auth.role() = 'authenticated'::text));
+
+
+--
+-- Name: users Users can update their own profile; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can update their own profile" ON public.users FOR UPDATE USING ((auth.uid() = id));
+
+
+--
 -- Name: users; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -383,5 +450,4 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict HeGUd759WkqdbaRHhjCOCstSuwWeGh3CtoRZ03wiT6gdr7wTvE2i44SnqgHIzdz
-
+\unrestrict 6gvG9bcyVNJiagKGWcfElZ7JVPbVAUBXzcCKdcE5Em6LLVaoaWHGYXDhKigoJKI
