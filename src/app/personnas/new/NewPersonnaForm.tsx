@@ -159,7 +159,7 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
                 <Dialog.Root>
                   <Dialog.Trigger asChild>
                     <Button
-                      variant="link"
+                      variant="plain"
                       size="sm"
                       colorPalette="blue"
                       textDecoration="underline"
@@ -181,7 +181,7 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
                             <br />- un fichier de
                             <Button
                               asChild
-                              variant="link"
+                              variant="plain"
                               size="sm"
                               colorPalette="blue"
                               textDecoration="underline"
@@ -216,7 +216,7 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
     <br />Le template en markdown est disponible
                             <Button
                               asChild
-                              variant="link"
+                              variant="plain"
                               size="sm"
                               colorPalette="blue"
                               textDecoration="underline"
