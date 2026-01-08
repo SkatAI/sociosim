@@ -3,11 +3,12 @@
 A web application where sociology students practice interviewing people using AI avatars instead.
 This is a demo, POC application, low volume expected. simple UI with light design and interactions.
 
+The Application is all in French!
+
 ## Accounts
 
-- student account : select avatar, access interview template / instructions, continue past interviews, start new interview, see teacher comments
-- teacher account : reviews interviews. adds comments. interview analysis.
-- admin account: manages users, avatars prompts, LLM endpoints (changes from paying to free, openAI to Gemini etc, hosted vs local)
+- student account : select avatar, access interview template / instructions, continue past interviews, start new interview
+- admin account: manages users, avatars prompts
 
 ## LLMs
 

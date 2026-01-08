@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   },
   // Generate the standalone output for production containers
   output: "standalone",
+  experimental: {
+    outputFileTracingIncludes: {
+      "/": ["docs/prompts/template_agent_system_prompt.md"],
+    },
+  },
 };
 
 export default nextConfig;

@@ -149,6 +149,14 @@ describe("ResetPasswordConfirmPage", () => {
       },
     });
     updateUser.mockResolvedValue({ error: { message: "Lien invalide" } });
+    const originalSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const originalSupabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({ message: "Lien invalide" }),
+    });
 
     renderWithChakra(<ResetPasswordConfirmPage />);
 
@@ -161,5 +169,7 @@ describe("ResetPasswordConfirmPage", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /Réinitialiser/i })).not.toBeDisabled();
     });
+    process.env.NEXT_PUBLIC_SUPABASE_URL = originalSupabaseUrl;
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = originalSupabaseAnonKey;
   });
 });

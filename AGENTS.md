@@ -1,6 +1,6 @@
 # Repository Guidelines (SocioSim)
 
-**Always read first:** `docs/specs/specification_stack_and_tools.md`, `README.md`, `CLAUDE.md`.
+**Always read first:** `docs/specs/specification_stack_and_tools.md`, `README.md`, `AGENTS.md`, `docs/sociosim_public_schema.sql`, `CHANGELOG.md`, `Makefile`
 
 ## Project Snapshot
 
@@ -11,11 +11,7 @@
 
 ## Development Commands
 
-- `make devrun` (or `npm run dev`) — Panda watch + Next dev server on :3000 for day-to-day work.
-- `make lint` / `npm run lint:all` — ESLint + TypeScript checks.
-- `npm run build` — runs Panda codegen + Next build; use before releases.
-- `make pretty` / `npm run format:fix` — formatting.
-- Supabase locally: `supabase start` (or `make start` to boot Supabase + dev server together).
+see Makefile
 
 ## Coding Style & Conventions
 
@@ -24,6 +20,8 @@
 - Route/file naming: route segments lowercase-with-dashes; utilities camelCase; components PascalCase.
 - Do not touch `styled-system/` output. Panda regenerates automatically in dev/build.
 - Global input padding is defined in `src/app/globals.css`; avoid per-field padding props unless necessary.
+
+Important: do not implement silent fail. Better the app crashes than obfuscate failures.
 
 ## Chakra UI v3 Rules (not v2)
 
@@ -35,7 +33,17 @@
 
 ## Testing
 
-- No automated tests yet. Manually exercise new flows in `npm run dev`, especially Supabase interactions. When adding tests later, colocate as `*.test.tsx` near components.
+make test
+
+or
+
+make test_live (costs API requests and money)
+
+## Database
+
+supabase postgresql 17
+
+migrations: write <migration>.sql files in the supabase/migrations folder when needed. but We do nott update the database by running the migrations automatically.
 
 ## Commits & PRs
 

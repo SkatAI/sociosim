@@ -135,7 +135,7 @@ describe("PersonnasPage", () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId: "test-user-123",
-            agent_name: "oriane",
+            agent_id: "agent-oriane",
           }),
         })
       );

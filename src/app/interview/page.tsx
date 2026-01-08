@@ -1,10 +1,20 @@
 "use client";
 
-import { Box, Container, Heading, HStack, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Container,
+  Dialog,
+  Heading,
+  Portal,
+  Spinner,
+  Stack,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { marked } from "marked";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import { ChatMessage } from "@/components/ChatMessage";
 import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
@@ -26,7 +36,6 @@ function InterviewPageInner() {
 
   const [introHtml, setIntroHtml] = useState<string>("");
   const [introPreview, setIntroPreview] = useState<string>("");
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   // Extract session info from URL (passed from dashboard for new interviews)
   const interviewIdParam = searchParams.get("interviewId");
@@ -354,13 +363,66 @@ function InterviewPageInner() {
             Erreur: {agentError}
           </Heading>
         ) : (
-          <Heading as="h1" size="lg">
-            {agentInfo ? `Entretien avec ${agentInfo.agent_name}` : "Chargement de l'agent..."}
-          </Heading>
+          <Stack
+            direction={{ base: "column", sm: "row" }}
+            align={{ base: "flex-start", sm: "center" }}
+            gap={{ base: 2, sm: 4 }}
+            justify="space-between"
+          >
+            <Heading as="h1" size="lg">
+              {agentInfo ? `Entretien avec ${agentInfo.agent_name}` : "Chargement de l'agent..."}
+            </Heading>
+            <Dialog.Root>
+              <Dialog.Trigger asChild>
+                <Button
+                  variant="link"
+                  size="sm"
+                  colorPalette="blue"
+                  textDecoration="underline"
+                >
+                  Aide pour l&apos;entretien
+                </Button>
+              </Dialog.Trigger>
+              <Portal>
+                <Dialog.Backdrop />
+                <Dialog.Positioner>
+                  <Dialog.Content padding={8}>
+                    <Dialog.Header>
+                      <Dialog.Title>Guide d&apos;entretien</Dialog.Title>
+                    </Dialog.Header>
+                    <Dialog.Body>
+                      <VStack align="stretch" gap={3}>
+                        {introPreview ? (
+                          <Text fontWeight="600">{introPreview}</Text>
+                        ) : null}
+                        {introHtml ? (
+                          <Box
+                            css={{
+                              "& h2": { marginTop: "1.5rem", fontWeight: "600", color: "fg.default" },
+                              "& h3": { marginTop: "1rem", fontWeight: "600", color: "fg.default" },
+                              "& ul": { paddingLeft: "1.25rem", marginTop: "0.75rem" },
+                              "& li": { marginBottom: "0.5rem" },
+                              "& p": { marginBottom: "0.75rem" },
+                              "& strong": { color: "fg.default" },
+                            }}
+                            dangerouslySetInnerHTML={{ __html: introHtml }}
+                          />
+                        ) : (
+                          <Text color="fg.muted">Chargement du guide d&apos;entretien...</Text>
+                        )}
+                      </VStack>
+                    </Dialog.Body>
+                    <Dialog.Footer>
+                      <Dialog.ActionTrigger asChild>
+                        <Button variant="outline">Fermer</Button>
+                      </Dialog.ActionTrigger>
+                    </Dialog.Footer>
+                  </Dialog.Content>
+                </Dialog.Positioner>
+              </Portal>
+            </Dialog.Root>
+          </Stack>
         )}
-        <Text fontSize="sm" color="fg.muted" marginTop={1}>
-          Session: {session?.sessionId}
-        </Text>
       </Box>
 
       {/* Messages + Input */}
@@ -377,83 +439,9 @@ function InterviewPageInner() {
         >
           {messages.length === 0 ? (
             <VStack align="center" justify="center" height="100%" gap={4}>
-              {introPreview ? (
-                <>
-                  <Box
-                    width="100%"
-                    maxWidth="3xl"
-                    paddingX={3}
-                    paddingY={2}
-                    borderWidth="1px"
-                    borderStyle="solid"
-                    borderColor="border.muted"
-                    borderRadius="md"
-                    backgroundColor="bg.surface"
-                    color="fg.muted"
-                    textAlign="left"
-                  >
-                    <Box width="100%">
-                      <button
-                        type="button"
-                        onClick={() => setIsGuideOpen((prev) => !prev)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            setIsGuideOpen((prev) => !prev);
-                          }
-                        }}
-                        aria-expanded={isGuideOpen}
-                        aria-controls="interview-guide"
-                        style={{
-                          width: "100%",
-                          textAlign: "left",
-                          background: "transparent",
-                          border: "none",
-                          padding: 0,
-                          margin: 0,
-                          cursor: "pointer",
-                          color: "inherit",
-                          font: "inherit",
-                        }}
-                      >
-                    <HStack
-                      width="100%"
-                      justifyContent="space-between"
-                      alignItems="baseline"
-                      fontWeight="500"
-                        cursor="pointer"
-                      >
-                        <Text as="span">{introPreview}</Text>
-                        {isGuideOpen ? (
-                          <ChevronUp size={18} aria-hidden="true" />
-                        ) : (
-                          <ChevronDown size={18} aria-hidden="true" />
-                        )}
-                      </HStack>
-                      </button>
-                    </Box>
-                    {isGuideOpen && introHtml && (
-                    <Box
-                      id="interview-guide"
-                      paddingTop={2}
-                      css={{
-                        "& h2": { marginTop: "1.5rem", fontWeight: "600", color: "fg.default" },
-                        "& h3": { marginTop: "1rem", fontWeight: "600", color: "fg.default" },
-                        "& ul": { paddingLeft: "1.25rem", marginTop: "0.75rem" },
-                        "& li": { marginBottom: "0.5rem" },
-                        "& p": { marginBottom: "0.75rem" },
-                        "& strong": { color: "fg.default" },
-                      }}
-                      dangerouslySetInnerHTML={{ __html: introHtml }}
-                    />
-                    )}
-                  </Box>
-                </>
-              ) : (
-                <Text color="fg.muted">
-                  Chargement du guide d&apos;entretien...
-                </Text>
-              )}
+              <Text color="fg.muted">
+                Posez votre première question pour commencer l&apos;entretien.
+              </Text>
             </VStack>
           ) : (
             <Stack gap={0}>

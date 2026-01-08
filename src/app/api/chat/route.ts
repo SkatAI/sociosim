@@ -63,19 +63,25 @@ export async function POST(req: NextRequest) {
 
     // Load interview with agent from database
     const interview = await getInterviewWithAgent(interviewId);
-    const agentName = interview.agents.agent_name;
-    console.log("[/api/chat POST] Loaded agent from DB:", agentName);
+    const agentId = interview.agent_id;
+    if (!agentId) {
+      return NextResponse.json(
+        { error: "Interview has no agent assigned" },
+        { status: 500 }
+      );
+    }
+    console.log("[/api/chat POST] Loaded agent from DB:", agentId);
 
     // Determine if streaming or not (default: streaming)
     const shouldStream = streaming !== false;
 
     // Handle streaming response
     if (shouldStream) {
-      return handleStreamingResponse(message, userId, sessionId, adkSessionId, agentName, interviewId);
+      return handleStreamingResponse(message, userId, sessionId, adkSessionId, agentId, interviewId);
     }
 
     // Handle batch response
-    return handleBatchResponse(message, userId, sessionId, adkSessionId, agentName, interviewId);
+    return handleBatchResponse(message, userId, sessionId, adkSessionId, agentId, interviewId);
   } catch (error) {
     console.error("[/api/chat] Error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -94,7 +100,7 @@ function handleStreamingResponse(
   userId: string,
   sessionId: string,
   adkSessionId: string,
-  agentName: string,
+  agentId: string,
   interviewId?: string
 ) {
   console.log("[/api/chat] Starting stream:", { message, userId, sessionId, adkSessionId });
@@ -113,7 +119,7 @@ function handleStreamingResponse(
           app_name: "app",
           user_id: userId,
           session_id: adkSessionId,  // Use ADK session ID for ADK calls
-          agent_name: agentName,      // Selected agent
+          agent_id: agentId,      // Selected agent
           new_message: {
             role: "user" as const,
             parts: [{ text: message }],
@@ -279,7 +285,7 @@ async function handleBatchResponse(
   userId: string,
   sessionId: string,
   adkSessionId: string,
-  agentName: string,
+  agentId: string,
   interviewId?: string
 ) {
   try {
@@ -287,7 +293,7 @@ async function handleBatchResponse(
       app_name: "app",
       user_id: userId,
       session_id: adkSessionId,  // Use ADK session ID for ADK calls
-      agent_name: agentName,      // Selected agent
+      agent_id: agentId,      // Selected agent
       new_message: {
         role: "user" as const,
         parts: [{ text: message }],

@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
 import { interviews, sessions } from "@/lib/data";
-import { getAgentByName, getInterviewWithAgent } from "@/lib/data/agents";
+import { getAgentById, getInterviewWithAgent } from "@/lib/data/agents";
 
 const adkClient = new AdkClient();
 
@@ -23,10 +23,10 @@ export async function POST(req: NextRequest) {
       typeof body.interviewId === "string" && body.interviewId.trim().length > 0
         ? body.interviewId
         : null;
-    const agentNameFromRequest = body.agent_name;
+    const agentIdFromRequest = body.agent_id;
 
     console.log("--- api session routes interviewId:", interviewId);
-    console.log("--- api session routes agentName (from request):", agentNameFromRequest);
+    console.log("--- api session routes agentId (from request):", agentIdFromRequest);
 
     // Validate required fields
     if (!userId) {
@@ -78,25 +78,24 @@ export async function POST(req: NextRequest) {
       isResume = true;
     } else {
       console.log("--- NEW MODE");
-      // NEW MODE: Validate agent_name from request
-      if (typeof agentNameFromRequest !== "string" || agentNameFromRequest.trim().length === 0) {
+      // NEW MODE: Validate agent_id from request
+      if (typeof agentIdFromRequest !== "string" || agentIdFromRequest.trim().length === 0) {
         return NextResponse.json(
-          { error: "Missing or invalid 'agent_name' field" },
+          { error: "Missing or invalid 'agent_id' field" },
           { status: 400 }
         );
       }
 
-      validAgentName = agentNameFromRequest;
-
-      // Look up agent UUID from database
-      const agentRecord = await getAgentByName(validAgentName);
+      // Look up agent from database
+      const agentRecord = await getAgentById(agentIdFromRequest);
       if (!agentRecord) {
         return NextResponse.json(
-          { error: "Unknown agent_name" },
+          { error: "Unknown agent_id" },
           { status: 400 }
         );
       }
       agentId = agentRecord.id;
+      validAgentName = agentRecord.agent_name;
       console.log("--- api session routes agentId:", agentId);
 
       // Create new interview with agent_id
@@ -105,7 +104,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create ADK session (let ADK generate its own session ID)
-    const adkSession = await adkClient.createSession("app", userId, validAgentName);
+    const adkSession = await adkClient.createSession("app", userId, agentId);
 
     // Create sessions record
     const session = await sessions.createSession(adkSession.session_id);
@@ -119,6 +118,7 @@ export async function POST(req: NextRequest) {
         sessionId: session.id,
         adkSessionId: adkSession.session_id,
         interviewId: finalInterviewId,
+        agent_id: agentId,
         agent_name: validAgentName,
         isResume,
         createdAt: adkSession.created_at,

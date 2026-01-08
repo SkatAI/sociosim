@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - **Auth Flow Tests:** Add tests for registration, login, password reset, and logout with invalid input coverage.
 - **Guide Page:** Add `/guide-entretien` rendered from `public/docs/guide_entretien.md` and link it in the header.
 - **Auth Emails:** Send signup confirmations and password reset emails via Supabase Auth (Inbucket in local dev).
+- **Personnas:** Add a creation flow with a prefilled prompt template and redirect to the editor.
 ### Changed
 - **Tests:** Auth flow tests now pass with bad input assertions and coverage reporting.
 - **Interview Intro:** Render the new interview intro from `public/docs/guide_entretien_court.md`.
@@ -19,6 +20,9 @@ All notable changes to this project will be documented in this file.
 - **Dashboard:** Split the dashboard into dedicated Personnas and Mes entretiens pages.
 - **Agents:** Add `public.agent_prompts` for versioned system prompts and seed a template persona in Supabase.
 - **Personnas:** Replace the prompt textarea with a TipTap editor that saves markdown.
+- **ADK Contract:** Send `agent_id` (instead of `agent_name`) in ADK session/run requests and accept `agent_id` in `/api/sessions`.
+- **Personnas:** Add prompt history selector on `/personnas/[id]/edit` to load and edit previous versions.
+- **Users:** Allow authenticated reads of user profiles for prompt history labels.
 
 ### Changed
 - **Agents Data Source:** Load agent_name and description from `public.agents` instead of static in-code definitions.
