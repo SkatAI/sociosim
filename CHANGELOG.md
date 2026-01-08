@@ -13,8 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - **Tests:** Auth flow tests now pass with bad input assertions and coverage reporting.
 - **Interview Intro:** Render the new interview intro from `public/docs/guide_entretien_court.md`.
-- **Interview Intro:** Make the guide collapsible for faster starts.
-- **Interview Intro:** Show only the first line by default with click-to-expand text.
+- **Interview Intro:** Replace the collapsible guide with a header help link that opens a dialog.
 - **Interview Intro:** Allow font size settings to scale the intro text.
 - **Auth Redirects:** Update local Supabase SMTP host and redirect allowlist to support email-based flows.
 - **Dashboard:** Split the dashboard into dedicated Personnas and Mes entretiens pages.
@@ -23,6 +22,9 @@ All notable changes to this project will be documented in this file.
 - **ADK Contract:** Send `agent_id` (instead of `agent_name`) in ADK session/run requests and accept `agent_id` in `/api/sessions`.
 - **Personnas:** Add prompt history selector on `/personnas/[id]/edit` to load and edit previous versions.
 - **Users:** Allow authenticated reads of user profiles for prompt history labels.
+### Fixed
+- **Chakra Buttons:** Replace invalid `variant="link"` usage with Chakra v3-compatible variants.
+- **Next Config:** Move `outputFileTracingIncludes` to the top-level Next.js config.
 
 ### Changed
 - **Agents Data Source:** Load agent_name and description from `public.agents` instead of static in-code definitions.

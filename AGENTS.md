@@ -1,6 +1,8 @@
 # Repository Guidelines (SocioSim)
 
-**Always read first:** `docs/specs/specification_stack_and_tools.md`, `README.md`, `AGENTS.md`, `docs/sociosim_public_schema.sql`, `CHANGELOG.md`, `Makefile`
+**Always read first:** `AGENTS.md`, `CHANGELOG.md`, `Makefile`, `docs/specs/specification_stack_and_tools.md`, `README.md`,
+
+The most recent schema is in `docs/sociosim_public_schema.sql`
 
 ## Project Snapshot
 
@@ -11,7 +13,12 @@
 
 ## Development Commands
 
-see Makefile
+See `Makefile`. Common flows:
+- `make start` (Supabase + Next.js dev)
+- `make dev` (Next.js dev only)
+- `make lint` (ESLint + TypeScript)
+- `make test` (Vitest with coverage)
+- `make format` / `make format-fix`
 
 ## Coding Style & Conventions
 
@@ -33,17 +40,17 @@ Important: do not implement silent fail. Better the app crashes than obfuscate f
 
 ## Testing
 
-make test
+make test (coverage)
 
 or
 
-make test_live (costs API requests and money)
+make test-ui
 
 ## Database
 
-supabase postgresql 17
+Supabase PostgreSQL 17
 
-migrations: write <migration>.sql files in the supabase/migrations folder when needed. but We do nott update the database by running the migrations automatically.
+Migrations: write `<migration>.sql` files in `supabase/migrations` when needed. Do not run migrations automatically.
 
 ## Commits & PRs
 
