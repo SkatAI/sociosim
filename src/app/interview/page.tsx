@@ -374,12 +374,12 @@ function InterviewPageInner() {
             </Heading>
             <Dialog.Root>
               <Dialog.Trigger asChild>
-                <Button
-                  variant="link"
-                  size="sm"
-                  colorPalette="blue"
-                  textDecoration="underline"
-                >
+                  <Button
+                    variant="plain"
+                    size="sm"
+                    colorPalette="blue"
+                    textDecoration="underline"
+                  >
                   Aide pour l&apos;entretien
                 </Button>
               </Dialog.Trigger>
