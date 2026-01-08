@@ -9,7 +9,9 @@ import { mockUseAuthUser } from "@/test/mocks/useAuthUser";
 import { mockRouter } from "@/test/mocks/router";
 import { mockInterview } from "@/test/mocks/interviews";
 
-vi.mock("@/hooks/useAuthUser");
+vi.mock("@/hooks/useAuthUser", () => ({
+  useAuthUser: vi.fn(),
+}));
 vi.mock("next/navigation");
 
 const mockAgents = [
@@ -30,21 +32,14 @@ const mockAgents = [
   },
 ];
 
-vi.mock("@/lib/supabaseClient", () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          order: vi.fn().mockResolvedValue({ data: mockAgents, error: null }),
-        })),
-      })),
-    })),
-  },
-}));
-
 function renderWithChakra(component: React.ReactElement) {
   return render(<ChakraProvider value={defaultSystem}>{component}</ChakraProvider>);
 }
+
+const createAgentsResponse = (agents: unknown[]) => ({
+  ok: true,
+  json: async () => ({ success: true, agents }),
+});
 
 const createInterviewsResponse = (interviews: unknown[]) => ({
   ok: true,
@@ -57,7 +52,15 @@ describe("PersonnasPage", () => {
     vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser);
     vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
 
-    global.fetch = vi.fn().mockResolvedValue(createInterviewsResponse([]));
+    global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (input === "/api/agents?published=true") {
+        return Promise.resolve(createAgentsResponse(mockAgents));
+      }
+      if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
+        return Promise.resolve(createInterviewsResponse([]));
+      }
+      return Promise.reject(new Error("Unexpected fetch"));
+    });
   });
 
   it("renders agent cards and action buttons", async () => {
@@ -74,7 +77,15 @@ describe("PersonnasPage", () => {
   });
 
   it("shows Historique only for agents with previous interviews", async () => {
-    global.fetch = vi.fn().mockResolvedValue(createInterviewsResponse([mockInterview]));
+    global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (input === "/api/agents?published=true") {
+        return Promise.resolve(createAgentsResponse(mockAgents));
+      }
+      if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
+        return Promise.resolve(createInterviewsResponse([mockInterview]));
+      }
+      return Promise.reject(new Error("Unexpected fetch"));
+    });
 
     renderWithChakra(<PersonnasPage />);
 
@@ -87,7 +98,15 @@ describe("PersonnasPage", () => {
 
   it("navigates to dashboard with agent filter on Historique click", async () => {
     const user = userEvent.setup();
-    global.fetch = vi.fn().mockResolvedValue(createInterviewsResponse([mockInterview]));
+    global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (input === "/api/agents?published=true") {
+        return Promise.resolve(createAgentsResponse(mockAgents));
+      }
+      if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
+        return Promise.resolve(createInterviewsResponse([mockInterview]));
+      }
+      return Promise.reject(new Error("Unexpected fetch"));
+    });
 
     renderWithChakra(<PersonnasPage />);
 
@@ -102,6 +121,9 @@ describe("PersonnasPage", () => {
   it("creates a new interview when Nouvel entretien is clicked", async () => {
     const user = userEvent.setup();
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (input === "/api/agents?published=true") {
+        return Promise.resolve(createAgentsResponse(mockAgents));
+      }
       if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
         return Promise.resolve(createInterviewsResponse([mockInterview]));
       }

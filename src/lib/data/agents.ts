@@ -29,6 +29,23 @@ export async function getAgents(): Promise<AgentRecord[]> {
 }
 
 /**
+ * Fetch published agents (with at least one published prompt).
+ */
+export async function getPublishedAgents(): Promise<AgentRecord[]> {
+  const supabase = createServiceSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("agents")
+    .select("id, agent_name, description, agent_prompts!inner(published)")
+    .eq("agent_prompts.published", true)
+    .order("agent_name");
+
+  throwIfError(error, "Failed to load published agents");
+
+  return (data || []) as AgentRecord[];
+}
+
+/**
  * Look up agent by name (oriane, theo, jade)
  */
 export async function getAgentByName(name: string): Promise<AgentRecord | null> {
