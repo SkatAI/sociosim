@@ -25,7 +25,7 @@ SocioSim is a **Next.js 16 TypeScript** application with the following component
 - **Database:** Supabase PostgreSQL
 - **AI Agent:** Separate ADK Agent Service (Python, runs on port 8000)
 
-The BFF communicates with the ADK Agent Service to provide conversational interviews.
+The BFF communicates with the ADK Agent Service (streamed via SSE) to provide conversational interviews.
 
 ## Prerequisites
 
@@ -57,10 +57,11 @@ This command will:
 - Launch PostgreSQL on port 54321
 - Launch Supabase Studio at http://localhost:54323
 - Launch Inbucket (email testing) at http://localhost:54324
-- Apply migrations from `supabase/migrations/`
-- Seed sample data from `supabase/seed.sql`
+- Apply migrations from `supabase/migrations/` in local dev
+- Seed sample data from `supabase/seed.sql` in local dev
 
 The first run takes a few minutes. Credentials will be printed to the terminal.
+In CI/production, migrations are applied manually (no automatic migration runs).
 
 ### 3. Copy Environment Variables
 
@@ -108,16 +109,13 @@ NEXT_PUBLIC_ADK_BASE_URL=http://localhost:8000
 
 ## Database
 
-SQL migrations are in `supabase/migrations/` and are applied automatically when you run `supabase start`.
+SQL migrations are in `supabase/migrations/` and are applied manually in production.
 
-**Existing tables:**
-- `users` - User profiles (student, teacher, admin roles)
-
-**Planned tables** (for interviews):
-- `avatars` - AI personas
-- `interviews` - Interview sessions
-- `messages` - Conversation history
-- `llm_calls` - API usage tracking
+**Current tables (see `docs/sociosim_public_schema.sql` for full schema):**
+- `agents`, `agent_prompts`
+- `interviews`, `sessions`, `user_interview_session`
+- `messages`, `interview_usage`
+- `users`
 
 ## Available Scripts
 
@@ -128,6 +126,8 @@ make start           # Start Supabase + dev server (concurrently)
 make dev             # Start Next.js dev server only
 make build           # Build for production
 make lint            # Run ESLint and TypeScript check
+make test            # Run Vitest with coverage
+make test-ui         # Run Vitest UI
 make format          # Auto-format code
 make db-start        # Start Supabase
 make db-stop         # Stop Supabase
@@ -197,7 +197,7 @@ npm run panda
 Or use the combined startup command:
 
 ```bash
-make start  # Runs panda watch + Next.js dev server
+make start  # Runs Supabase + panda watch + Next.js dev server
 ```
 
 ### Manage Supabase
