@@ -306,18 +306,21 @@ describe("InterviewPage - UI States", () => {
     global.fetch = vi.fn().mockResolvedValue(createMarkdownResponse());
   });
 
-  it("shows empty state with welcome message before first message", async () => {
+  it("shows empty state prompt before first message", async () => {
     await renderInterviewPage();
 
     // Empty state message should be visible
-    expect(screen.getByText(/Guide court/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Posez votre première question pour commencer l'entretien."
+      )
+    ).toBeInTheDocument();
   });
 
-  it("displays session ID in header", async () => {
+  it("does not display session ID in header", async () => {
     await renderInterviewPage();
 
-    // Session ID should be displayed
-    expect(screen.getByText("Session: session-456")).toBeInTheDocument();
+    expect(screen.queryByText(/Session:/)).not.toBeInTheDocument();
   });
 
   it("has messageInput component for sending messages", async () => {

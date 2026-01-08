@@ -17,7 +17,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { type Agent } from "@/lib/agents";
-import { supabase } from "@/lib/supabaseClient";
 import { PenLine } from "lucide-react";
 
 interface InterviewWithDetails {
@@ -49,22 +48,21 @@ export default function PersonnasPage() {
     const loadData = async () => {
       try {
         const [agentsResult, interviewsResult] = await Promise.allSettled([
-          supabase
-            .from("agents")
-            .select("id, agent_name, description, agent_prompts!inner(published)")
-            .eq("agent_prompts.published", true)
-            .order("agent_name"),
+          fetch("/api/agents?published=true"),
           fetch(`/api/user/interviews?userId=${user.id}`),
         ]);
 
         if (agentsResult.status === "fulfilled") {
-          const { data: agentsData, error: agentsError } = agentsResult.value;
-          if (agentsError) {
-            console.error("Error fetching agents:", agentsError);
-            setError("Impossible de charger les agents");
+          const response = agentsResult.value;
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            const message = data.error || "Impossible de charger les agents";
+            console.error("Error fetching agents:", message);
+            setError(message);
           } else {
+            const data = await response.json();
             const uniqueAgents = new Map<string, Agent>();
-            (agentsData || []).forEach((agent) => {
+            (data.agents || []).forEach((agent: Agent) => {
               uniqueAgents.set(agent.id, agent as Agent);
             });
             setAgents(Array.from(uniqueAgents.values()));
