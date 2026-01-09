@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAgents, getPublishedAgents } from "@/lib/data/agents";
+import { getAgentsWithPromptStatus, getPublishedAgents } from "@/lib/data/agents";
 import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
 
 /**
- * GET /api/agents?published=true
- * Returns all agents, optionally filtered to published-only.
+ * GET /api/agents?published=true&active=true
+ * Returns all agents, optionally filtered to published-only and/or active-only.
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const publishedOnly = searchParams.get("published") === "true";
+    const activeOnly = searchParams.get("active") === "true";
 
-    const agents = publishedOnly ? await getPublishedAgents() : await getAgents();
+    const agents = publishedOnly
+      ? (await getPublishedAgents(activeOnly)).map((agent) => ({
+          ...agent,
+          has_published_prompt: true,
+        }))
+      : await getAgentsWithPromptStatus(activeOnly);
 
     return NextResponse.json({ success: true, agents }, { status: 200 });
   } catch (error) {

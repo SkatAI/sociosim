@@ -48,7 +48,7 @@ export default function PersonnasPage() {
     const loadData = async () => {
       try {
         const [agentsResult, interviewsResult] = await Promise.allSettled([
-          fetch("/api/agents?published=true"),
+          fetch("/api/agents?active=true"),
           fetch(`/api/user/interviews?userId=${user.id}`),
         ]);
 
@@ -231,15 +231,22 @@ export default function PersonnasPage() {
                     </Text>
                   </VStack>
                   <HStack gap={3}>
-                    <Button
-                      onClick={() => handleSelectAgent(agent.id)}
-                      colorPalette="blue"
-                      size="sm"
-                      padding={4}
-                      disabled={isCreatingSession}
-                    >
-                      {isCreatingSession ? "Création..." : "Nouvel entretien"}
-                    </Button>
+                    <VStack gap={1} alignItems="center">
+                      <Button
+                        onClick={() => handleSelectAgent(agent.id)}
+                        colorPalette="blue"
+                        size="sm"
+                        padding={4}
+                        disabled={isCreatingSession || agent.has_published_prompt === false}
+                      >
+                        {isCreatingSession ? "Création..." : "Nouvel entretien"}
+                      </Button>
+                      {agent.has_published_prompt === false && (
+                        <Text fontSize="xs" color="fg.muted">
+                        (N&apos;a pas de prompt publié)
+                        </Text>
+                      )}
+                    </VStack>
                     {interactedAgents.includes(agent.agent_name) && (
                       <Button
                         onClick={() =>

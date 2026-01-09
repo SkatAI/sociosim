@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - **ADK Contract:** Send `agent_id` (instead of `agent_name`) in ADK session/run requests and accept `agent_id` in `/api/sessions`.
 - **Personnas:** Add prompt history selector on `/personnas/[id]/edit` to load and edit previous versions.
 - **Users:** Allow authenticated reads of user profiles for prompt history labels.
+- **Personnas:** Filter the list to `active` agents and track prompt availability on each card.
 ### Fixed
 - **Chakra Buttons:** Replace invalid `variant="link"` usage with Chakra v3-compatible variants.
 - **Next Config:** Move `outputFileTracingIncludes` to the top-level Next.js config.
