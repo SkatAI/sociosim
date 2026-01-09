@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6gvG9bcyVNJiagKGWcfElZ7JVPbVAUBXzcCKdcE5Em6LLVaoaWHGYXDhKigoJKI
+\restrict QovZnySFKdm3A1dDmMbXFWOmhHTk5r4qQeeRZAB94V35DUQ3cs2GDeXgcgFx2EA
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.7 (Homebrew)
@@ -110,7 +110,8 @@ CREATE TABLE public.agents (
     agent_name text NOT NULL,
     description text NOT NULL,
     created_at timestamp with time zone DEFAULT timezone('CET'::text, now()) NOT NULL,
-    updated_at timestamp with time zone DEFAULT timezone('CET'::text, now()) NOT NULL
+    updated_at timestamp with time zone DEFAULT timezone('CET'::text, now()) NOT NULL,
+    active boolean DEFAULT true NOT NULL
 );
 
 
@@ -421,16 +422,17 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users Users can read their own profile; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Users can read their own profile" ON public.users FOR SELECT USING ((auth.uid() = id));
-
---
 -- Name: users Users can read public profile names; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY "Users can read public profile names" ON public.users FOR SELECT USING ((auth.role() = 'authenticated'::text));
+
+
+--
+-- Name: users Users can read their own profile; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY "Users can read their own profile" ON public.users FOR SELECT USING ((auth.uid() = id));
 
 
 --
@@ -450,4 +452,5 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6gvG9bcyVNJiagKGWcfElZ7JVPbVAUBXzcCKdcE5Em6LLVaoaWHGYXDhKigoJKI
+\unrestrict QovZnySFKdm3A1dDmMbXFWOmhHTk5r4qQeeRZAB94V35DUQ3cs2GDeXgcgFx2EA
+

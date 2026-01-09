@@ -19,16 +19,19 @@ const mockAgents = [
     id: "agent-oriane",
     agent_name: "oriane",
     description: "Master 1 EOS\\nUtilisatrice pragmatique de l'IA",
+    has_published_prompt: true,
   },
   {
     id: "agent-theo",
     agent_name: "theo",
     description: "M2 Math. App. et Socio Quantitative\\nPassionné de technologie",
+    has_published_prompt: true,
   },
   {
     id: "agent-jade",
     agent_name: "jade",
     description: "M2 Sociologie et études de genre\\nTechno sceptique",
+    has_published_prompt: false,
   },
 ];
 
@@ -53,7 +56,7 @@ describe("PersonnasPage", () => {
     vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
 
     global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
-      if (input === "/api/agents?published=true") {
+      if (input === "/api/agents?active=true") {
         return Promise.resolve(createAgentsResponse(mockAgents));
       }
       if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
@@ -73,12 +76,14 @@ describe("PersonnasPage", () => {
     expect(screen.getByText("oriane")).toBeInTheDocument();
     expect(screen.getByText("theo")).toBeInTheDocument();
     expect(screen.getByText("jade")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /Nouvel entretien/i })).toHaveLength(3);
+    const interviewButtons = screen.getAllByRole("button", { name: /Nouvel entretien/i });
+    expect(interviewButtons).toHaveLength(3);
+    expect(interviewButtons.some((button) => button.hasAttribute("disabled"))).toBe(true);
   });
 
   it("shows Historique only for agents with previous interviews", async () => {
     global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
-      if (input === "/api/agents?published=true") {
+      if (input === "/api/agents?active=true") {
         return Promise.resolve(createAgentsResponse(mockAgents));
       }
       if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
@@ -99,7 +104,7 @@ describe("PersonnasPage", () => {
   it("navigates to dashboard with agent filter on Historique click", async () => {
     const user = userEvent.setup();
     global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
-      if (input === "/api/agents?published=true") {
+      if (input === "/api/agents?active=true") {
         return Promise.resolve(createAgentsResponse(mockAgents));
       }
       if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
@@ -121,7 +126,7 @@ describe("PersonnasPage", () => {
   it("creates a new interview when Nouvel entretien is clicked", async () => {
     const user = userEvent.setup();
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo) => {
-      if (input === "/api/agents?published=true") {
+      if (input === "/api/agents?active=true") {
         return Promise.resolve(createAgentsResponse(mockAgents));
       }
       if (typeof input === "string" && input.startsWith("/api/user/interviews")) {

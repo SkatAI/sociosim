@@ -12,6 +12,10 @@ export interface AgentRecord {
   description: string | null;
 }
 
+export interface AgentRecordWithPromptStatus extends AgentRecord {
+  has_published_prompt: boolean;
+}
+
 /**
  * Fetch all agents with display data.
  */
@@ -29,16 +33,47 @@ export async function getAgents(): Promise<AgentRecord[]> {
 }
 
 /**
- * Fetch published agents (with at least one published prompt).
+ * Fetch all agents with published prompt status.
  */
-export async function getPublishedAgents(): Promise<AgentRecord[]> {
+export async function getAgentsWithPromptStatus(
+  activeOnly = false
+): Promise<AgentRecordWithPromptStatus[]> {
   const supabase = createServiceSupabaseClient();
 
-  const { data, error } = await supabase
+  const query = supabase
+    .from("agents")
+    .select("id, agent_name, description, agent_prompts(published)")
+    .order("agent_name");
+
+  const { data, error } = await (activeOnly ? query.eq("active", true) : query);
+
+  throwIfError(error, "Failed to load agents with prompt status");
+
+  const agents = (data || []) as Array<
+    AgentRecord & { agent_prompts?: Array<{ published?: boolean | null }> | null }
+  >;
+
+  return agents.map((agent) => ({
+    id: agent.id,
+    agent_name: agent.agent_name,
+    description: agent.description,
+    has_published_prompt: (agent.agent_prompts || []).some((prompt) => prompt.published),
+  }));
+}
+
+/**
+ * Fetch published agents (with at least one published prompt).
+ */
+export async function getPublishedAgents(activeOnly = false): Promise<AgentRecord[]> {
+  const supabase = createServiceSupabaseClient();
+
+  const query = supabase
     .from("agents")
     .select("id, agent_name, description, agent_prompts!inner(published)")
     .eq("agent_prompts.published", true)
     .order("agent_name");
+
+  const { data, error } = await (activeOnly ? query.eq("active", true) : query);
 
   throwIfError(error, "Failed to load published agents");
 
