@@ -27,6 +27,7 @@ See `Makefile`. Common flows:
 - Route/file naming: route segments lowercase-with-dashes; utilities camelCase; components PascalCase.
 - Do not touch `styled-system/` output. Panda regenerates automatically in dev/build.
 - Global input padding is defined in `src/app/globals.css`; avoid per-field padding props unless necessary.
+- Data loading for pages: prefer Next.js API routes backed by the service Supabase client instead of direct client Supabase queries. Avoid gating the entire page on multiple client-side fetches; aim for a single API response or progressive rendering to prevent infinite spinners.
 
 Important: do not implement silent fail. Better the app crashes than obfuscate failures.
 
