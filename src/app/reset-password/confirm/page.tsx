@@ -15,7 +15,7 @@ import {
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { authService } from "@/lib/authService";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -37,20 +37,6 @@ function ResetPasswordConfirmPageInner() {
   const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");
   const [recoveryAccessToken, setRecoveryAccessToken] = useState<string | null>(null);
 
-  const withTimeout = async <T,>(label: string, promise: Promise<T>, ms = 5000): Promise<T> => {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    const timeoutPromise = new Promise<T>((_resolve, reject) => {
-      timeoutId = setTimeout(() => {
-        reject(new Error(`${label} timed out after ${ms}ms`));
-      }, ms);
-    });
-    try {
-      return await Promise.race([promise, timeoutPromise]);
-    } finally {
-      if (timeoutId) clearTimeout(timeoutId);
-    }
-  };
-
   useEffect(() => {
     let isActive = true;
 
@@ -68,7 +54,7 @@ function ResetPasswordConfirmPageInner() {
         const code = url.searchParams.get("code");
 
         if (code) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          const { error: exchangeError } = await authService.exchangeCodeForSession(code);
           if (exchangeError) {
             finalize("invalid");
             return;
@@ -87,16 +73,12 @@ function ResetPasswordConfirmPageInner() {
 
           if (accessToken && refreshToken) {
             setRecoveryAccessToken(accessToken);
-            let sessionResult: Awaited<ReturnType<typeof supabase.auth.setSession>> | null = null;
+            let sessionResult: Awaited<ReturnType<typeof authService.setSession>> | null = null;
             try {
-              sessionResult = await withTimeout(
-                "setSession",
-                supabase.auth.setSession({
-                  access_token: accessToken,
-                  refresh_token: refreshToken,
-                }),
-                8000
-              );
+              sessionResult = await authService.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
             } catch {
               setSessionTimedOut = true;
             }
@@ -117,10 +99,7 @@ function ResetPasswordConfirmPageInner() {
           return;
         }
 
-        const { data, error: getSessionError } = await withTimeout(
-          "getSession after hydration",
-          supabase.auth.getSession()
-        );
+        const { data, error: getSessionError } = await authService.getSession();
         if (getSessionError) {
           finalize("invalid");
           return;
@@ -133,7 +112,7 @@ function ResetPasswordConfirmPageInner() {
 
     hydrateSessionFromUrl();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: subscription } = authService.onAuthStateChange((_event, session) => {
       if (!isActive) return;
       if (session) {
         setStatus("ready");
@@ -192,13 +171,9 @@ function ResetPasswordConfirmPageInner() {
     try {
       let updateError: { message?: string } | null = null;
       try {
-        const updateResult = await withTimeout(
-          "updateUser",
-          supabase.auth.updateUser({
-            password: form.password,
-          }),
-          10000
-        );
+        const updateResult = await authService.updateUser({
+          password: form.password,
+        });
         updateError = updateResult.error ?? null;
       } catch {
         updateError = { message: "updateUser timed out" };
@@ -242,7 +217,7 @@ function ResetPasswordConfirmPageInner() {
       }
 
       try {
-        await withTimeout("signOut", supabase.auth.signOut(), 5000);
+        await authService.signOutLocal();
       } catch {
       }
       router.replace("/login?password=reset");

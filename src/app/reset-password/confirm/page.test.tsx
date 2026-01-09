@@ -11,7 +11,7 @@ const setSession = vi.fn();
 const exchangeCodeForSession = vi.fn();
 const getSession = vi.fn();
 const updateUser = vi.fn();
-const signOut = vi.fn();
+const signOutLocal = vi.fn();
 const unsubscribe = vi.fn();
 const onAuthStateChange = vi.fn().mockReturnValue({
   data: {
@@ -19,16 +19,14 @@ const onAuthStateChange = vi.fn().mockReturnValue({
   },
 });
 
-vi.mock("@/lib/supabaseClient", () => ({
-  supabase: {
-    auth: {
-      setSession: (...args: unknown[]) => setSession(...args),
-      exchangeCodeForSession: (...args: unknown[]) => exchangeCodeForSession(...args),
-      getSession: (...args: unknown[]) => getSession(...args),
-      updateUser: (...args: unknown[]) => updateUser(...args),
-      signOut: (...args: unknown[]) => signOut(...args),
-      onAuthStateChange: (...args: unknown[]) => onAuthStateChange(...args),
-    },
+vi.mock("@/lib/authService", () => ({
+  authService: {
+    setSession: (...args: unknown[]) => setSession(...args),
+    exchangeCodeForSession: (...args: unknown[]) => exchangeCodeForSession(...args),
+    getSession: (...args: unknown[]) => getSession(...args),
+    updateUser: (...args: unknown[]) => updateUser(...args),
+    signOutLocal: (...args: unknown[]) => signOutLocal(...args),
+    onAuthStateChange: (...args: unknown[]) => onAuthStateChange(...args),
   },
 }));
 
@@ -50,7 +48,7 @@ describe("ResetPasswordConfirmPage", () => {
     exchangeCodeForSession.mockResolvedValue({ error: null });
     getSession.mockResolvedValue({ data: { session: null } });
     updateUser.mockResolvedValue({ error: null });
-    signOut.mockResolvedValue({ error: null });
+    signOutLocal.mockResolvedValue({ error: null });
     onAuthStateChange.mockReturnValue({
       data: {
         subscription: { unsubscribe },

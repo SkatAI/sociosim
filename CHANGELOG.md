@@ -25,6 +25,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - **Chakra Buttons:** Replace invalid `variant="link"` usage with Chakra v3-compatible variants.
 - **Next Config:** Move `outputFileTracingIncludes` to the top-level Next.js config.
+- **Auth Resilience:** Add shared timeout handling for auth and registration flows to prevent infinite spinners.
+- **Auth Concurrency:** Centralize client auth calls behind a serialized auth service to avoid Supabase auth deadlocks.
 
 ### Changed
 - **Agents Data Source:** Load agent_name and description from `public.agents` instead of static in-code definitions.

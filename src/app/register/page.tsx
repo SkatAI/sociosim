@@ -18,6 +18,7 @@ import { Eye, EyeOff } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { withTimeout } from "@/lib/withTimeout";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -95,28 +96,37 @@ export default function RegisterPage() {
     }
 
     setIsSubmitting(true);
+    try {
+      const response = await withTimeout(
+        "register",
+        fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstName: form.firstName.trim(),
+            lastName: form.lastName.trim(),
+            email: form.email.trim(),
+            password: form.password,
+          }),
+        }),
+        30000
+      );
 
-    const response = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        email: form.email.trim(),
-        password: form.password,
-      }),
-    });
+      if (response.ok) {
+        router.replace("/login?signup=success");
+        return;
+      }
 
-    if (response.ok) {
-      router.replace("/login?signup=success");
-      return;
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+      setServerError(
+        payload?.error ?? "Impossible de créer votre compte pour le moment. Veuillez réessayer."
+      );
+    } catch (error) {
+      console.error("[register] Failed to submit:", error);
+      setServerError("Impossible de créer votre compte pour le moment. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-    setServerError(
-      payload?.error ?? "Impossible de créer votre compte pour le moment. Veuillez réessayer."
-    );
-    setIsSubmitting(false);
   };
 
   return (

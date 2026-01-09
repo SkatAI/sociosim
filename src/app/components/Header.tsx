@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ColorModeButton } from "@/components/ui/color-mode";
 import { useAuthUser } from "@/hooks/useAuthUser";
-import { supabase, supabaseStorageKey } from "@/lib/supabaseClient";
+import { supabaseStorageKey } from "@/lib/supabaseClient";
+import { authService } from "@/lib/authService";
 
 type UserRole = "student" | "teacher" | "admin";
 
@@ -44,7 +45,7 @@ export default function Header() {
         );
       });
       const result = await Promise.race([
-        supabase.auth.signOut({ scope: "local" }),
+        authService.signOutLocal(),
         timeout,
       ]);
       if ("error" in result && result.error) {

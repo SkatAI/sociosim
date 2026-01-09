@@ -9,11 +9,9 @@ import { mockRouter } from "@/test/mocks/router";
 const signInWithPassword = vi.fn();
 
 vi.mock("next/navigation");
-vi.mock("@/lib/supabaseClient", () => ({
-  supabase: {
-    auth: {
-      signInWithPassword: (...args: unknown[]) => signInWithPassword(...args),
-    },
+vi.mock("@/lib/authService", () => ({
+  authService: {
+    signInWithPassword: (...args: unknown[]) => signInWithPassword(...args),
   },
 }));
 

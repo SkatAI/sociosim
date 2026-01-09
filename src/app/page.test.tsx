@@ -3,15 +3,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import Home from "./page";
-import { supabase } from "@/lib/supabaseClient";
 import { mockRouter } from "@/test/mocks/router";
+import { useAuthUser } from "@/hooks/useAuthUser";
 
-vi.mock("@/lib/supabaseClient", () => ({
-  supabase: {
-    auth: {
-      getSession: vi.fn(),
-    },
-  },
+vi.mock("@/hooks/useAuthUser", () => ({
+  useAuthUser: vi.fn(),
 }));
 
 function renderWithChakra(component: React.ReactElement) {
@@ -19,17 +15,16 @@ function renderWithChakra(component: React.ReactElement) {
 }
 
 describe("Home page auth flow", () => {
-  const mockSupabase = supabase as unknown as {
-    auth: {
-      getSession: ReturnType<typeof vi.fn>;
-    };
-  };
-
   beforeEach(() => {
     vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
-    mockSupabase.auth.getSession = vi.fn().mockResolvedValue({
-      data: { session: null },
-    });
+    vi.mocked(useAuthUser).mockReturnValue({
+      user: null,
+      session: null,
+      role: null,
+      isLoading: false,
+      refreshUser: vi.fn(),
+      updateUserMetadata: vi.fn(),
+    } as ReturnType<typeof useAuthUser>);
   });
 
   it("renders content when user is logged out", async () => {
@@ -39,9 +34,14 @@ describe("Home page auth flow", () => {
   });
 
   it("redirects to dashboard when a session exists", async () => {
-    mockSupabase.auth.getSession = vi.fn().mockResolvedValue({
-      data: { session: { user: { id: "user-1" } } },
-    });
+    vi.mocked(useAuthUser).mockReturnValue({
+      user: { id: "user-1" } as ReturnType<typeof useAuthUser>["user"],
+      session: null,
+      role: null,
+      isLoading: false,
+      refreshUser: vi.fn(),
+      updateUserMetadata: vi.fn(),
+    } as ReturnType<typeof useAuthUser>);
 
     renderWithChakra(<Home />);
 

@@ -5,30 +5,24 @@ import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from "next/n
 import Providers from "@/app/providers";
 import Header from "@/app/components/Header";
 import LoginPage from "@/app/login/page";
-import { supabase } from "@/lib/supabaseClient";
+import { authService } from "@/lib/authService";
 import { mockRouter } from "@/test/mocks/router";
 
-vi.mock("@/lib/supabaseClient", () => ({
-  supabase: {
-    auth: {
-      getSession: vi.fn(),
-      signInWithPassword: vi.fn(),
-      signOut: vi.fn(),
-      onAuthStateChange: vi.fn(),
-    },
-    from: vi.fn(),
+vi.mock("@/lib/authService", () => ({
+  authService: {
+    getSession: vi.fn(),
+    signInWithPassword: vi.fn(),
+    signOutLocal: vi.fn(),
+    onAuthStateChange: vi.fn(),
   },
 }));
 
 describe("Auth flow integration", () => {
-  const mockSupabase = supabase as unknown as {
-    auth: {
-      getSession: ReturnType<typeof vi.fn>;
-      signInWithPassword: ReturnType<typeof vi.fn>;
-      signOut: ReturnType<typeof vi.fn>;
-      onAuthStateChange: ReturnType<typeof vi.fn>;
-    };
-    from: ReturnType<typeof vi.fn>;
+  const mockAuthService = authService as unknown as {
+    getSession: ReturnType<typeof vi.fn>;
+    signInWithPassword: ReturnType<typeof vi.fn>;
+    signOutLocal: ReturnType<typeof vi.fn>;
+    onAuthStateChange: ReturnType<typeof vi.fn>;
   };
 
   let authCallback: ((event: string, session: unknown) => void) | null = null;
@@ -39,13 +33,13 @@ describe("Auth flow integration", () => {
       new URLSearchParams() as unknown as ReadonlyURLSearchParams
     );
 
-    mockSupabase.auth.getSession = vi.fn().mockResolvedValue({
+    mockAuthService.getSession = vi.fn().mockResolvedValue({
       data: {
         session: null,
       },
     });
-    mockSupabase.auth.signOut = vi.fn().mockResolvedValue({ error: null });
-    mockSupabase.auth.signInWithPassword = vi.fn().mockResolvedValue({
+    mockAuthService.signOutLocal = vi.fn().mockResolvedValue({ error: null });
+    mockAuthService.signInWithPassword = vi.fn().mockResolvedValue({
       data: {
         session: {
           user: {
@@ -57,17 +51,14 @@ describe("Auth flow integration", () => {
       },
       error: null,
     });
-    mockSupabase.auth.onAuthStateChange = vi.fn((callback: (event: string, session: unknown) => void) => {
+    mockAuthService.onAuthStateChange = vi.fn((callback: (event: string, session: unknown) => void) => {
       authCallback = callback;
       return { data: { subscription: { unsubscribe: vi.fn() } } };
     });
-    mockSupabase.from = vi.fn(() => ({
-      select: () => ({
-        eq: () => ({
-          single: vi.fn().mockResolvedValue({ data: { role: "student" }, error: null }),
-        }),
-      }),
-    }));
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ role: "student" }),
+    });
   });
 
   it(
@@ -90,6 +81,7 @@ describe("Auth flow integration", () => {
 
     await act(async () => {
       authCallback?.("SIGNED_IN", {
+        access_token: "access-token",
         user: {
           id: "user-1",
           email: "user@example.com",
@@ -104,7 +96,7 @@ describe("Auth flow integration", () => {
 
     await user.click(within(header).getByLabelText("Déconnexion"));
     await waitFor(() => {
-      expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+      expect(mockAuthService.signOutLocal).toHaveBeenCalled();
     });
 
     await act(async () => {
