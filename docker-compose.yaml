@@ -11,6 +11,7 @@ services:
     environment:
       NODE_ENV: development
       NEXT_RUNTIME_LOGGING: debug
+      # NEXT_DISABLE_TURBOPACK: "1"
     extra_hosts:
       # Enable host.docker.internal on Linux (macOS/Windows have it by default)
       - "host.docker.internal:host-gateway"
@@ -28,4 +29,5 @@ services:
       - /app/node_modules
       - /app/.next
       - /app/styled-system
+    # command: sh -lc "npm run panda & npx next dev -H 0.0.0.0"
     command: npm run dev
