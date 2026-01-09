@@ -38,6 +38,43 @@ values (
 on conflict (agent_name) do update
 set description = excluded.description;
 
+insert into auth.users (
+  id,
+  instance_id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  created_at,
+  updated_at
+)
+values (
+  '206c1ef0-edb3-42b6-b118-7cc162b353fa',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated',
+  'authenticated',
+  'seed@sociosim.local',
+  crypt('changeme', gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}',
+  '{}',
+  now(),
+  now()
+)
+on conflict (id) do nothing;
+
+insert into public.users (id, name, email, role)
+values (
+  '206c1ef0-edb3-42b6-b118-7cc162b353fa',
+  'Seed User',
+  'seed@sociosim.local',
+  'admin'
+)
+on conflict (id) do nothing;
+
 insert into public.agent_prompts (agent_id, system_prompt, edited_by, version, published)
 values (
   (select id from public.agents where agent_name = 'oriane'),

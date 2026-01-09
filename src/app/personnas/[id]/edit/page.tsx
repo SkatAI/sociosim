@@ -23,6 +23,7 @@ import ListItem from "@tiptap/extension-list-item";
 import Paragraph from "@tiptap/extension-paragraph";
 import TextExtension from "@tiptap/extension-text";
 import { ChevronDown } from "lucide-react";
+import { toaster } from "@/components/ui/toaster";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { withTimeout } from "@/lib/withTimeout";
 
@@ -225,6 +226,11 @@ export default function EditAgentPromptPage() {
           published: prompt.id === selectedPromptId,
         }))
       );
+      toaster.create({
+        title: "Prompt publié",
+        description: "Le prompt est maintenant actif pour les entretiens.",
+        type: "success",
+      });
     } catch (publishError) {
       console.error("Error publishing prompt:", publishError);
       setError("Une erreur est survenue lors de la publication.");
@@ -285,6 +291,11 @@ export default function EditAgentPromptPage() {
         | { prompts?: PromptOption[] }
         | null;
       applyPromptList((refreshedPayload?.prompts || []) as PromptOption[]);
+      toaster.create({
+        title: "Prompt enregistré",
+        description: "Vos modifications ont été sauvegardées.",
+        type: "success",
+      });
     } catch (saveError) {
       console.error("Error saving agent prompt:", saveError);
       setError("Une erreur est survenue lors de l'enregistrement.");
