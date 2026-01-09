@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { useState } from "react";
+import { withTimeout } from "@/lib/withTimeout";
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
@@ -25,23 +26,32 @@ export default function ResetPasswordPage() {
     setError(null);
     setIsSubmitting(true);
 
-    const response = await fetch("/api/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim() }),
-    });
+    try {
+      const response = await withTimeout(
+        "resetPasswordRequest",
+        fetch("/api/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim() }),
+        }),
+        20000
+      );
 
-    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
 
-    if (!response.ok) {
-      setError(payload?.error ?? "Impossible de traiter votre demande. Veuillez réessayer.");
+      if (!response.ok) {
+        setError(payload?.error ?? "Impossible de traiter votre demande. Veuillez réessayer.");
+        return;
+      }
+
+      setSuccess(true);
+      setEmail("");
+    } catch (submitError) {
+      console.error("[reset-password] Request failed:", submitError);
+      setError("Impossible de traiter votre demande. Veuillez réessayer.");
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    setSuccess(true);
-    setEmail("");
-    setIsSubmitting(false);
   };
 
   return (

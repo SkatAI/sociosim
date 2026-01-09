@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseStorageKey } from "@/lib/supabaseClient";
+import { withTimeout } from "@/lib/withTimeout";
+import { authService } from "@/lib/authService";
 
 // todo: def sould not be here
 type UserRole = "student" | "teacher" | "admin";
@@ -17,12 +19,23 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 async function fetchUserRole(userId: string): Promise<UserRole | null> {
-  const { data, error } = await supabase.from("users").select("role").eq("id", userId).single();
-  if (error) {
-    console.error("[AuthProvider] Failed to load user role:", error);
+  console.log("[AuthProvider] Fetching role for user:", userId);
+  try {
+    const response = await withTimeout(
+      "fetchUserRole",
+      fetch(`/api/user/role?userId=${userId}`),
+      5000
+    );
+    const payload = (await response.json().catch(() => null)) as { role?: UserRole; error?: string } | null;
+    if (!response.ok) {
+      console.error("[AuthProvider] Failed to load user role:", payload?.error ?? response.statusText);
+      return null;
+    }
+    return payload?.role ?? null;
+  } catch (error) {
+    console.error("[AuthProvider] Role fetch failed:", error);
     return null;
   }
-  return data?.role ?? null;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -31,6 +44,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const isMountedRef = useRef(true);
+  const latestUserIdRef = useRef<string | null>(null);
+
+  const resetLocalAuth = useCallback((reason: string) => {
+    console.warn("[AuthProvider] Resetting local auth state:", reason);
+    try {
+      window.localStorage.removeItem(supabaseStorageKey);
+      document.cookie = `${supabaseStorageKey}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    } catch (error) {
+      console.warn("[AuthProvider] Failed to clear local auth storage", error);
+    }
+    if (isMountedRef.current) {
+      setSession(null);
+      setUser(null);
+      setRole(null);
+      setIsLoading(false);
+    }
+  }, []);
 
   const syncSession = useCallback(async (nextSession: Session | null) => {
     if (!isMountedRef.current) return;
@@ -42,10 +72,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       : null;
 
     setUser(nextUser);
+    latestUserIdRef.current = nextUser?.id ?? null;
 
     if (nextUser?.id) {
       const loadedRole = await fetchUserRole(nextUser.id);
-      if (isMountedRef.current) {
+      if (isMountedRef.current && latestUserIdRef.current === nextUser.id) {
         setRole(loadedRole);
       }
     } else if (isMountedRef.current) {
@@ -54,22 +85,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loadSession = useCallback(async () => {
-    console.log("[loadSession] Starting session load...");
+    const startedAt = Date.now();
+    console.log("[loadSession] Starting session load...", { startedAt });
     setIsLoading(true);
     try {
+      console.log("[loadSession] Calling getSession...");
       const {
         data: { session: currentSession },
-      } = await supabase.auth.getSession();
+      } = await authService.getSession();
 
       console.log("[loadSession] Got session from Supabase:", {
         hasSession: !!currentSession,
         userId: currentSession?.user?.id,
         userMetadata: currentSession?.user?.user_metadata,
+        elapsedMs: Date.now() - startedAt,
       });
 
       await syncSession(currentSession);
     } catch (error) {
       console.error("[AuthProvider] Failed to load session:", error);
+      if (error instanceof Error && error.message.includes("timed out")) {
+        resetLocalAuth("loadSession timeout");
+        return;
+      }
       if (isMountedRef.current) {
         setSession(null);
         setUser(null);
@@ -79,15 +117,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (isMountedRef.current) {
         setIsLoading(false);
       }
-      console.log("[loadSession] Finished");
+      console.log("[loadSession] Finished", { elapsedMs: Date.now() - startedAt });
     }
-  }, [syncSession]);
+  }, [resetLocalAuth, syncSession]);
 
   useEffect(() => {
     loadSession();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    const { data: subscription } = authService.onAuthStateChange(async (_event, newSession) => {
+      console.log("[AuthProvider] Auth state change:", {
+        event: _event,
+        hasSession: !!newSession,
+        userId: newSession?.user?.id ?? null,
+      });
       await syncSession(newSession);
+      if (_event === "SIGNED_IN" && !newSession?.access_token) {
+        resetLocalAuth("signed-in event missing access token");
+      }
+      if (_event === "SIGNED_OUT") {
+        resetLocalAuth("signed out");
+      }
       if (isMountedRef.current) {
         setIsLoading(false);
       }
@@ -97,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isMountedRef.current = false;
       subscription?.subscription.unsubscribe();
     };
-  }, [loadSession, syncSession]);
+  }, [loadSession, resetLocalAuth, syncSession]);
 
   const updateUserMetadata = useCallback(
     (metadata: Partial<{ firstName: string; lastName: string; name: string }>) => {

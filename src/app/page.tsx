@@ -10,28 +10,17 @@ import {
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useAuthUser } from "@/hooks/useAuthUser";
 
 export default function Home() {
   const router = useRouter();
+  const { user, isLoading } = useAuthUser();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (session?.user?.id) {
-          router.replace("/dashboard");
-        }
-      } catch (error) {
-        console.error("[home] Failed to check session", error);
-      }
-    };
-
-    checkAuth();
-  }, [router]);
+    if (!isLoading && user?.id) {
+      router.replace("/dashboard");
+    }
+  }, [isLoading, router, user?.id]);
 
   return (
     <Container py={16}>

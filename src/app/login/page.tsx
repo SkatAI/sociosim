@@ -17,7 +17,7 @@ import { Eye, EyeOff } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { authService } from "@/lib/authService";
 
 type AuthState = {
   email: string;
@@ -43,25 +43,14 @@ function LoginPageInner() {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     console.log("[login] Attempting sign in with:", form.email);
 
     try {
-      const signInPromise = supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await authService.signInWithPassword({
         email: form.email,
         password: form.password,
       });
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => {
-          reject(new Error("timeout"));
-        }, 15000);
-      });
-
-      const { data, error: signInError } = (await Promise.race([
-        signInPromise,
-        timeoutPromise,
-      ])) as Awaited<typeof signInPromise>;
 
 
       console.log(
@@ -90,16 +79,13 @@ function LoginPageInner() {
       router.replace("/dashboard");
     } catch (submitError) {
       console.error("[login] Sign in failed:", submitError);
-      const isTimeout = submitError instanceof Error && submitError.message === "timeout";
+      const isTimeout = submitError instanceof Error && submitError.message.includes("timed out");
       setError(
         isTimeout
           ? "La connexion a expiré. Timeout."
           : "Impossible de vous connecter pour le moment. Veuillez réessayer."
       );
     } finally {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
       setIsSubmitting(false);
     }
   };

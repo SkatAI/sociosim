@@ -8,15 +8,13 @@ import { useAuthUser } from "@/hooks/useAuthUser";
 import { mockRouter } from "@/test/mocks/router";
 import { mockUseAuthUser } from "@/test/mocks/useAuthUser";
 
-const signOut = vi.fn();
+const signOutLocal = vi.fn().mockResolvedValue({ error: null });
 
 vi.mock("next/navigation");
 vi.mock("@/hooks/useAuthUser");
-vi.mock("@/lib/supabaseClient", () => ({
-  supabase: {
-    auth: {
-      signOut: () => signOut(),
-    },
+vi.mock("@/lib/authService", () => ({
+  authService: {
+    signOutLocal: (...args: unknown[]) => signOutLocal(...args),
   },
 }));
 
@@ -39,7 +37,7 @@ describe("Header", () => {
 
     await user.click(screen.getByLabelText("Déconnexion"));
 
-    expect(signOut).toHaveBeenCalled();
+    expect(signOutLocal).toHaveBeenCalled();
     expect(mockRouter.replace).toHaveBeenCalledWith("/login");
   });
 });

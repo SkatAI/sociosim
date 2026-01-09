@@ -15,6 +15,7 @@ import {
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
+import { withTimeout } from "@/lib/withTimeout";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -78,25 +79,35 @@ function SetPasswordPageInner() {
 
     setIsSubmitting(true);
 
-    const response = await fetch("/api/register/set-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, password: form.password }),
-    });
+    try {
+      const response = await withTimeout(
+        "registerSetPassword",
+        fetch("/api/register/set-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, password: form.password }),
+        }),
+        20000
+      );
 
-    if (response.ok) {
-      router.replace("/login?password=created");
-      return;
+      if (response.ok) {
+        router.replace("/login?password=created");
+        return;
+      }
+
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+
+      setError(
+        payload?.error ?? "Impossible d'enregistrer votre mot de passe."
+      );
+    } catch (submitError) {
+      console.error("[register-set-password] Request failed:", submitError);
+      setError("Impossible d'enregistrer votre mot de passe.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const payload = (await response.json().catch(() => null)) as
-      | { error?: string }
-      | null;
-
-    setError(
-      payload?.error ?? "Impossible d'enregistrer votre mot de passe."
-    );
-    setIsSubmitting(false);
   };
 
   return (
