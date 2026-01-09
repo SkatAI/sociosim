@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ColorModeButton } from "@/components/ui/color-mode";
 import { useAuthUser } from "@/hooks/useAuthUser";
+import { supabase, supabaseStorageKey } from "@/lib/supabaseClient";
 
 type UserRole = "student" | "teacher" | "admin";
 
@@ -24,13 +25,37 @@ export default function Header() {
   const [fontSize, setFontSize] = useState<"md" | "lg" | "xl">("md");
 
   const handleLogout = async () => {
+    console.log("[Header] Logout clicked");
+
+    const clearLocalAuth = () => {
+      try {
+        window.localStorage.removeItem(supabaseStorageKey);
+        document.cookie = `${supabaseStorageKey}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      } catch (error) {
+        console.warn("[Header] Failed to clear local auth storage", error);
+      }
+    };
+
     try {
-      const { supabase } = await import("@/lib/supabaseClient");
-      await supabase.auth.signOut();
-      setUserInfo(null);
-      router.replace("/login");
+      const timeout = new Promise<{ error: Error }>((resolve) => {
+        window.setTimeout(
+          () => resolve({ error: new Error("Logout timeout") }),
+          2000
+        );
+      });
+      const result = await Promise.race([
+        supabase.auth.signOut({ scope: "local" }),
+        timeout,
+      ]);
+      if ("error" in result && result.error) {
+        console.warn("[Header] Logout warning:", result.error);
+      }
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
+    } finally {
+      clearLocalAuth();
+      setUserInfo(null);
+      router.replace("/login");
     }
   };
 
@@ -207,6 +232,7 @@ export default function Header() {
                   variant="ghost"
                   size="sm"
                   title="Se déconnecter"
+                  type="button"
                 >
                   <LogOut size={20} />
                 </IconButton>
