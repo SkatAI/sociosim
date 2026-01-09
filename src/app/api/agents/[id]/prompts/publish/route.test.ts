@@ -53,7 +53,7 @@ describe("POST /api/agents/:id/prompts/publish", () => {
 
     mockCreateServiceSupabaseClient.mockReturnValue({
       from: mockFrom,
-    } as ReturnType<typeof mockCreateServiceSupabaseClient>);
+    } as unknown as ReturnType<typeof mockCreateServiceSupabaseClient>);
 
     const request = new NextRequest("http://localhost", {
       method: "POST",

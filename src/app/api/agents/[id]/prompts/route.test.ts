@@ -64,7 +64,7 @@ describe("GET /api/agents/:id/prompts", () => {
 
     mockCreateServiceSupabaseClient.mockReturnValue({
       from: mockFrom,
-    } as ReturnType<typeof mockCreateServiceSupabaseClient>);
+    } as unknown as ReturnType<typeof mockCreateServiceSupabaseClient>);
 
     const response = await GET(new NextRequest("http://localhost"), {
       params: Promise.resolve({ id: "agent-1" }),
@@ -125,7 +125,7 @@ describe("POST /api/agents/:id/prompts", () => {
 
     mockCreateServiceSupabaseClient.mockReturnValue({
       from: mockFrom,
-    } as ReturnType<typeof mockCreateServiceSupabaseClient>);
+    } as unknown as ReturnType<typeof mockCreateServiceSupabaseClient>);
 
     const request = new NextRequest("http://localhost", {
       method: "POST",
