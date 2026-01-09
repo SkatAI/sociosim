@@ -93,7 +93,7 @@ function LoginPageInner() {
       const isTimeout = submitError instanceof Error && submitError.message === "timeout";
       setError(
         isTimeout
-          ? "La connexion a expiré. Vérifiez que Supabase est démarré puis réessayez."
+          ? "La connexion a expiré. Timeout."
           : "Impossible de vous connecter pour le moment. Veuillez réessayer."
       );
     } finally {

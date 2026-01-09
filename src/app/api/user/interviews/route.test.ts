@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
 import { GET } from "./route";
 import { interviews } from "@/lib/data";
 
@@ -18,7 +19,7 @@ describe("GET /api/user/interviews", () => {
   });
 
   it("returns 400 when userId is missing", async () => {
-    const response = await GET(new Request("http://localhost/api/user/interviews"));
+    const response = await GET(new NextRequest("http://localhost/api/user/interviews"));
     const body = await response.json();
 
     expect(response.status).toBe(400);
@@ -31,7 +32,7 @@ describe("GET /api/user/interviews", () => {
     ]);
 
     const response = await GET(
-      new Request("http://localhost/api/user/interviews?userId=test-user-123")
+      new NextRequest("http://localhost/api/user/interviews?userId=test-user-123")
     );
     const body = await response.json();
 
