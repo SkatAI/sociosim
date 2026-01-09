@@ -16,6 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
+import { toaster } from "@/components/ui/toaster";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { withTimeout } from "@/lib/withTimeout";
 
@@ -98,6 +99,11 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
         return;
       }
 
+      toaster.create({
+        title: "Personna créé",
+        description: "Le prompt a été enregistré et peut être édité.",
+        type: "success",
+      });
       router.push(`/personnas/${payload.id}/edit`);
     } catch (submitError) {
       console.error("Error creating personna:", submitError);

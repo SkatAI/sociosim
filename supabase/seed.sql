@@ -1,12 +1,49 @@
 -- Seed agents (idempotent)
 insert into public.agents (agent_name, description)
 values
-  ('Oriane', 'Master 1 EOS\nUtilisatrice pragmatique de l''IA'),
-  ('Théo', 'M2 Math. App. et Socio Quantitative\nPassionné de technologie'),
-  ('Jade', 'SM2 Sociologie et études de genre\nTechno sceptique'),
+  ('oriane', 'Master 1 EOS\nUtilisatrice pragmatique de l''IA'),
+  ('theo', 'M2 Math. App. et Socio Quantitative\nPassionné de technologie'),
+  ('jade', 'SM2 Sociologie et études de genre\nTechno sceptique'),
   ('template', 'template pour creer un nouvel agent')
 on conflict (agent_name) do update
 set description = excluded.description;
+
+insert into auth.users (
+  id,
+  instance_id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  created_at,
+  updated_at
+)
+values (
+  '206c1ef0-edb3-42b6-b118-7cc162b353fa',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated',
+  'authenticated',
+  'seed@sociosim.local',
+  crypt('changeme', gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}',
+  '{}',
+  now(),
+  now()
+)
+on conflict (id) do nothing;
+
+insert into public.users (id, name, email, role)
+values (
+  '206c1ef0-edb3-42b6-b118-7cc162b353fa',
+  'Seed User',
+  'seed@sociosim.local',
+  'admin'
+)
+on conflict (id) do nothing;
 
 -- Seed agent prompts (idempotent)
 insert into public.agent_prompts (agent_id, system_prompt, edited_by, version, published)
@@ -135,7 +172,7 @@ Ne donne pas de réponse théorique ou experte. Tu n'es pas un chatbot ni un ens
 
 TRES IMPORTANT: Souviens-toi, tu est un étudiant de master qui donne un entretien, tu n'es pas un expert ni entretiens ni en IA. Réponds en fonction aux informations du profil personnel, hésite si besoin, sois sûr de toi même si besoin, utilise les expressions et maniérismes d'Oriane, etc.
     $$,
-    'b7ebce7b-3bea-422f-b421-35d0b1d58576',
+    '206c1ef0-edb3-42b6-b118-7cc162b353fa',
     1,
     true
   ),
@@ -262,7 +299,7 @@ TRES IMPORTANT: Suis les caractéristiques du profil décrit précédemment comm
 
 TRES IMPORTANT: J'insiste, il faut suivre les informations du profil. Par exemple, Théo connaît très bien l'IA et l'utilise intensément, il peut donc parler avec assurance de ses usages multiples, contrairement à quelqu'un qui découvrirait ces outils.
     $$,
-    'b7ebce7b-3bea-422f-b421-35d0b1d58576',
+    '206c1ef0-edb3-42b6-b118-7cc162b353fa',
     1,
     true
   ),
@@ -390,7 +427,7 @@ Cependant, elle ne peut s'empecher de bavarder avec chatgpt sur ses problemes de
 
 Tu incarnes Jade lors d'un entretien sociologique conduit par un chercheur. Réponds comme lors d'un vrai entretien : de manière engagée, critique, parfois contradictoire. Tu peux être passionnée, en colère, résignée selon les sujets. N'hésite pas à questionner les questions elles-mêmes si elles te semblent biaisées. Tu peux demander des clarifications, expliquer longuement un concept si nécessaire, ou refuser de répondre si cela va contre tes principes.
     $$,
-    'b7ebce7b-3bea-422f-b421-35d0b1d58576',
+    '206c1ef0-edb3-42b6-b118-7cc162b353fa',
     1,
     true
   ),
@@ -457,7 +494,7 @@ TRES IMPORTANT: Ne produit pas du texte avec mots gras ou titres et soutitres, t
 
 Reste dans ton rôle jusqu'à la fin de l'entretien.
     $$,
-    'b7ebce7b-3bea-422f-b421-35d0b1d58576',
+    '206c1ef0-edb3-42b6-b118-7cc162b353fa',
     1,
     false
   )

@@ -1,6 +1,7 @@
 "use client";
 import { ChakraProvider } from "@chakra-ui/react";
 import { ColorModeProvider } from "@/components/ui/color-mode";
+import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/useAuthUser";
 import { system } from "@/lib/theme";
 
@@ -9,6 +10,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <ColorModeProvider>
       <ChakraProvider value={system}>
         <AuthProvider>{children}</AuthProvider>
+        <Toaster />
       </ChakraProvider>
     </ColorModeProvider>
   );
