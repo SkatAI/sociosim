@@ -24,7 +24,7 @@ import Paragraph from "@tiptap/extension-paragraph";
 import TextExtension from "@tiptap/extension-text";
 import { ChevronDown } from "lucide-react";
 import { useAuthUser } from "@/hooks/useAuthUser";
-import { supabase } from "@/lib/supabaseClient";
+import { withTimeout } from "@/lib/withTimeout";
 
 type AgentPromptState = {
   systemPrompt: string;
@@ -48,7 +48,6 @@ export default function EditAgentPromptPage() {
   const [agentName, setAgentName] = useState<string>("");
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
   const [selectedPromptId, setSelectedPromptId] = useState<string>("");
-  const [latestVersion, setLatestVersion] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const basePromptRef = useRef("");
@@ -100,11 +99,6 @@ export default function EditAgentPromptPage() {
 
   const applyPromptList = (prompts: PromptOption[], nextSelectedId?: string) => {
     setPromptOptions(prompts);
-    const maxVersion = prompts.reduce(
-      (max, prompt) => Math.max(max, prompt.version),
-      0
-    );
-    setLatestVersion(maxVersion);
     const initialPrompt = nextSelectedId
       ? prompts.find((prompt) => prompt.id === nextSelectedId) || prompts[0]
       : prompts[0];
@@ -142,35 +136,25 @@ export default function EditAgentPromptPage() {
 
     const loadAgentPrompt = async () => {
       try {
-        const { data: agentData, error: agentError } = await supabase
-          .from("agents")
-          .select("id, agent_name")
-          .eq("id", agentId)
-          .single();
+        const response = await withTimeout(
+          "loadAgentPrompts",
+          fetch(`/api/agents/${agentId}/prompts`),
+          15000
+        );
 
-        if (agentError || !agentData) {
-          console.error("Error fetching agent:", agentError);
-          setError("Impossible de charger l'agent.");
-          setIsLoading(false);
-          return;
-        }
-
-        setAgentName(agentData.agent_name);
-
-        const { data: promptData, error: promptError } = await supabase
-          .from("agent_prompts")
-          .select("id, system_prompt, version, last_edited, published, users(name)")
-          .eq("agent_id", agentId)
-          .order("last_edited", { ascending: false });
-
-        if (promptError) {
-          console.error("Error fetching agent prompt:", promptError);
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          console.error("Error fetching agent prompt:", payload);
           setError("Impossible de charger le prompt.");
           setIsLoading(false);
           return;
         }
 
-        const prompts = (promptData || []) as PromptOption[];
+        const payload = (await response.json().catch(() => null)) as
+          | { agent?: { agent_name?: string }; prompts?: PromptOption[] }
+          | null;
+        const prompts = (payload?.prompts || []) as PromptOption[];
+        setAgentName(payload?.agent?.agent_name ?? "");
         applyPromptList(prompts);
       } catch (loadError) {
         console.error("Error loading agent prompt:", loadError);
@@ -218,24 +202,19 @@ export default function EditAgentPromptPage() {
       setIsPublishing(true);
       setError(null);
 
-      const { error: clearError } = await supabase
-        .from("agent_prompts")
-        .update({ published: false })
-        .eq("agent_id", agentId);
+      const response = await withTimeout(
+        "publishPrompt",
+        fetch(`/api/agents/${agentId}/prompts/publish`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ promptId: selectedPromptId }),
+        }),
+        15000
+      );
 
-      if (clearError) {
-        console.error("Error unpublishing prompts:", clearError);
-        setError("Impossible de mettre à jour la publication.");
-        return;
-      }
-
-      const { error: publishError } = await supabase
-        .from("agent_prompts")
-        .update({ published: true })
-        .eq("id", selectedPromptId);
-
-      if (publishError) {
-        console.error("Error publishing prompt:", publishError);
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        console.error("Error publishing prompt:", payload);
         setError("Impossible de publier le prompt.");
         return;
       }
@@ -269,34 +248,43 @@ export default function EditAgentPromptPage() {
       setIsSaving(true);
       setError(null);
 
-      const nextVersion = latestVersion + 1;
-      const { error: saveError } = await supabase.from("agent_prompts").insert({
-        agent_id: agentId,
-        system_prompt: promptState.systemPrompt,
-        edited_by: user.id,
-        version: nextVersion,
-        published: false,
-      });
+      const saveResponse = await withTimeout(
+        "savePrompt",
+        fetch(`/api/agents/${agentId}/prompts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_prompt: promptState.systemPrompt,
+            edited_by: user.id,
+          }),
+        }),
+        15000
+      );
 
-      if (saveError) {
-        console.error("Error saving agent prompt:", saveError);
+      if (!saveResponse.ok) {
+        const payload = await saveResponse.json().catch(() => null);
+        console.error("Error saving agent prompt:", payload);
         setError("Impossible d'enregistrer le prompt pour le moment.");
         return;
       }
 
-      const { data: refreshedPrompts, error: refreshError } = await supabase
-        .from("agent_prompts")
-        .select("id, system_prompt, version, last_edited, published, users(name)")
-        .eq("agent_id", agentId)
-        .order("last_edited", { ascending: false });
+      const refreshResponse = await withTimeout(
+        "refreshPrompts",
+        fetch(`/api/agents/${agentId}/prompts`),
+        15000
+      );
 
-      if (refreshError) {
-        console.error("Error refreshing prompts:", refreshError);
+      if (!refreshResponse.ok) {
+        const payload = await refreshResponse.json().catch(() => null);
+        console.error("Error refreshing prompts:", payload);
         setError("Le prompt est enregistré mais la liste ne peut pas être mise à jour.");
         return;
       }
 
-      applyPromptList((refreshedPrompts || []) as PromptOption[]);
+      const refreshedPayload = (await refreshResponse.json().catch(() => null)) as
+        | { prompts?: PromptOption[] }
+        | null;
+      applyPromptList((refreshedPayload?.prompts || []) as PromptOption[]);
     } catch (saveError) {
       console.error("Error saving agent prompt:", saveError);
       setError("Une erreur est survenue lors de l'enregistrement.");
