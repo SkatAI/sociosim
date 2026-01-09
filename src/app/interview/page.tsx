@@ -84,22 +84,21 @@ function InterviewPageInner() {
 
       try {
         setAgentError(null);
-        // Query interview to get agent info
-        const { supabase: sb } = await import("@/lib/supabaseClient");
-        const { data, error } = await sb
-          .from("interviews")
-          .select("agent_id, agents(agent_name, description)")
-          .eq("id", session.interviewId)
-          .single();
-
-        if (error) throw error;
-        const agentData = (data as { agents?: { agent_name?: string; description?: string | null } })?.agents;
-        if (!agentData?.agent_name) {
+        const response = await fetch(`/api/interviews/agent?interviewId=${session.interviewId}`);
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          const message = payload?.error ?? response.statusText;
+          throw new Error(message);
+        }
+        const payload = (await response.json().catch(() => null)) as
+          | { agent?: { agent_name?: string; description?: string | null } }
+          | null;
+        if (!payload?.agent?.agent_name) {
           throw new Error("Agent information missing from interview");
         }
         setAgentInfo({
-          agent_name: agentData.agent_name,
-          description: agentData.description ?? null,
+          agent_name: payload.agent.agent_name,
+          description: payload.agent.description ?? null,
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";

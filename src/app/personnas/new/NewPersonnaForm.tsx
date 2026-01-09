@@ -17,7 +17,7 @@ import {
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
-import { supabase } from "@/lib/supabaseClient";
+import { withTimeout } from "@/lib/withTimeout";
 
 type NewPersonnaFormProps = {
   templatePrompt: string;
@@ -70,36 +70,35 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
       setIsSaving(true);
       setError(null);
 
-      const { data: agentData, error: agentError } = await supabase
-        .from("agents")
-        .insert({
-          agent_name: trimmedName,
-          description: trimmedDescription,
-        })
-        .select("id")
-        .single();
+      const response = await withTimeout(
+        "createPersonna",
+        fetch("/api/agents", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            agent_name: trimmedName,
+            description: trimmedDescription,
+            system_prompt: trimmedPrompt,
+            edited_by: user.id,
+          }),
+        }),
+        15000
+      );
 
-      if (agentError || !agentData) {
-        console.error("Error creating agent:", agentError);
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        console.error("Error creating personna:", payload);
         setError("Impossible de créer le personna.");
         return;
       }
 
-      const { error: promptError } = await supabase.from("agent_prompts").insert({
-        agent_id: agentData.id,
-        system_prompt: trimmedPrompt,
-        edited_by: user.id,
-        version: 1,
-        published: false,
-      });
-
-      if (promptError) {
-        console.error("Error creating agent prompt:", promptError);
-        setError("Le personna est créé, mais le prompt n'a pas pu être enregistré.");
+      const payload = (await response.json().catch(() => null)) as { id?: string } | null;
+      if (!payload?.id) {
+        setError("Impossible de créer le personna.");
         return;
       }
 
-      router.push(`/personnas/${agentData.id}/edit`);
+      router.push(`/personnas/${payload.id}/edit`);
     } catch (submitError) {
       console.error("Error creating personna:", submitError);
       setError("Une erreur est survenue lors de la création.");

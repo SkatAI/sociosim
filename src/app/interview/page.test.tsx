@@ -15,26 +15,40 @@ import { createMockStreamingResponse } from "@/test/helpers/streaming";
 vi.mock("@/hooks/useAuthUser");
 vi.mock("@/hooks/useInterviewSession");
 vi.mock("next/navigation");
-vi.mock("@/lib/supabaseClient", () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({
-            data: { agents: { agent_name: "oriane", description: null } },
-            error: null,
-          }),
-        })),
-      })),
-    })),
-  },
-}));
-
 function createMarkdownResponse(markdown = "Guide court") {
   return {
     ok: true,
     text: async () => markdown,
   };
+}
+
+function createAgentResponse() {
+  return {
+    ok: true,
+    json: async () => ({ agent: { agent_name: "oriane", description: null } }),
+  };
+}
+
+function createBaseFetch() {
+  return vi.fn().mockImplementation((input: RequestInfo) => {
+    if (typeof input === "string" && input.startsWith("/docs/guide_entretien_court.md")) {
+      return Promise.resolve(createMarkdownResponse());
+    }
+    if (typeof input === "string" && input.startsWith("/api/interviews/agent")) {
+      return Promise.resolve(createAgentResponse());
+    }
+    return Promise.reject(new Error("Unexpected fetch"));
+  });
+}
+
+function createChatFetch(responseText: string) {
+  const baseFetch = createBaseFetch();
+  return vi.fn().mockImplementation((input: RequestInfo) => {
+    if (input === "/api/chat") {
+      return Promise.resolve(createMockStreamingResponse(responseText));
+    }
+    return baseFetch(input);
+  });
 }
 
 function renderWithChakra(component: React.ReactElement) {
@@ -61,7 +75,7 @@ describe("InterviewPage - Authentication & Session Setup", () => {
       isResume: false,
     } as ReturnType<typeof useInterviewSession>);
 
-    global.fetch = vi.fn().mockResolvedValue(createMarkdownResponse());
+    global.fetch = createBaseFetch();
   });
 
   it("redirects to login when user not authenticated", async () => {
@@ -99,7 +113,7 @@ describe("InterviewPage - Authentication & Session Setup", () => {
       mockSearchParams as unknown as ReadonlyURLSearchParams
     );
 
-    global.fetch = vi.fn().mockResolvedValue(createMarkdownResponse());
+    global.fetch = createBaseFetch();
 
     await renderInterviewPage();
 
@@ -137,7 +151,7 @@ describe("InterviewPage - Agent Loading", () => {
       isResume: false,
     } as ReturnType<typeof useInterviewSession>);
 
-    global.fetch = vi.fn().mockResolvedValue(createMarkdownResponse());
+    global.fetch = createBaseFetch();
   });
 
   it("loads agent name from interview session", async () => {
@@ -188,7 +202,7 @@ describe("InterviewPage - Chat Interaction", () => {
       isResume: false,
     } as ReturnType<typeof useInterviewSession>);
 
-    global.fetch = vi.fn().mockResolvedValue(createMarkdownResponse());
+    global.fetch = createBaseFetch();
   });
 
   it("can type in message input", async () => {
@@ -204,9 +218,7 @@ describe("InterviewPage - Chat Interaction", () => {
   it("clicking send adds user message immediately", async () => {
     const user = userEvent.setup();
 
-    global.fetch = vi.fn()
-      .mockResolvedValueOnce(createMarkdownResponse())
-      .mockResolvedValueOnce(createMockStreamingResponse("Assistant response"));
+    global.fetch = createChatFetch("Assistant response");
 
     await renderInterviewPage();
 
@@ -225,11 +237,7 @@ describe("InterviewPage - Chat Interaction", () => {
   it("sends to chat API with correct sessionId parameter", async () => {
     const user = userEvent.setup();
 
-    const mockFetch = vi.fn();
-    mockFetch
-      .mockResolvedValueOnce(createMarkdownResponse())
-      .mockResolvedValueOnce(createMockStreamingResponse("Response"));
-
+    const mockFetch = createChatFetch("Response");
     global.fetch = mockFetch;
 
     await renderInterviewPage();
@@ -253,11 +261,7 @@ describe("InterviewPage - Chat Interaction", () => {
   it("can send a complete message interaction", async () => {
     const user = userEvent.setup();
 
-    const mockFetch = vi.fn();
-    mockFetch
-      .mockResolvedValueOnce(createMarkdownResponse())
-      .mockResolvedValueOnce(createMockStreamingResponse("Réponse"));
-
+    const mockFetch = createChatFetch("Réponse");
     global.fetch = mockFetch;
 
     await renderInterviewPage();
@@ -303,7 +307,7 @@ describe("InterviewPage - UI States", () => {
       isResume: false,
     } as ReturnType<typeof useInterviewSession>);
 
-    global.fetch = vi.fn().mockResolvedValue(createMarkdownResponse());
+    global.fetch = createBaseFetch();
   });
 
   it("shows empty state prompt before first message", async () => {
@@ -333,9 +337,7 @@ describe("InterviewPage - UI States", () => {
   it("can send message when session params provided", async () => {
     const user = userEvent.setup();
 
-    global.fetch = vi.fn()
-      .mockResolvedValueOnce(createMarkdownResponse())
-      .mockResolvedValueOnce(createMockStreamingResponse("Response"));
+    global.fetch = createChatFetch("Response");
 
     await renderInterviewPage();
 

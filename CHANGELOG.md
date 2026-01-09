@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - **Next Config:** Move `outputFileTracingIncludes` to the top-level Next.js config.
 - **Auth Resilience:** Add shared timeout handling for auth and registration flows to prevent infinite spinners.
 - **Auth Concurrency:** Centralize client auth calls behind a serialized auth service to avoid Supabase auth deadlocks.
+- **Client DB Calls:** Move personna edits/creation and interview agent lookups to API routes to avoid auth-client hangs.
 
 ### Changed
 - **Agents Data Source:** Load agent_name and description from `public.agents` instead of static in-code definitions.

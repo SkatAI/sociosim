@@ -10,20 +10,6 @@ import { mockUseInterviewSession } from "@/test/mocks/useInterviewSession";
 vi.mock("@/hooks/useAuthUser");
 vi.mock("@/hooks/useInterviewSession");
 vi.mock("next/navigation");
-vi.mock("@/lib/supabaseClient", () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn().mockResolvedValue({
-            data: { agents: { agent_name: "oriane", description: null } },
-            error: null,
-          }),
-        })),
-      })),
-    })),
-  },
-}));
 
 describe("ResumeInterviewPage - Load Previous Messages", () => {
   beforeEach(() => {
