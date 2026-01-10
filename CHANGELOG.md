@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - **Auth Flow Tests:** Add tests for registration, login, password reset, and logout with invalid input coverage.
 - **Guide Page:** Add `/guide-entretien` rendered from `public/docs/guide_entretien.md` and link it in the header.
 - **Auth Emails:** Send signup confirmations and password reset emails via Supabase Auth (Inbucket in local dev).
+- **Auth Email Template:** Add a custom HTML template for password reset emails.
 - **Personnas:** Add a creation flow with a prefilled prompt template and redirect to the editor.
 ### Changed
 - **Tests:** Auth flow tests now pass with bad input assertions and coverage reporting.
