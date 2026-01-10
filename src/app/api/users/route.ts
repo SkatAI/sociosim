@@ -10,7 +10,7 @@ export async function GET() {
     const supabase = createServiceSupabaseClient();
     const { data: profiles, error: profileError } = await supabase
       .from("users")
-      .select("id, name, email, role");
+      .select("id, name, email, role, is_banned");
 
     if (profileError) {
       console.error("[/api/users GET] Failed to load profiles:", profileError.message);
@@ -26,6 +26,7 @@ export async function GET() {
         name: profile.name,
         email: profile.email ?? "",
         role: profile.role as UserRole,
+        is_banned: profile.is_banned ?? false,
       }))
       .sort((a, b) => a.name.localeCompare(b.name, "fr"));
 
@@ -100,6 +101,7 @@ export async function POST(req: NextRequest) {
             email: normalizedEmail,
             role,
             password_setup_token: null,
+            is_banned: false,
           },
         ],
         { onConflict: "id" }
@@ -120,6 +122,7 @@ export async function POST(req: NextRequest) {
           name: trimmedName,
           email: normalizedEmail,
           role,
+          is_banned: false,
         },
       },
       { status: 200 }
