@@ -73,9 +73,9 @@ describe("PersonnasPage", () => {
       expect(screen.queryByText("Chargement des personnas...")).not.toBeInTheDocument();
     });
 
-    expect(screen.getByText("oriane")).toBeInTheDocument();
-    expect(screen.getByText("theo")).toBeInTheDocument();
-    expect(screen.getByText("jade")).toBeInTheDocument();
+    expect(screen.getByText("Oriane")).toBeInTheDocument();
+    expect(screen.getByText("Theo")).toBeInTheDocument();
+    expect(screen.getByText("Jade")).toBeInTheDocument();
     const interviewButtons = screen.getAllByRole("button", { name: /Nouvel entretien/i });
     expect(interviewButtons).toHaveLength(3);
     expect(interviewButtons.some((button) => button.hasAttribute("disabled"))).toBe(true);
