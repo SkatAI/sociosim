@@ -15,6 +15,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { marked } from "marked";
+import { AssistantSkeleton } from "@/components/AssistantSkeleton";
 import { ChatMessage } from "@/components/ChatMessage";
 import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
@@ -114,6 +115,8 @@ function InterviewPageInner() {
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [messagesContainerRef, setMessagesContainerRef] = useState<HTMLDivElement | null>(null);
+  const showAssistantSkeleton =
+    isStreaming && messages.length > 0 && messages[messages.length - 1]?.role !== "assistant";
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -452,6 +455,7 @@ function InterviewPageInner() {
                   timestamp={msg.timestamp}
                 />
               ))}
+              {showAssistantSkeleton && <AssistantSkeleton />}
             </Stack>
           )}
         </Box>

@@ -3,6 +3,7 @@
 import { Box, Container, Heading, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
+import { AssistantSkeleton } from "@/components/AssistantSkeleton";
 import { ChatMessage } from "@/components/ChatMessage";
 import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
@@ -39,6 +40,8 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [messagesContainerRef, setMessagesContainerRef] = useState<HTMLDivElement | null>(null);
+  const showAssistantSkeleton =
+    isStreaming && messages.length > 0 && messages[messages.length - 1]?.role !== "assistant";
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -332,6 +335,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
                   timestamp={msg.timestamp}
                 />
               ))}
+              {showAssistantSkeleton && <AssistantSkeleton />}
             </Stack>
           )}
         </Box>
