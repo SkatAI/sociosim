@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Container, Heading, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, Container, Heading, HStack, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { AssistantSkeleton } from "@/components/AssistantSkeleton";
@@ -40,6 +40,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [messagesContainerRef, setMessagesContainerRef] = useState<HTMLDivElement | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const showAssistantSkeleton =
     isStreaming && messages.length > 0 && messages[messages.length - 1]?.role !== "assistant";
 
@@ -247,6 +248,29 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
     }
   };
 
+  const handleExportPdf = async () => {
+    if (!interviewId || !agentInfo || !user) return;
+    setIsExporting(true);
+    try {
+      const response = await fetch(`/api/interviews/export?interviewId=${interviewId}`);
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const safeAgentName = agentInfo.agent_name.replace(/\s+/g, "-").toLowerCase();
+      const dateStamp = new Date().toISOString().slice(0, 10);
+      const fileName = `entretien-${safeAgentName}-${dateStamp}.pdf`;
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName;
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Show loading state while checking auth
   if (isAuthLoading) {
     return (
@@ -295,15 +319,29 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         borderBottomColor="border.muted"
         backgroundColor="bg.surface"
         zIndex={10}
+        position="sticky"
+        top={0}
       >
         {agentError ? (
           <Heading as="h1" size="lg" color="red.600">
             Erreur: {agentError}
           </Heading>
         ) : (
-          <Heading as="h1" size="lg">
-            {agentInfo ? `Entretien avec ${agentInfo.agent_name}` : "Chargement de l'agent..."} {agentInfo && isResume && <Text as="span" fontSize="sm" color="accent.primary"> (reprise)</Text>}
-          </Heading>
+          <HStack justify="space-between" align="center">
+            <Heading as="h1" size="lg">
+              {agentInfo ? `Entretien avec ${agentInfo.agent_name}` : "Chargement de l'agent..."} {agentInfo && isResume && <Text as="span" fontSize="sm" color="accent.primary"> (reprise)</Text>}
+            </Heading>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleExportPdf}
+              loading={isExporting}
+              disabled={!agentInfo || !user || !interviewId}
+              paddingInline={4}
+            >
+              Exporter
+            </Button>
+          </HStack>
         )}
         <Text fontSize="sm" color="fg.muted" marginTop={1}>
           Session: {session?.sessionId}
@@ -346,6 +384,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
           containerProps={{ width: "100%" }}
         />
       </Box>
+
     </Box>
   );
 }

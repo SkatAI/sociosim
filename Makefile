@@ -56,20 +56,14 @@ pretty: ## Auto-format code with Prettier (alias for format-fix).
 
 # Docker
 
-docker-dev: ## Run development environment in Docker with hot reload.
+docker-build: ## Run development environment in Docker with hot reload.
 	docker compose -f docker-compose.yaml up --build
 
-docker-dev-detached: ## Run development environment in Docker with hot reload (detached).
-	@$(MAKE) docker-up-detached
-
-docker-up-detached: ## Run development environment in Docker with hot reload.
+docker-up-detached: ## Run development environment in Docker with hot reload (detached).
 	docker compose -f docker-compose.yaml up -d
 
-docker-prod: ## Run production build in Docker.
-	docker compose -f docker-compose.prod.yaml up --build
-
-docker-prod-detached: ## Run production build in Docker (detached).
-	docker compose -f docker-compose.prod.yaml up -d
+docker-build-detached: ## Run development environment in Docker with hot reload.
+	docker compose -f docker-compose.yaml up -d --build
 
 docker-down: ## Stop all Docker containers.
 	docker compose -f docker-compose.yaml down
@@ -77,9 +71,6 @@ docker-down: ## Stop all Docker containers.
 
 docker-logs: ## Tail Docker logs.
 	docker compose -f docker-compose.yaml logs -f
-
-docker-prod-build: ## Build Docker production image without starting containers.
-	docker compose -f docker-compose.prod.yaml build
 
 # Database
 

@@ -6,6 +6,7 @@ import {
   Container,
   Dialog,
   Heading,
+  HStack,
   Portal,
   Spinner,
   Stack,
@@ -115,6 +116,7 @@ function InterviewPageInner() {
   const [messages, setMessages] = useState<UIMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [messagesContainerRef, setMessagesContainerRef] = useState<HTMLDivElement | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const showAssistantSkeleton =
     isStreaming && messages.length > 0 && messages[messages.length - 1]?.role !== "assistant";
 
@@ -311,6 +313,29 @@ function InterviewPageInner() {
     }
   };
 
+  const handleExportPdf = async () => {
+    if (!session?.interviewId || !agentInfo || !user) return;
+    setIsExporting(true);
+    try {
+      const response = await fetch(`/api/interviews/export?interviewId=${session.interviewId}`);
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const safeAgentName = agentInfo.agent_name.replace(/\s+/g, "-").toLowerCase();
+      const dateStamp = new Date().toISOString().slice(0, 10);
+      const fileName = `entretien-${safeAgentName}-${dateStamp}.pdf`;
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName;
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Show loading state while checking auth
   if (isAuthLoading) {
     return (
@@ -359,6 +384,8 @@ function InterviewPageInner() {
         borderBottomColor="border.muted"
         backgroundColor="bg.surface"
         zIndex={10}
+        position="sticky"
+        top={0}
       >
         {agentError ? (
           <Heading as="h1" size="lg" color="red.600">
@@ -374,55 +401,67 @@ function InterviewPageInner() {
             <Heading as="h1" size="lg">
               {agentInfo ? `Entretien avec ${agentInfo.agent_name}` : "Chargement de l'agent..."}
             </Heading>
-            <Dialog.Root>
-              <Dialog.Trigger asChild>
+            <HStack gap={3}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleExportPdf}
+                loading={isExporting}
+                disabled={!agentInfo || !user || !session?.interviewId}
+                paddingInline={4}
+              >
+                Exporter
+              </Button>
+              <Dialog.Root>
+                <Dialog.Trigger asChild>
                   <Button
                     variant="plain"
                     size="sm"
                     colorPalette="blue"
                     textDecoration="underline"
                   >
-                  Aide pour l&apos;entretien
-                </Button>
-              </Dialog.Trigger>
-              <Portal>
-                <Dialog.Backdrop />
-                <Dialog.Positioner>
-                  <Dialog.Content padding={8}>
-                    <Dialog.Header>
-                      <Dialog.Title>Guide d&apos;entretien</Dialog.Title>
-                    </Dialog.Header>
-                    <Dialog.Body>
-                      <VStack align="stretch" gap={3}>
-                        {introPreview ? (
-                          <Text fontWeight="600">{introPreview}</Text>
-                        ) : null}
-                        {introHtml ? (
-                          <Box
-                            css={{
-                              "& h2": { marginTop: "1.5rem", fontWeight: "600", color: "fg.default" },
-                              "& h3": { marginTop: "1rem", fontWeight: "600", color: "fg.default" },
-                              "& ul": { paddingLeft: "1.25rem", marginTop: "0.75rem" },
-                              "& li": { marginBottom: "0.5rem" },
-                              "& p": { marginBottom: "0.75rem" },
-                              "& strong": { color: "fg.default" },
-                            }}
-                            dangerouslySetInnerHTML={{ __html: introHtml }}
-                          />
-                        ) : (
-                          <Text color="fg.muted">Chargement du guide d&apos;entretien...</Text>
-                        )}
-                      </VStack>
-                    </Dialog.Body>
-                    <Dialog.Footer>
-                      <Dialog.ActionTrigger asChild>
-                        <Button variant="outline">Fermer</Button>
-                      </Dialog.ActionTrigger>
-                    </Dialog.Footer>
-                  </Dialog.Content>
-                </Dialog.Positioner>
-              </Portal>
-            </Dialog.Root>
+                    Aide pour l&apos;entretien
+                  </Button>
+                </Dialog.Trigger>
+                <Portal>
+                  <Dialog.Backdrop />
+                  <Dialog.Positioner>
+                    <Dialog.Content padding={8}>
+                      <Dialog.Header>
+                        <Dialog.Title>Guide d&apos;entretien</Dialog.Title>
+                      </Dialog.Header>
+                      <Dialog.Body>
+                        <VStack align="stretch" gap={3}>
+                          {introPreview ? (
+                            <Text fontWeight="600">{introPreview}</Text>
+                          ) : null}
+                          {introHtml ? (
+                            <Box
+                              css={{
+                                "& h2": { marginTop: "1.5rem", fontWeight: "600", color: "fg.default" },
+                                "& h3": { marginTop: "1rem", fontWeight: "600", color: "fg.default" },
+                                "& ul": { paddingLeft: "1.25rem", marginTop: "0.75rem" },
+                                "& li": { marginBottom: "0.5rem" },
+                                "& p": { marginBottom: "0.75rem" },
+                                "& strong": { color: "fg.default" },
+                              }}
+                              dangerouslySetInnerHTML={{ __html: introHtml }}
+                            />
+                          ) : (
+                            <Text color="fg.muted">Chargement du guide d&apos;entretien...</Text>
+                          )}
+                        </VStack>
+                      </Dialog.Body>
+                      <Dialog.Footer>
+                        <Dialog.ActionTrigger asChild>
+                          <Button variant="outline">Fermer</Button>
+                        </Dialog.ActionTrigger>
+                      </Dialog.Footer>
+                    </Dialog.Content>
+                  </Dialog.Positioner>
+                </Portal>
+              </Dialog.Root>
+            </HStack>
           </Stack>
         )}
       </Box>
