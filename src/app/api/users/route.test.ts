@@ -19,7 +19,13 @@ describe("GET /api/users", () => {
       from: () => ({
         select: () => ({
           data: [
-            { id: "user-1", name: "Admin User", email: "admin@example.com", role: "admin" },
+            {
+              id: "user-1",
+              name: "Admin User",
+              email: "admin@example.com",
+              role: "admin",
+              is_banned: false,
+            },
           ],
           error: null,
         }),
@@ -37,6 +43,7 @@ describe("GET /api/users", () => {
           name: "Admin User",
           email: "admin@example.com",
           role: "admin",
+          is_banned: false,
         },
       ],
     });
@@ -94,6 +101,7 @@ describe("GET /api/users", () => {
         name: "New User",
         email: "new@example.com",
         role: "admin",
+        is_banned: false,
       },
     });
   });

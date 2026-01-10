@@ -331,7 +331,7 @@ export default function DashboardClient() {
           >
             <Text color="fg.muted" fontSize="lg">
               {selectedAgentId === "all"
-                ? "Vous n&apos;avez pas encore d&apos;entretiens"
+                ? "Vous n'avez pas encore d'entretiens"
                 : "Aucun entretien pour ce personna"}
             </Text>
             {selectedAgentId === "all" && (

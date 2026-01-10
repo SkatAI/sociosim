@@ -2,6 +2,7 @@
 
 import {
   Box,
+  Button,
   Checkbox,
   Container,
   Heading,
@@ -24,6 +25,7 @@ type UserSummary = {
   name: string;
   email: string;
   role: UserRole;
+  is_banned: boolean;
 };
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -61,6 +63,7 @@ export default function ManageUsersClient() {
   const [inviteIsAdmin, setInviteIsAdmin] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [isInviting, setIsInviting] = useState(false);
+  const [banLoading, setBanLoading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -162,6 +165,56 @@ export default function ManageUsersClient() {
     }
   };
 
+  const handleToggleBan = async (target: UserSummary) => {
+    setBanLoading((current) => ({ ...current, [target.id]: true }));
+    try {
+      const response = await fetch(`/api/users/${target.id}/ban`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isBanned: !target.is_banned }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | { user?: UserSummary }
+        | null;
+
+      if (!response.ok) {
+        const message = payload && "error" in payload ? payload.error : null;
+        toaster.create({
+          title: "Action echouee",
+          description: message ?? "Impossible de mettre a jour ce compte.",
+          type: "error",
+        });
+        return;
+      }
+
+      const updatedUser = payload && "user" in payload ? payload.user : null;
+      if (updatedUser) {
+        setUsers((current) =>
+          current.map((entry) => (entry.id === updatedUser.id ? updatedUser : entry))
+        );
+      }
+
+      toaster.create({
+        title: target.is_banned ? "Utilisateur active" : "Utilisateur banni",
+        description: target.is_banned
+          ? "Le compte est de nouveau actif."
+          : "Le compte a ete desactive.",
+        type: "success",
+      });
+    } catch (banError) {
+      console.error("[ManageUsers] Ban toggle failed:", banError);
+      toaster.create({
+        title: "Action echouee",
+        description: "Impossible de mettre a jour ce compte.",
+        type: "error",
+      });
+    } finally {
+      setBanLoading((current) => ({ ...current, [target.id]: false }));
+    }
+  };
+
   if (isLoading) {
     return (
       <Container maxWidth="5xl" height="100vh" display="flex" alignItems="center" justifyContent="center">
@@ -208,23 +261,23 @@ export default function ManageUsersClient() {
                 <Table.Body>
                   <Table.Row backgroundColor="bg.surface">
                     <Table.Cell paddingInlineStart={4}>
-                    <Input
-                      aria-label="Adresse e-mail"
-                      value={inviteEmail}
-                      onChange={(event) => setInviteEmail(event.target.value)}
-                      placeholder="nom@exemple.fr"
-                      paddingLeft={3}
-                    />
-                  </Table.Cell>
-                  <Table.Cell paddingInlineStart={4}>
-                    <Input
-                      aria-label="Nom"
-                      value={inviteName}
-                      onChange={(event) => setInviteName(event.target.value)}
-                      placeholder="Prenom Nom"
-                      paddingLeft={3}
-                    />
-                  </Table.Cell>
+                      <Input
+                        aria-label="Adresse e-mail"
+                        value={inviteEmail}
+                        onChange={(event) => setInviteEmail(event.target.value)}
+                        placeholder="nom@exemple.fr"
+                        paddingLeft={3}
+                      />
+                    </Table.Cell>
+                    <Table.Cell paddingInlineStart={4}>
+                      <Input
+                        aria-label="Nom"
+                        value={inviteName}
+                        onChange={(event) => setInviteName(event.target.value)}
+                        placeholder="Prenom Nom"
+                        paddingLeft={3}
+                      />
+                    </Table.Cell>
                     <Table.Cell paddingInlineStart={4} textAlign="center">
                       <Checkbox.Root
                         checked={inviteIsAdmin}
@@ -236,16 +289,16 @@ export default function ManageUsersClient() {
                       </Checkbox.Root>
                     </Table.Cell>
                     <Table.Cell paddingInlineStart={4} textAlign="center">
-                    <IconButton
-                      type="submit"
-                      size="sm"
-                      aria-label="Inviter un utilisateur"
-                      colorPalette="blue"
-                      loading={isInviting}
-                      paddingInline={4}
-                    >
-                      Inviter
-                    </IconButton>
+                      <IconButton
+                        type="submit"
+                        size="sm"
+                        aria-label="Inviter un utilisateur"
+                        colorPalette="blue"
+                        loading={isInviting}
+                        paddingInline={4}
+                      >
+                        Inviter
+                      </IconButton>
                     </Table.Cell>
                   </Table.Row>
                 </Table.Body>
@@ -314,17 +367,26 @@ export default function ManageUsersClient() {
                       <Table.Cell paddingInlineStart={4} fontWeight="medium">
                         {userRow.name}
                       </Table.Cell>
-                      <Table.Cell
-                        paddingInlineStart={4}
-                        textAlign="center"
-                        color={`${getRoleColor(userRow.role)}.600`}
-                        fontWeight="semibold"
+                    <Table.Cell
+                      paddingInlineStart={4}
+                      textAlign="center"
+                      color={`${getRoleColor(userRow.role)}.600`}
+                      fontWeight="semibold"
+                    >
+                      {getRoleLabel(userRow.role)}
+                    </Table.Cell>
+                    <Table.Cell paddingInlineStart={4} textAlign="center">
+                      <Button
+                        size="xs"
+                        colorPalette={userRow.is_banned ? "green" : "red"}
+                        loading={Boolean(banLoading[userRow.id])}
+                        onClick={() => handleToggleBan(userRow)}
                       >
-                        {getRoleLabel(userRow.role)}
-                      </Table.Cell>
-                      <Table.Cell paddingInlineStart={4} />
-                    </Table.Row>
-                  ))}
+                        {userRow.is_banned ? "Activer" : "Bannir"}
+                      </Button>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
                 </Table.Body>
               </Table.Root>
             </Table.ScrollArea>

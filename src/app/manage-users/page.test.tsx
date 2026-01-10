@@ -35,6 +35,7 @@ describe("ManageUsersClient", () => {
             name: "Admin User",
             email: "admin@example.com",
             role: "admin",
+            is_banned: false,
           },
         ],
       }),
@@ -79,6 +80,7 @@ describe("ManageUsersClient", () => {
             name: "New User",
             email: "new@example.com",
             role: "student",
+            is_banned: false,
           },
         }),
       });
