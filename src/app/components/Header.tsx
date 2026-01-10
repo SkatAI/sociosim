@@ -68,11 +68,13 @@ export default function Header() {
     const firstName = (user.user_metadata?.firstName as string) || "";
     const lastName = (user.user_metadata?.lastName as string) || "";
 
-    if (firstName && lastName) {
+    if (firstName || lastName) {
       setUserInfo({ firstName, lastName, role });
-    } else {
-      setUserInfo(null);
+      return;
     }
+
+    const fallbackName = user.email?.split("@")[0] ?? "Utilisateur";
+    setUserInfo({ firstName: fallbackName, lastName: "", role });
   }, [user, role]);
 
   useEffect(() => {
@@ -133,7 +135,7 @@ export default function Header() {
         </HStack>
 
         <HStack gap={4}>
-          {!isLoading && userInfo ? (
+          {!isLoading && user ? (
             <HStack gap={4}>
               <Link
                 as={NextLink}
@@ -173,7 +175,9 @@ export default function Header() {
                   <Popover.Trigger asChild>
                     <Box cursor="pointer">
                       <Avatar.Root size="md">
-                        <Avatar.Fallback name={`${userInfo.firstName} ${userInfo.lastName}`} />
+                        <Avatar.Fallback
+                          name={`${userInfo?.firstName ?? ""} ${userInfo?.lastName ?? ""}`.trim() || "Utilisateur"}
+                        />
                       </Avatar.Root>
                     </Box>
                   </Popover.Trigger>
@@ -182,10 +186,12 @@ export default function Header() {
                       <Stack gap={3} p={3}>
                         {/* Full name and role */}
                         <Text fontWeight="semibold" fontSize="md">
-                          {userInfo.firstName} {userInfo.lastName}
-                          {(userInfo.role === "teacher" || userInfo.role === "admin") && (
+                          {(userInfo?.firstName || userInfo?.lastName)
+                            ? `${userInfo?.firstName ?? ""} ${userInfo?.lastName ?? ""}`.trim()
+                            : "Utilisateur"}
+                          {(userInfo?.role === "teacher" || userInfo?.role === "admin") && (
                             <Text as="span" fontWeight="normal" fontSize="sm" color="fg.subtle">
-                              {" "}({userInfo.role})
+                              {" "}({userInfo?.role})
                             </Text>
                           )}
                         </Text>
