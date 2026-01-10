@@ -42,7 +42,8 @@ describe("DashboardPage", () => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
     });
 
-    expect(screen.getByRole("combobox")).toBeInTheDocument();
+    expect(screen.getByLabelText("Filtrer par agent")).toBeInTheDocument();
+    expect(screen.getByLabelText("Entretiens par page")).toBeInTheDocument();
   });
 
   it("hides the filter dropdown when only one agent exists", async () => {
@@ -54,7 +55,8 @@ describe("DashboardPage", () => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
     });
 
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Filtrer par agent")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Entretiens par page")).toBeInTheDocument();
   });
 
   it("filters interviews when an agent is selected", async () => {
@@ -65,7 +67,7 @@ describe("DashboardPage", () => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
     });
 
-    const select = screen.getByRole("combobox");
+    const select = screen.getByLabelText("Filtrer par agent");
     await user.selectOptions(select, "theo");
 
     await waitFor(() => {
@@ -111,7 +113,7 @@ describe("DashboardPage", () => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
     });
 
-    const select = screen.getByRole("combobox");
+    const select = screen.getByLabelText("Filtrer par agent");
     await user.selectOptions(select, "oriane");
     await user.click(screen.getByRole("button", { name: /Nouvel entretien/i }));
 
@@ -138,7 +140,7 @@ describe("DashboardPage", () => {
 
   it("applies agent selection from URL param", async () => {
     vi.mocked(useSearchParams).mockReturnValue(
-      new URLSearchParams({ agent: "theo" }) as unknown as ReadonlyURLSearchParams
+      new URLSearchParams({ agent: "agent-theo" }) as unknown as ReadonlyURLSearchParams
     );
 
     renderWithChakra(<DashboardClient />);
@@ -147,9 +149,9 @@ describe("DashboardPage", () => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
     });
 
-    const select = screen.getByRole("combobox") as HTMLSelectElement;
+    const select = screen.getByLabelText("Filtrer par agent") as HTMLSelectElement;
     await waitFor(() => {
-      expect(select.value).toBe("theo");
+      expect(select.value).toBe("agent-theo");
     });
   });
 });
