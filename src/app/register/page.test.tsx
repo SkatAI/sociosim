@@ -5,8 +5,12 @@ import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import RegisterPage from "./page";
 import { mockRouter } from "@/test/mocks/router";
+import { toaster } from "@/components/ui/toaster";
 
 vi.mock("next/navigation");
+vi.mock("@/components/ui/toaster", () => ({
+  toaster: { create: vi.fn() },
+}));
 
 function renderWithChakra(component: React.ReactElement) {
   return render(<ChakraProvider value={defaultSystem}>{component}</ChakraProvider>);
@@ -114,6 +118,12 @@ describe("RegisterPage", () => {
 
     await user.click(screen.getByRole("button", { name: /Créer mon compte/i }));
 
-    expect(await screen.findByText("Erreur serveur")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(toaster.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: "Erreur serveur",
+        })
+      );
+    });
   });
 });

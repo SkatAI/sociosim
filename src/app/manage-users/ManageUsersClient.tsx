@@ -64,6 +64,8 @@ export default function ManageUsersClient() {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [isInviting, setIsInviting] = useState(false);
   const [banLoading, setBanLoading] = useState<Record<string, boolean>>({});
+  const [roleLoading, setRoleLoading] = useState<Record<string, boolean>>({});
+  const currentUserId = user?.id ?? null;
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -140,7 +142,7 @@ export default function ManageUsersClient() {
       const nextUser = payload && "user" in payload ? payload.user : null;
       if (nextUser) {
         setUsers((current) =>
-          [...current, nextUser].sort((a, b) => a.name.localeCompare(b.name, "fr"))
+          [...current, nextUser].sort((a, b) => a.email.localeCompare(b.email, "fr"))
         );
       }
 
@@ -215,6 +217,57 @@ export default function ManageUsersClient() {
     }
   };
 
+  const handleToggleRole = async (target: UserSummary) => {
+    const nextRole: UserRole = target.role === "admin" ? "student" : "admin";
+    setRoleLoading((current) => ({ ...current, [target.id]: true }));
+    try {
+      const response = await fetch(`/api/users/${target.id}/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: nextRole }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string }
+        | { user?: UserSummary }
+        | null;
+
+      if (!response.ok) {
+        const message = payload && "error" in payload ? payload.error : null;
+        toaster.create({
+          title: "Action echouee",
+          description: message ?? "Impossible de mettre a jour ce compte.",
+          type: "error",
+        });
+        return;
+      }
+
+      const updatedUser = payload && "user" in payload ? payload.user : null;
+      if (updatedUser) {
+        setUsers((current) =>
+          current.map((entry) => (entry.id === updatedUser.id ? updatedUser : entry))
+        );
+      }
+
+      toaster.create({
+        title: "Role mis a jour",
+        description: nextRole === "admin"
+          ? "L'utilisateur est maintenant administrateur."
+          : "L'utilisateur est maintenant etudiant.",
+        type: "success",
+      });
+    } catch (roleError) {
+      console.error("[ManageUsers] Role toggle failed:", roleError);
+      toaster.create({
+        title: "Action echouee",
+        description: "Impossible de mettre a jour ce compte.",
+        type: "error",
+      });
+    } finally {
+      setRoleLoading((current) => ({ ...current, [target.id]: false }));
+    }
+  };
+
   if (isLoading) {
     return (
       <Container maxWidth="5xl" height="100vh" display="flex" alignItems="center" justifyContent="center">
@@ -225,6 +278,14 @@ export default function ManageUsersClient() {
       </Container>
     );
   }
+
+  const sortedUsers = [...users].sort((a, b) => {
+    const isCurrentA = a.id === currentUserId;
+    const isCurrentB = b.id === currentUserId;
+    if (isCurrentA !== isCurrentB) return isCurrentA ? -1 : 1;
+    if (a.is_banned !== b.is_banned) return a.is_banned ? 1 : -1;
+    return a.email.localeCompare(b.email, "fr");
+  });
 
   return (
     <Container maxWidth="5xl" py={8} px={{ base: 4, md: 6 }}>
@@ -361,29 +422,40 @@ export default function ManageUsersClient() {
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {users.map((userRow) => (
+                  {sortedUsers.map((userRow) => (
                     <Table.Row key={userRow.id}>
                       <Table.Cell paddingInlineStart={4}>{userRow.email}</Table.Cell>
                       <Table.Cell paddingInlineStart={4} fontWeight="medium">
                         {userRow.name}
                       </Table.Cell>
-                    <Table.Cell
-                      paddingInlineStart={4}
-                      textAlign="center"
-                      color={`${getRoleColor(userRow.role)}.600`}
-                      fontWeight="semibold"
-                    >
-                      {getRoleLabel(userRow.role)}
-                    </Table.Cell>
-                    <Table.Cell paddingInlineStart={4} textAlign="center">
-                      <Button
-                        size="xs"
-                        colorPalette={userRow.is_banned ? "green" : "red"}
-                        loading={Boolean(banLoading[userRow.id])}
-                        onClick={() => handleToggleBan(userRow)}
+                      <Table.Cell
+                        paddingInlineStart={4}
+                        textAlign="center"
                       >
-                        {userRow.is_banned ? "Activer" : "Bannir"}
-                      </Button>
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          colorPalette={getRoleColor(userRow.role)}
+                          loading={Boolean(roleLoading[userRow.id])}
+                          onClick={() => handleToggleRole(userRow)}
+                          disabled={userRow.id === currentUserId}
+                        >
+                          {getRoleLabel(userRow.role)}
+                        </Button>
+                      </Table.Cell>
+                    <Table.Cell paddingInlineStart={4} textAlign="center">
+                      {userRow.id === currentUserId ? null : (
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          colorPalette={userRow.is_banned ? "status.activate" : "status.ban"}
+                          paddingInline={2}
+                          loading={Boolean(banLoading[userRow.id])}
+                          onClick={() => handleToggleBan(userRow)}
+                        >
+                          {userRow.is_banned ? "Activer" : "Bannir"}
+                        </Button>
+                      )}
                     </Table.Cell>
                   </Table.Row>
                 ))}

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Alert,
   Button,
   Container,
   Field,
@@ -19,6 +18,7 @@ import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { withTimeout } from "@/lib/withTimeout";
+import { toaster } from "@/components/ui/toaster";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -43,7 +43,6 @@ export default function RegisterPage() {
     confirmation: "",
   });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -87,8 +86,6 @@ export default function RegisterPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setServerError(null);
-
     const errors = validate();
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -118,12 +115,19 @@ export default function RegisterPage() {
       }
 
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-      setServerError(
-        payload?.error ?? "Impossible de créer votre compte pour le moment. Veuillez réessayer."
-      );
+      toaster.create({
+        title: "Inscription impossible",
+        description:
+          payload?.error ?? "Impossible de créer votre compte pour le moment. Veuillez réessayer.",
+        type: "error",
+      });
     } catch (error) {
       console.error("[register] Failed to submit:", error);
-      setServerError("Impossible de créer votre compte pour le moment. Veuillez réessayer.");
+      toaster.create({
+        title: "Inscription impossible",
+        description: "Impossible de créer votre compte pour le moment. Veuillez réessayer.",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -135,16 +139,6 @@ export default function RegisterPage() {
         <Stack gap={2} textAlign="center" maxW="lg" width="full">
           <Heading size="lg">Créer un compte</Heading>
         </Stack>
-
-        {serverError ? (
-          <Alert.Root status="error" borderRadius="md">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>Une erreur est survenue</Alert.Title>
-              <Alert.Description>{serverError}</Alert.Description>
-            </Alert.Content>
-          </Alert.Root>
-        ) : null}
 
         <chakra.form
           onSubmit={handleSubmit}

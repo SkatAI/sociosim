@@ -14,6 +14,14 @@ const customConfig = defineConfig({
         "fg.subtle": { value: { base: "#667085", _dark: "#94a3b8" } },
         "border.muted": { value: { base: "#e2e8f0", _dark: "#1f2937" } },
         "accent.primary": { value: { base: "#2563eb", _dark: "#60a5fa" } },
+
+        // Colorblind-friendly status colors (Blue + Orange palette)
+        "status.activate": { value: { base: "#1e40af", _dark: "#60a5fa" } },      // Navy → Light Blue
+        "status.ban": { value: { base: "#b45309", _dark: "#f97316" } },            // Muted Brown → Warm Orange
+        "status.success": { value: { base: "#0369a1", _dark: "#22d3ee" } },        // Muted Teal → Cyan
+        "status.error": { value: { base: "#b91c1c", _dark: "#f87171" } },          // Muted Dark Red → Light Red
+        "status.warning": { value: { base: "#a16207", _dark: "#fbbf24" } },        // Muted Amber → Light Amber
+        "status.info": { value: { base: "#1e40af", _dark: "#60a5fa" } },           // Muted Blue → Light Blue
       },
     },
   },

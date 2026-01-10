@@ -41,8 +41,58 @@ export async function POST(req: NextRequest) {
     const supabaseService = createServiceSupabaseClient();
     const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
     const normalizedEmail = email.trim().toLowerCase();
+    const [localPart, domainPart] = normalizedEmail.split("@");
+    const baseLocalPart = localPart?.split("+")[0] ?? "";
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     console.log("[register] Creating auth user", { email: normalizedEmail });
+
+    if (baseLocalPart && domainPart) {
+      const baseEmail = `${baseLocalPart}@${domainPart}`;
+      const { data: bannedBase, error: bannedBaseError } = await supabaseService
+        .from("users")
+        .select("id")
+        .eq("is_banned", true)
+        .eq("email", baseEmail)
+        .maybeSingle();
+
+      if (bannedBaseError) {
+        console.error("[register] Failed to check banned users:", bannedBaseError.message);
+        return NextResponse.json(
+          { error: "Impossible de verifier les interdictions d'acces." },
+          { status: 500 }
+        );
+      }
+
+      if (bannedBase) {
+        return NextResponse.json(
+          { error: "Impossible de creer un compte avec cette adresse. Contactez un administrateur du site." },
+          { status: 403 }
+        );
+      }
+
+      const { data: bannedAlias, error: bannedAliasError } = await supabaseService
+        .from("users")
+        .select("id")
+        .eq("is_banned", true)
+        .ilike("email", `${baseLocalPart}+%@${domainPart}`)
+        .limit(1)
+        .maybeSingle();
+
+      if (bannedAliasError) {
+        console.error("[register] Failed to check banned aliases:", bannedAliasError.message);
+        return NextResponse.json(
+          { error: "Impossible de verifier les interdictions d'acces." },
+          { status: 500 }
+        );
+      }
+
+      if (bannedAlias) {
+        return NextResponse.json(
+          { error: "Impossible de creer un compte avec cette adresse. Contactez un administrateur du site." },
+          { status: 403 }
+        );
+      }
+    }
 
     const { data: userData, error: createUserError } =
       await supabasePublic.auth.signUp({
