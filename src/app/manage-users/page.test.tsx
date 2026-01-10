@@ -48,6 +48,8 @@ describe("ManageUsersClient", () => {
       expect(screen.getByText("Admin User")).toBeInTheDocument();
       expect(screen.getByText("admin@example.com")).toBeInTheDocument();
     });
+
+    expect(screen.getByRole("button", { name: "Admin" })).toBeInTheDocument();
   });
 
   it("redirects when user is not logged in", async () => {

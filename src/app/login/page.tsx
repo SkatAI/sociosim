@@ -18,6 +18,7 @@ import NextLink from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { authService } from "@/lib/authService";
+import { toaster } from "@/components/ui/toaster";
 
 type AuthState = {
   email: string;
@@ -32,16 +33,28 @@ function LoginPageInner() {
   const signupSuccess = searchParams.get("signup") === "success";
   const [form, setForm] = useState<AuthState>({ email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (field: keyof AuthState) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
+  const getLoginErrorMessage = (message?: string | null) => {
+    if (!message) {
+      return "Impossible de vous connecter pour le moment. Veuillez réessayer.";
+    }
+    const lower = message.toLowerCase();
+    if (lower.includes("banned")) {
+      return "Impossible de vous connecter. Contacter un administrateur du site.";
+    }
+    if (message === "Invalid login credentials") {
+      return "Identifiants incorrects. Merci de vérifier votre email et votre mot de passe.";
+    }
+    return "Impossible de vous connecter pour le moment. Veuillez réessayer.";
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(null);
     setIsSubmitting(true);
 
     console.log("[login] Attempting sign in with:", form.email);
@@ -62,16 +75,21 @@ function LoginPageInner() {
 
       if (signInError) {
         console.error("[login] Sign in error:", signInError);
-        setError(
-          signInError.message === "Invalid login credentials"
-            ? "Identifiants incorrects. Merci de vérifier votre email et votre mot de passe."
-            : "Impossible de vous connecter pour le moment. Veuillez réessayer."
-        );
+        const errorMessage = getLoginErrorMessage(signInError.message);
+        toaster.create({
+          title: "Connexion impossible",
+          description: errorMessage,
+          type: "error",
+        });
         return;
       }
 
       if (!data?.session?.user?.id) {
-        setError("Impossible de vous connecter pour le moment. Veuillez réessayer.");
+        toaster.create({
+          title: "Connexion impossible",
+          description: "Impossible de vous connecter pour le moment. Veuillez réessayer.",
+          type: "error",
+        });
         return;
       }
 
@@ -80,17 +98,17 @@ function LoginPageInner() {
     } catch (submitError) {
       console.error("[login] Sign in failed:", submitError);
       const isTimeout = submitError instanceof Error && submitError.message.includes("timed out");
-      setError(
-        isTimeout
+      toaster.create({
+        title: "Connexion impossible",
+        description: isTimeout
           ? "La connexion a expiré. Timeout."
-          : "Impossible de vous connecter pour le moment. Veuillez réessayer."
-      );
+          : "Impossible de vous connecter pour le moment. Veuillez réessayer.",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const hasError = Boolean(error);
 
   return (
     <Container py={16} maxW="lg" centerContent mx="auto">
@@ -140,7 +158,7 @@ function LoginPageInner() {
             />
           </Field.Root>
 
-          <Field.Root required invalid={hasError}>
+          <Field.Root required>
             <Field.Label>Mot de passe</Field.Label>
             <InputGroup
               endElement={
@@ -162,20 +180,7 @@ function LoginPageInner() {
                 autoComplete="current-password"
               />
             </InputGroup>
-            {hasError ? <Field.ErrorText>{error}</Field.ErrorText> : null}
           </Field.Root>
-
-          {hasError && !isSubmitting ? (
-            <Alert.Root status="error" borderRadius="md">
-              <Alert.Indicator />
-              <Alert.Content>
-                <Alert.Title>Connexion impossible</Alert.Title>
-                <Alert.Description>
-                  {error}
-                </Alert.Description>
-              </Alert.Content>
-            </Alert.Root>
-          ) : null}
 
           <Button type="submit" colorPalette="blue" loading={isSubmitting}>
             Se connecter

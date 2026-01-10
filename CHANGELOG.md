@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - **User Management:** Add `/manage-users` page with a user list and API endpoint.
 - **User Invites:** Add email-based invitations from `/manage-users`.
 - **User Status:** Allow banning/unbanning users from the manage users list.
+- **User Roles:** Allow toggling user roles directly from the manage users list.
 - **Personnas:** Add a creation flow with a prefilled prompt template and redirect to the editor.
 ### Changed
 - **Tests:** Auth flow tests now pass with bad input assertions and coverage reporting.
@@ -33,6 +34,7 @@ All notable changes to this project will be documented in this file.
 - **Auth Resilience:** Add shared timeout handling for auth and registration flows to prevent infinite spinners.
 - **Auth Concurrency:** Centralize client auth calls behind a serialized auth service to avoid Supabase auth deadlocks.
 - **Client DB Calls:** Move personna edits/creation and interview agent lookups to API routes to avoid auth-client hangs.
+- **Registration Guard:** Block banned users from re-registering via email aliases.
 
 ### Changed
 - **Agents Data Source:** Load agent_name and description from `public.agents` instead of static in-code definitions.

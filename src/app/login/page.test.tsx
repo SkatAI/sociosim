@@ -5,6 +5,7 @@ import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
 import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
 import LoginPage from "./page";
 import { mockRouter } from "@/test/mocks/router";
+import { toaster } from "@/components/ui/toaster";
 
 const signInWithPassword = vi.fn();
 
@@ -13,6 +14,9 @@ vi.mock("@/lib/authService", () => ({
   authService: {
     signInWithPassword: (...args: unknown[]) => signInWithPassword(...args),
   },
+}));
+vi.mock("@/components/ui/toaster", () => ({
+  toaster: { create: vi.fn() },
 }));
 
 function renderWithChakra(component: React.ReactElement) {
@@ -44,8 +48,14 @@ describe("LoginPage", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /Se connecter/i }));
 
-    const errors = await screen.findAllByText(/Identifiants incorrects/i);
-    expect(errors.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(toaster.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description:
+            "Identifiants incorrects. Merci de vérifier votre email et votre mot de passe.",
+        })
+      );
+    });
   });
 
   it("shows generic error message on sign-in failure", async () => {
@@ -61,8 +71,13 @@ describe("LoginPage", () => {
     await user.type(screen.getByLabelText("Mot de passe"), "wrongpass");
     await user.click(screen.getByRole("button", { name: /Se connecter/i }));
 
-    const errors = await screen.findAllByText(/Impossible de vous connecter/i);
-    expect(errors.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(toaster.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: "Impossible de vous connecter pour le moment. Veuillez réessayer.",
+        })
+      );
+    });
   });
 
   it("re-enables submit button after failed sign-in", async () => {
@@ -79,8 +94,14 @@ describe("LoginPage", () => {
     const submitButton = screen.getByRole("button", { name: /Se connecter/i });
     await user.click(submitButton);
 
-    const errors = await screen.findAllByText(/Identifiants incorrects/i);
-    expect(errors.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(toaster.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description:
+            "Identifiants incorrects. Merci de vérifier votre email et votre mot de passe.",
+        })
+      );
+    });
     expect(submitButton).not.toBeDisabled();
   });
 
@@ -97,8 +118,13 @@ describe("LoginPage", () => {
     await user.type(screen.getByLabelText("Mot de passe"), "password123");
     await user.click(screen.getByRole("button", { name: /Se connecter/i }));
 
-    const errors = await screen.findAllByText(/Impossible de vous connecter/i);
-    expect(errors.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(toaster.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: "Impossible de vous connecter pour le moment. Veuillez réessayer.",
+        })
+      );
+    });
   });
 
   it("shows generic error when sign-in throws", async () => {
@@ -112,8 +138,13 @@ describe("LoginPage", () => {
     const submitButton = screen.getByRole("button", { name: /Se connecter/i });
     await user.click(submitButton);
 
-    const errors = await screen.findAllByText(/Impossible de vous connecter/i);
-    expect(errors.length).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(toaster.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: "Impossible de vous connecter pour le moment. Veuillez réessayer.",
+        })
+      );
+    });
     expect(submitButton).not.toBeDisabled();
   });
 
