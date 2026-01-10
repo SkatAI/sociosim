@@ -153,6 +153,15 @@ export default function Header() {
               >
                 Mes entretiens
               </Link>
+              <Link
+                as={NextLink}
+                href="/manage-users"
+                fontWeight="medium"
+                color="fg.muted"
+                _hover={{ color: "accent.primary" }}
+              >
+                Utilisateurs
+              </Link>
               <HStack gap={2}>
                 <Popover.Root
                   open={isPopoverOpen}
