@@ -76,7 +76,7 @@ export function MessageInput({
           minWidth={16}
           height={12}
         >
-          {isLoading ? "..." : "Envoyer"}
+          Envoyer
         </Button>
       </HStack>
     </Box>
