@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
         {
           error:
             authError.message === "User already registered"
-              ? "Cette adresse e-mail est déjà utilisée."
+              ? "Cette adresse email est déjà utilisée."
               : "Impossible de mettre à jour votre profil pour le moment.",
         },
         { status: 400 }

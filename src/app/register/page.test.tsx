@@ -32,7 +32,7 @@ describe("RegisterPage", () => {
 
     expect(await screen.findByText("Votre prénom est requis.")).toBeInTheDocument();
     expect(await screen.findByText("Votre nom est requis.")).toBeInTheDocument();
-    expect(await screen.findByText("Votre adresse e-mail est requise.")).toBeInTheDocument();
+    expect(await screen.findByText("Votre adresse emailest requise.")).toBeInTheDocument();
     expect(await screen.findByText("Votre mot de passe est requis.")).toBeInTheDocument();
     expect(await screen.findByText("Merci de confirmer votre mot de passe.")).toBeInTheDocument();
     expect(global.fetch).not.toHaveBeenCalled();
@@ -54,7 +54,7 @@ describe("RegisterPage", () => {
     fireEvent.submit(form as HTMLFormElement);
 
     await waitFor(() => {
-      expect(screen.getByText("Merci de fournir une adresse e-mail valide.")).toBeInTheDocument();
+      expect(screen.getByText("Merci de fournir une adresse emailvalide.")).toBeInTheDocument();
     });
     await waitFor(() => {
       expect(

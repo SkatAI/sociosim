@@ -9,7 +9,7 @@ export default function RegisterConfirmationPage() {
       <Stack gap={6} textAlign="center">
         <Heading size="lg">Compte créé</Heading>
         <Text color="fg.muted">
-          Votre compte Sociosim est prêt. Vous pouvez vous connecter avec votre adresse e-mail et
+          Votre compte Sociosim est prêt. Vous pouvez vous connecter avec votre adresse emailet
           le mot de passe choisi.
         </Text>
         <Button asChild colorPalette="blue" variant="outline">
