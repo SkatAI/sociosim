@@ -89,7 +89,7 @@ export async function getUserInterviewsWithMessages(userId: string) {
   // Step 1: First, get the user's interview IDs via user_interview_session
   const { data: userSessions, error: sessionError } = await supabase
     .from("user_interview_session")
-    .select("interview_id, session_id")
+    .select("interview_id, session_id, created_at")
     .eq("user_id", userId);
 
   console.log("-----------------------");
@@ -118,6 +118,14 @@ export async function getUserInterviewsWithMessages(userId: string) {
 
   const interviewIds = userSessions.map((us) => us.interview_id);
   const sessionIds = userSessions.map((us) => us.session_id);
+
+  const sessionsByInterview = new Map<string, typeof userSessions>();
+  userSessions.forEach((session) => {
+    if (!sessionsByInterview.has(session.interview_id)) {
+      sessionsByInterview.set(session.interview_id, []);
+    }
+    sessionsByInterview.get(session.interview_id)!.push(session);
+  });
 
   // Step 2: Get full interview data with agent and usage
   const { data: interviews, error: interviewError } = await supabase
@@ -163,12 +171,10 @@ export async function getUserInterviewsWithMessages(userId: string) {
 
   // Step 5: Combine data
   const result = (interviews || []).map((interview) => {
-    const sessionForInterview = userSessions.find(
-      (us) => us.interview_id === interview.id
+    const sessionsForInterview = sessionsByInterview.get(interview.id) || [];
+    const msgs = sessionsForInterview.flatMap(
+      (session) => messagesBySession.get(session.session_id) || []
     );
-    const msgs = sessionForInterview
-      ? (messagesBySession.get(sessionForInterview.session_id) || [])
-      : [];
 
     // Sort messages by date descending
     msgs.sort(
