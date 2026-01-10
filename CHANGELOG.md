@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - **Auth Emails:** Send signup confirmations and password reset emails via Supabase Auth (Inbucket in local dev).
 - **Auth Email Template:** Add a custom HTML template for password reset emails.
 - **User Management:** Add `/manage-users` page with a user list and API endpoint.
+- **User Invites:** Add email-based invitations from `/manage-users`.
 - **Personnas:** Add a creation flow with a prefilled prompt template and redirect to the editor.
 ### Changed
 - **Tests:** Auth flow tests now pass with bad input assertions and coverage reporting.
