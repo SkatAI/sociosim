@@ -253,7 +253,7 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
               />
             </Field.Root>
 
-            <Button type="submit" colorPalette="blue" loading={isSaving} alignSelf="flex-end">
+            <Button type="submit" variant="subtle" loading={isSaving} alignSelf="flex-end" paddingInline={6}>
               Enregistrer
             </Button>
           </VStack>

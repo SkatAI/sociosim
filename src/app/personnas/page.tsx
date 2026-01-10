@@ -11,13 +11,11 @@ import {
   Spinner,
   Grid,
   Card,
-  Avatar,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { type Agent } from "@/lib/agents";
-import { PenLine } from "lucide-react";
 
 interface InterviewWithDetails {
   agents?: {
@@ -158,7 +156,7 @@ export default function PersonnasPage() {
           <Heading size="lg" marginBottom={0}>
             Choisissez un personnage
           </Heading>
-          <Button colorPalette="blue" size="sm" onClick={() => router.push("/personnas/new")}>
+          <Button variant="subtle" size="sm" onClick={() => router.push("/personnas/new")} paddingInline={5}>
             Créer une nouvelle personna
           </Button>
         </HStack>
@@ -202,41 +200,28 @@ export default function PersonnasPage() {
           >
             {agents.map((agent) => (
               <Card.Root key={agent.id}>
-                <Card.Body display="flex" flexDirection="column" alignItems="center" gap={4} py={6} px={4}>
-                  <HStack width="full" justifyContent="flex-end">
-                    <Button
-                      aria-label="Modifier le prompt"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => router.push(`/personnas/${agent.id}/edit`)}
-                    >
-                      <PenLine size={18} />
-                    </Button>
-                  </HStack>
-                  <Avatar.Root size="lg">
-                    <Avatar.Fallback>{agent.agent_name.charAt(0)}</Avatar.Fallback>
-                  </Avatar.Root>
-                  <VStack gap={2} alignItems="center">
+                <Card.Body display="flex" flexDirection="column" alignItems="stretch" gap={4} py={6} px={4}>
+                  <VStack gap={2} alignItems="flex-start">
                     <Text fontWeight="semibold" fontSize="md">
-                      {agent.agent_name}
+                      {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
                     </Text>
                     <Text
                       fontSize="sm"
                       color="fg.muted"
-                      textAlign="center"
+                      textAlign="left"
                       lineHeight="1.4"
                       whiteSpace="pre-line"
                     >
                       {(agent.description || "").replace(/\\n/g, "\n")}
                     </Text>
                   </VStack>
-                  <HStack gap={3}>
+                  <HStack gap={3} flexWrap="wrap" justifyContent="center">
                     <VStack gap={1} alignItems="center">
                       <Button
                         onClick={() => handleSelectAgent(agent.id)}
-                        colorPalette="blue"
+                        variant="subtle"
                         size="sm"
-                        padding={4}
+                        paddingInline={5}
                         disabled={isCreatingSession || agent.has_published_prompt === false}
                       >
                         {isCreatingSession ? "Création..." : "Nouvel entretien"}
@@ -252,13 +237,22 @@ export default function PersonnasPage() {
                         onClick={() =>
                           router.push(`/dashboard?agent=${encodeURIComponent(agent.agent_name)}`)
                         }
-                        colorPalette="blue"
+                        variant="subtle"
                         size="sm"
-                        padding={4}
+                        paddingInline={5}
                       >
                         Historique
                       </Button>
                     )}
+                    <Button
+                      aria-label="Modifier le prompt"
+                      variant="subtle"
+                      size="sm"
+                      paddingInline={5}
+                      onClick={() => router.push(`/personnas/${agent.id}/edit`)}
+                    >
+                      Prompt
+                    </Button>
                   </HStack>
                 </Card.Body>
               </Card.Root>

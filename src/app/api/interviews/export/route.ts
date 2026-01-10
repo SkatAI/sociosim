@@ -79,6 +79,7 @@ export async function GET(req: NextRequest) {
       .eq("interview_id", interviewId);
 
     const sessionIds = (sessions ?? []).map((row) => row.session_id);
+    const primarySessionId = sessionIds[0] ?? "";
     const { data: messages } = sessionIds.length
       ? await supabase
           .from("messages")
@@ -205,6 +206,7 @@ export async function GET(req: NextRequest) {
           <div class="container">
             <h1>Entretien avec ${escapeHtml(agentName)}</h1>
             <div class="muted">Entretien du ${escapeHtml(interviewDate)}, Export du ${escapeHtml(exportDate)}</div>
+            <div class="muted"><strong>Session</strong> : ${escapeHtml(primarySessionId)}</div>
             <div class="meta-line"><strong>Utilisateur</strong> : ${escapeHtml(userEmail)} ${escapeHtml(fallbackUserName)}</div>
             <div class="meta-line"><strong>Agent</strong> : ${escapeHtml(agentName)} ${escapeHtml(agentDescription)}</div>
 

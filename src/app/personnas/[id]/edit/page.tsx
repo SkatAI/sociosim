@@ -334,7 +334,7 @@ export default function EditAgentPromptPage() {
             <Menu.Root positioning={{ placement: "bottom-end" }}>
               <Menu.Trigger asChild>
                 <Button
-                  variant="outline"
+                  variant="subtle"
                   size="sm"
                   minWidth={{ base: "full", sm: "320px" }}
                   justifyContent="space-between"
@@ -435,7 +435,7 @@ export default function EditAgentPromptPage() {
             <HStack gap={2} flex="1" justify="flex-end" flexWrap="wrap">
               <Button
                 size="sm"
-                variant="outline"
+                variant="subtle"
                 onClick={handleSave}
                 loading={isSaving}
                 disabled={!isDirty || isSaving}
@@ -445,7 +445,7 @@ export default function EditAgentPromptPage() {
               </Button>
               <Button
                 size="sm"
-                colorPalette="blue"
+                variant="subtle"
                 onClick={handlePublish}
                 loading={isPublishing}
                 disabled={!selectedPromptId || isSelectedPublished}
@@ -472,11 +472,11 @@ export default function EditAgentPromptPage() {
         </VStack>
 
         <HStack justifyContent="flex-end" gap={3}>
-          <Button variant="outline" onClick={handleDiscard} disabled={isSaving} paddingInline={5}>
+          <Button variant="subtle" onClick={handleDiscard} disabled={isSaving} paddingInline={5}>
             Annuler
           </Button>
           <Button
-            colorPalette="blue"
+            variant="subtle"
             onClick={handleSave}
             loading={isSaving}
             disabled={!isDirty || isSaving}
