@@ -65,7 +65,7 @@ describe("POST /api/reset-password", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(400);
-    expect(payload).toEqual({ error: "Le format de l'adresse e-mail est invalide." });
+    expect(payload).toEqual({ error: "Le format de l'adresse emailest invalide." });
     expect(resetPasswordForEmail).not.toHaveBeenCalled();
   });
 
@@ -80,6 +80,6 @@ describe("POST /api/reset-password", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(500);
-    expect(payload).toEqual({ error: "Impossible d'envoyer l'e-mail de réinitialisation." });
+    expect(payload).toEqual({ error: "Impossible d'envoyer l'emailde réinitialisation." });
   });
 });

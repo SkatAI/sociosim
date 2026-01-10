@@ -64,9 +64,9 @@ export default function RegisterPage() {
     }
 
     if (!form.email.trim()) {
-      errors.email = "Votre adresse e-mail est requise.";
+      errors.email = "Votre adresse emailest requise.";
     } else if (!emailRegex.test(form.email.trim())) {
-      errors.email = "Merci de fournir une adresse e-mail valide.";
+      errors.email = "Merci de fournir une adresse emailvalide.";
     }
 
     if (!form.password) {

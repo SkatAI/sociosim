@@ -127,7 +127,7 @@ function LoginPageInner() {
               <Alert.Title>Compte prêt</Alert.Title>
               <Alert.Description>
                 {passwordJustCreated
-                  ? "Vous pouvez maintenant vous connecter avec votre adresse e-mail et le mot de passe défini."
+                  ? "Vous pouvez maintenant vous connecter avec votre adresse emailet le mot de passe défini."
                   : passwordJustReset
                     ? "Votre mot de passe a été réinitialisé. Connectez-vous pour continuer."
                     : "Votre compte a été créé. Vérifiez vos e-mails pour confirmer votre inscription, puis connectez-vous."}

@@ -60,7 +60,7 @@ export default function ResetPasswordPage() {
         <Stack gap={2} textAlign="center" maxW="lg" width="full">
           <Heading size="lg">Réinitialiser votre mot de passe</Heading>
           <Text color="fg.muted">
-            Entrez votre adresse e-mail pour recevoir un lien de réinitialisation.
+            Entrez votre adresse emailpour recevoir un lien de réinitialisation.
           </Text>
         </Stack>
 
@@ -70,7 +70,7 @@ export default function ResetPasswordPage() {
             <Alert.Content>
               <Alert.Title>Lien envoyé</Alert.Title>
               <Alert.Description>
-                Vérifiez votre e-mail pour accéder au lien de réinitialisation. Vous pouvez maintenant créer un nouveau mot de passe.
+                Vérifiez votre emailpour accéder au lien de réinitialisation. Vous pouvez maintenant créer un nouveau mot de passe.
               </Alert.Description>
             </Alert.Content>
           </Alert.Root>

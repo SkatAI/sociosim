@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
     if (!email?.trim() || !name?.trim()) {
       return NextResponse.json(
-        { error: "Merci de renseigner un e-mail et un nom." },
+        { error: "Merci de renseigner un emailet un nom." },
         { status: 400 }
       );
     }
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     if (!emailRegex.test(normalizedEmail)) {
       return NextResponse.json(
-        { error: "Le format de l'adresse e-mail est invalide." },
+        { error: "Le format de l'adresse emailest invalide." },
         { status: 400 }
       );
     }
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
         {
           error:
             inviteError?.message === "User already registered"
-              ? "Cette adresse e-mail est déjà utilisée."
+              ? "Cette adresse emailest déjà utilisée."
               : "Impossible d'inviter cet utilisateur.",
         },
         { status: 400 }

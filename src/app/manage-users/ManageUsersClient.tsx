@@ -101,13 +101,13 @@ export default function ManageUsersClient() {
     setInviteError(null);
 
     if (!inviteEmail.trim() || !inviteName.trim()) {
-      setInviteError("Merci de renseigner un e-mail et un nom.");
+      setInviteError("Merci de renseigner un emailet un nom.");
       return;
     }
 
     const normalizedEmail = inviteEmail.trim().toLowerCase();
     if (!emailRegex.test(normalizedEmail)) {
-      setInviteError("Le format de l'adresse e-mail est invalide.");
+      setInviteError("Le format de l'adresse emailest invalide.");
       return;
     }
 
@@ -151,7 +151,7 @@ export default function ManageUsersClient() {
       setInviteIsAdmin(false);
       toaster.create({
         title: "Invitation envoyée",
-        description: "Le nouvel utilisateur va recevoir un e-mail d'inscription.",
+        description: "Le nouvel utilisateur va recevoir un emaild'inscription.",
         type: "success",
       });
     } catch (inviteError) {
@@ -448,7 +448,8 @@ export default function ManageUsersClient() {
                         <Button
                           size="xs"
                           variant="outline"
-                          colorPalette={userRow.is_banned ? "status.activate" : "status.ban"}
+                          borderColor={userRow.is_banned ? "status.activate" : "status.ban"}
+                          color={userRow.is_banned ? "status.activate" : "status.ban"}
                           paddingInline={2}
                           loading={Boolean(banLoading[userRow.id])}
                           onClick={() => handleToggleBan(userRow)}

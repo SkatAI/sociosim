@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: "Le format de l'adresse e-mail est invalide." },
+        { error: "Le format de l'adresse emailest invalide." },
         { status: 400 }
       );
     }
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
         errorMessage: resetError.message,
       });
       return NextResponse.json(
-        { error: "Impossible d'envoyer l'e-mail de réinitialisation." },
+        { error: "Impossible d'envoyer l'emailde réinitialisation." },
         { status: 500 }
       );
     }

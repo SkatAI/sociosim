@@ -18,14 +18,14 @@ export async function POST(req: NextRequest) {
 
     if (!firstName?.trim() || !lastName?.trim() || !email?.trim() || !password) {
       return NextResponse.json(
-        { error: "Merci de renseigner votre prénom, nom, adresse e-mail et mot de passe." },
+        { error: "Merci de renseigner votre prénom, nom, adresse emailet mot de passe." },
         { status: 400 }
       );
     }
 
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: "Le format de l'adresse e-mail est invalide." },
+        { error: "Le format de l'adresse emailest invalide." },
         { status: 400 }
       );
     }
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
         {
           error:
             createUserError?.message === "User already registered"
-              ? "Cette adresse e-mail est déjà utilisée."
+              ? "Cette adresse emailest déjà utilisée."
               : createUserError?.message ??
                 "Impossible de créer le compte pour le moment.",
         },
