@@ -299,7 +299,7 @@ export default function DashboardClient() {
             )}
           </HStack>
           <Button
-            colorPalette="blue"
+            variant="subtle"
             size="sm"
             paddingInline={4}
             onClick={handleNewInterview}
@@ -425,7 +425,7 @@ export default function DashboardClient() {
                         )}
 
                         <Button
-                          colorPalette="blue"
+                          variant="subtle"
                           size="xs"
                           paddingInline={4}
                           paddingBlock={2}
@@ -474,7 +474,7 @@ export default function DashboardClient() {
               page={currentPage}
               onPageChange={(details) => setCurrentPage(details.page)}
             >
-              <ButtonGroup variant="outline" size="sm">
+              <ButtonGroup variant="subtle" size="sm">
                 <Pagination.PrevTrigger asChild>
                   <IconButton aria-label="Page précédente">
                     <LuChevronLeft />
@@ -485,7 +485,7 @@ export default function DashboardClient() {
                   render={(page) => (
                     <IconButton
                       aria-label={`Page ${page.value}`}
-                      variant={{ base: "outline", _selected: "solid" }}
+                      variant={{ base: "subtle", _selected: "solid" }}
                     >
                       {page.value}
                     </IconButton>
