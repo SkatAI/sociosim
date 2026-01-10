@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QovZnySFKdm3A1dDmMbXFWOmhHTk5r4qQeeRZAB94V35DUQ3cs2GDeXgcgFx2EA
+\restrict u4t7Y9F2aDVkhcDWg5JcXlBqovqQ5pTy0J2zohJZhhuoz7oQWccraAkvVbH3BJe
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.7 (Homebrew)
@@ -452,5 +452,5 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QovZnySFKdm3A1dDmMbXFWOmhHTk5r4qQeeRZAB94V35DUQ3cs2GDeXgcgFx2EA
+\unrestrict u4t7Y9F2aDVkhcDWg5JcXlBqovqQ5pTy0J2zohJZhhuoz7oQWccraAkvVbH3BJe
 
