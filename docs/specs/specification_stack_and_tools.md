@@ -32,6 +32,7 @@ See `docs/sociosim_public_schema.sql` for details.
 
 - Home, login, register, password reset, profile
 - Personnas list (`/personnas`), create (`/personnas/new`), edit (`/personnas/[id]/edit`)
+- User management (`/manage-users`)
 - Interview start (`/interview`) and resume (`/interview/[id]`)
 - Guide page (`/guide-entretien`)
 
