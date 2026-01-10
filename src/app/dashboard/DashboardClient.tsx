@@ -10,10 +10,14 @@ import {
   VStack,
   HStack,
   Badge,
+  ButtonGroup,
   Spinner,
   Card,
   NativeSelect,
+  Pagination,
+  IconButton,
 } from "@chakra-ui/react";
+import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import NextLink from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -71,6 +75,11 @@ const getStatusLabel = (status: string): string => {
   return labels[status] || status;
 };
 
+const formatAgentName = (name?: string): string => {
+  if (!name) return "Agent";
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
+
 const getLatestAssistantMessage = (
   messages: Array<{ content: string; role: string; created_at: string }>
 ) => {
@@ -86,8 +95,10 @@ export default function DashboardClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedInterviewId, setExpandedInterviewId] = useState<string | null>(null);
-  const [selectedAgent, setSelectedAgent] = useState("Tous");
+  const [selectedAgentId, setSelectedAgentId] = useState("all");
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const hasAppliedAgentParam = useRef(false);
 
   useEffect(() => {
@@ -102,7 +113,9 @@ export default function DashboardClient() {
         console.log("[Dashboard] User logged in with ID:", user.id);
         console.log("[Dashboard] Fetching interviews from API...");
 
-        const response = await fetch(`/api/user/interviews?userId=${user.id}`);
+        const response = await fetch(`/api/user/interviews?userId=${user.id}`, {
+          cache: "no-store",
+        });
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
           const message = data.error || "Impossible de charger vos entretiens";
@@ -145,17 +158,8 @@ export default function DashboardClient() {
   };
 
   const handleNewInterview = async () => {
-    if (selectedAgent === "Tous") {
+    if (selectedAgentId === "all") {
       router.push("/personnas");
-      return;
-    }
-
-    const selectedAgentId = interviews.find(
-      (interview) => interview.agents?.agent_name === selectedAgent
-    )?.agent_id;
-
-    if (!selectedAgentId) {
-      setError("Impossible de retrouver l'identifiant du personna");
       return;
     }
 
@@ -197,37 +201,60 @@ export default function DashboardClient() {
     }
   };
 
-  const agentNames = Array.from(
-    new Set(
-      interviews
-        .map((interview) => interview.agents?.agent_name)
-        .filter((name): name is string => Boolean(name))
-    )
-  );
-  const hasMultipleAgents = agentNames.length > 1;
+  const agentOptions = Array.from(
+    interviews.reduce((map, interview) => {
+      if (interview.agent_id) {
+        map.set(interview.agent_id, {
+          id: interview.agent_id,
+          name: formatAgentName(interview.agents?.agent_name),
+        });
+      }
+      return map;
+    }, new Map<string, { id: string; name: string }>())
+  ).map(([, option]) => option);
+  const hasMultipleAgents = agentOptions.length > 1;
   const filteredInterviews =
-    selectedAgent === "Tous"
+    selectedAgentId === "all"
       ? interviews
-      : interviews.filter((interview) => interview.agents?.agent_name === selectedAgent);
+      : interviews.filter((interview) => interview.agent_id === selectedAgentId);
+  const totalPages = Math.max(1, Math.ceil(filteredInterviews.length / pageSize));
+  const paginatedInterviews = filteredInterviews.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   useEffect(() => {
     if (!hasMultipleAgents) {
-      setSelectedAgent("Tous");
+      setSelectedAgentId("all");
       return;
     }
-    if (selectedAgent !== "Tous" && !agentNames.includes(selectedAgent)) {
-      setSelectedAgent("Tous");
+    if (selectedAgentId !== "all" && !agentOptions.some((option) => option.id === selectedAgentId)) {
+      setSelectedAgentId("all");
     }
-  }, [agentNames, hasMultipleAgents, selectedAgent]);
+  }, [agentOptions, hasMultipleAgents, selectedAgentId]);
 
   useEffect(() => {
     const agentParam = searchParams.get("agent");
-    if (!agentParam || hasAppliedAgentParam.current || agentNames.length === 0) return;
-    if (agentNames.includes(agentParam)) {
-      setSelectedAgent(agentParam);
+    if (!agentParam || hasAppliedAgentParam.current || agentOptions.length === 0) return;
+    const matchedById = agentOptions.find((option) => option.id === agentParam);
+    const matchedByName = agentOptions.find((option) => option.name === agentParam);
+    if (matchedById) {
+      setSelectedAgentId(matchedById.id);
+    } else if (matchedByName) {
+      setSelectedAgentId(matchedByName.id);
     }
     hasAppliedAgentParam.current = true;
-  }, [agentNames, searchParams]);
+  }, [agentOptions, searchParams]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedAgentId, pageSize]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   if (isLoading) {
     return (
@@ -250,19 +277,20 @@ export default function DashboardClient() {
             </Heading>
             {hasMultipleAgents && (
               <NativeSelect.Root>
-                <NativeSelect.Field
-                  value={selectedAgent}
-                  onChange={(event) => setSelectedAgent(event.target.value)}
+              <NativeSelect.Field
+                  aria-label="Filtrer par agent"
+                  value={selectedAgentId}
+                  onChange={(event) => setSelectedAgentId(event.target.value)}
                   fontSize="sm"
                   borderWidth="1px"
                   borderColor="border.muted"
                   borderRadius="md"
                   backgroundColor="bg.surface"
                 >
-                  <option value="Tous">Tous</option>
-                  {agentNames.map((agentName) => (
-                    <option key={agentName} value={agentName}>
-                      {agentName}
+                  <option value="all">Tous</option>
+                  {agentOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
                     </option>
                   ))}
                 </NativeSelect.Field>
@@ -302,11 +330,11 @@ export default function DashboardClient() {
             backgroundColor="bg.subtle"
           >
             <Text color="fg.muted" fontSize="lg">
-              {selectedAgent === "Tous"
+              {selectedAgentId === "all"
                 ? "Vous n&apos;avez pas encore d&apos;entretiens"
                 : "Aucun entretien pour ce personna"}
             </Text>
-            {selectedAgent === "Tous" && (
+            {selectedAgentId === "all" && (
               <Text color="fg.subtle" fontSize="sm">
                 Rendez-vous sur{" "}
                 <Link as={NextLink} href="/personnas" color="accent.primary" fontWeight="semibold">
@@ -321,7 +349,7 @@ export default function DashboardClient() {
         {filteredInterviews.length > 0 && (
           <Card.Root>
             <Card.Body display="flex" flexDirection="column" gap={4}>
-              {filteredInterviews.map((interview) => {
+              {paginatedInterviews.map((interview) => {
                 const usage = interview.interview_usage?.[0];
                 const latestAssistant = getLatestAssistantMessage(interview.messages || []);
                 const firstLine =
@@ -340,7 +368,7 @@ export default function DashboardClient() {
                     <HStack justify="space-between" marginBottom={3}>
                       <HStack gap={3}>
                         <Text fontWeight="semibold" fontSize="md">
-                          {interview.agents?.agent_name || "Agent"}
+                          {formatAgentName(interview.agents?.agent_name)}
                         </Text>
                         <Badge colorPalette={getStatusColor(interview.status)}>
                           {getStatusLabel(interview.status)}
@@ -413,6 +441,65 @@ export default function DashboardClient() {
               })}
             </Card.Body>
           </Card.Root>
+        )}
+
+        {filteredInterviews.length > 0 && (
+          <HStack justify="space-between" align="center" flexWrap="wrap" gap={4}>
+            <HStack align="center" gap={3}>
+              <Text fontSize="sm" color="fg.muted">
+                Entretiens par page
+              </Text>
+              <NativeSelect.Root>
+                <NativeSelect.Field
+                  aria-label="Entretiens par page"
+                  value={String(pageSize)}
+                  onChange={(event) => setPageSize(Number(event.target.value))}
+                  fontSize="sm"
+                  borderWidth="1px"
+                  borderColor="border.muted"
+                  borderRadius="md"
+                  backgroundColor="bg.surface"
+                >
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                </NativeSelect.Field>
+                <NativeSelect.Indicator />
+              </NativeSelect.Root>
+            </HStack>
+
+            <Pagination.Root
+              count={filteredInterviews.length}
+              pageSize={pageSize}
+              page={currentPage}
+              onPageChange={(details) => setCurrentPage(details.page)}
+            >
+              <ButtonGroup variant="outline" size="sm">
+                <Pagination.PrevTrigger asChild>
+                  <IconButton aria-label="Page précédente">
+                    <LuChevronLeft />
+                  </IconButton>
+                </Pagination.PrevTrigger>
+
+                <Pagination.Items
+                  render={(page) => (
+                    <IconButton
+                      aria-label={`Page ${page.value}`}
+                      variant={{ base: "outline", _selected: "solid" }}
+                    >
+                      {page.value}
+                    </IconButton>
+                  )}
+                />
+
+                <Pagination.NextTrigger asChild>
+                  <IconButton aria-label="Page suivante">
+                    <LuChevronRight />
+                  </IconButton>
+                </Pagination.NextTrigger>
+              </ButtonGroup>
+            </Pagination.Root>
+          </HStack>
         )}
       </VStack>
     </Container>
