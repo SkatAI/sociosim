@@ -68,7 +68,7 @@ describe("DashboardPage", () => {
     });
 
     const select = screen.getByLabelText("Filtrer par agent");
-    await user.selectOptions(select, "theo");
+    await user.selectOptions(select, "agent-theo");
 
     await waitFor(() => {
       expect(screen.getAllByRole("button", { name: /Continuer/i })).toHaveLength(1);
@@ -114,7 +114,7 @@ describe("DashboardPage", () => {
     });
 
     const select = screen.getByLabelText("Filtrer par agent");
-    await user.selectOptions(select, "oriane");
+    await user.selectOptions(select, "agent-oriane");
     await user.click(screen.getByRole("button", { name: /Nouvel entretien/i }));
 
     await waitFor(() => {

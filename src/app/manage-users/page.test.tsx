@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
+import userEvent from "@testing-library/user-event";
 import ManageUsersClient from "./ManageUsersClient";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { mockRouter } from "@/test/mocks/router";
@@ -9,6 +10,9 @@ import { createMockAuthUser } from "@/test/mocks/useAuthUser";
 
 vi.mock("next/navigation");
 vi.mock("@/hooks/useAuthUser");
+vi.mock("@/components/ui/toaster", () => ({
+  toaster: { create: vi.fn() },
+}));
 
 function renderWithChakra(component: React.ReactElement) {
   return render(<ChakraProvider value={defaultSystem}>{component}</ChakraProvider>);
@@ -57,5 +61,49 @@ describe("ManageUsersClient", () => {
     await waitFor(() => {
       expect(mockRouter.push).toHaveBeenCalledWith("/login");
     });
+  });
+
+  it("invites a user and resets the form", async () => {
+    const user = userEvent.setup();
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ users: [] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          user: {
+            id: "user-2",
+            name: "New User",
+            email: "new@example.com",
+            role: "student",
+          },
+        }),
+      });
+    vi.stubGlobal("fetch", mockFetch);
+
+    renderWithChakra(<ManageUsersClient />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Chargement des utilisateurs...")).not.toBeInTheDocument();
+    });
+
+    await user.type(screen.getByLabelText("Adresse e-mail"), "new@example.com");
+    await user.type(screen.getByLabelText("Nom"), "New User");
+    await user.click(screen.getByLabelText("Inviter un utilisateur"));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenLastCalledWith(
+        "/api/users",
+        expect.objectContaining({
+          method: "POST",
+        })
+      );
+    });
+
+    expect(screen.getByLabelText("Adresse e-mail")).toHaveValue("");
+    expect(screen.getByLabelText("Nom")).toHaveValue("");
   });
 });
