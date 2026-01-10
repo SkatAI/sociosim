@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - **User Invites:** Add email-based invitations from `/manage-users`.
 - **User Status:** Allow banning/unbanning users from the manage users list.
 - **User Roles:** Allow toggling user roles directly from the manage users list.
+- **Interview Export:** Add server-side PDF exports with the system prompt included.
 - **Personnas:** Add a creation flow with a prefilled prompt template and redirect to the editor.
 ### Changed
 - **Tests:** Auth flow tests now pass with bad input assertions and coverage reporting.

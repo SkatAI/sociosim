@@ -1,15 +1,15 @@
-FROM node:20-alpine
+FROM node:20-bookworm-slim
 
 WORKDIR /app
 
-# Install dependencies for native modules
-RUN apk add --no-cache libc6-compat
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # Copy package files
 COPY package*.json ./
 
 # Install ALL dependencies (dev + prod)
 RUN npm ci
+RUN npx playwright install --with-deps chromium
 
 # Copy source code
 COPY . .
