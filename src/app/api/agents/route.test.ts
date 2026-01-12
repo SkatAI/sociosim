@@ -17,7 +17,7 @@ describe("GET /api/agents", () => {
 
   it("returns published agents when published=true", async () => {
     mockGetPublishedAgents.mockResolvedValue([
-      { id: "agent-1", agent_name: "oriane", description: "desc" },
+      { id: "agent-1", agent_name: "oriane", description: "desc", active: true, is_template: false },
     ]);
 
     const response = await GET(new Request("http://localhost/api/agents?published=true"));
@@ -45,6 +45,8 @@ describe("GET /api/agents", () => {
         agent_name: "theo",
         description: "desc",
         has_published_prompt: false,
+        active: true,
+        is_template: false,
       },
     ]);
 
@@ -73,6 +75,8 @@ describe("GET /api/agents", () => {
         agent_name: "mona",
         description: "desc",
         has_published_prompt: false,
+        active: true,
+        is_template: false,
       },
     ]);
 

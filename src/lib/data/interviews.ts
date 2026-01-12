@@ -133,11 +133,12 @@ export async function getUserInterviewsWithMessages(userId: string) {
     .select(
       `
       *,
-      agents(agent_name),
+      agents!inner(agent_name, active),
       interview_usage(total_input_tokens, total_output_tokens)
     `
     )
     .in("id", interviewIds)
+    .eq("agents.active", true)
     .order("updated_at", { ascending: false });
 
   throwIfError(interviewError, "Failed to load interviews");

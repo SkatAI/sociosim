@@ -23,7 +23,7 @@ describe("getUserInterviewsWithMessages", () => {
         id: "interview-1",
         status: "in_progress",
         updated_at: "2024-01-02T12:00:00Z",
-        agents: { agent_name: "oriane" },
+        agents: { agent_name: "oriane", active: true },
         interview_usage: [],
       },
     ];
@@ -54,7 +54,9 @@ describe("getUserInterviewsWithMessages", () => {
         return {
           select: () => ({
             in: () => ({
-              order: vi.fn().mockResolvedValue({ data: interviews, error: null }),
+              eq: () => ({
+                order: vi.fn().mockResolvedValue({ data: interviews, error: null }),
+              }),
             }),
           }),
         };

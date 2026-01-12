@@ -10,6 +10,8 @@ export interface AgentRecord {
   id: string;
   agent_name: string;
   description: string | null;
+  active: boolean;
+  is_template: boolean;
 }
 
 export interface AgentRecordWithPromptStatus extends AgentRecord {
@@ -24,7 +26,7 @@ export async function getAgents(): Promise<AgentRecord[]> {
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id, agent_name, description")
+    .select("id, agent_name, description, active, is_template")
     .order("agent_name");
 
   throwIfError(error, "Failed to load agents");
@@ -42,7 +44,7 @@ export async function getAgentsWithPromptStatus(
 
   let query = supabase
     .from("agents")
-    .select("id, agent_name, description, agent_prompts(published)")
+    .select("id, agent_name, description, active, is_template, agent_prompts(published)")
     .order("agent_name");
 
   if (templateFilter === "only") {
@@ -63,6 +65,8 @@ export async function getAgentsWithPromptStatus(
     id: agent.id,
     agent_name: agent.agent_name,
     description: agent.description,
+    active: agent.active,
+    is_template: agent.is_template,
     has_published_prompt: (agent.agent_prompts || []).some((prompt) => prompt.published),
   }));
 }
@@ -77,7 +81,7 @@ export async function getPublishedAgents(
 
   let query = supabase
     .from("agents")
-    .select("id, agent_name, description, agent_prompts!inner(published)")
+    .select("id, agent_name, description, active, is_template, agent_prompts!inner(published)")
     .eq("agent_prompts.published", true)
     .order("agent_name");
 
@@ -102,7 +106,7 @@ export async function getAgentByName(name: string): Promise<AgentRecord | null> 
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id, agent_name, description")
+    .select("id, agent_name, description, active, is_template")
     .eq("agent_name", name)
     .maybeSingle();
 
@@ -119,7 +123,7 @@ export async function getAgentById(agentId: string): Promise<AgentRecord | null>
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id, agent_name, description")
+    .select("id, agent_name, description, active, is_template")
     .eq("id", agentId)
     .maybeSingle();
 
