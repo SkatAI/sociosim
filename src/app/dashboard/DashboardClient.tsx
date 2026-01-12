@@ -20,7 +20,7 @@ import {
 import { LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp } from "react-icons/lu";
 import NextLink from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
 
 interface InterviewWithDetails {
@@ -206,19 +206,20 @@ export default function DashboardClient() {
     }, new Map<string, { id: string; name: string }>())
   ).map(([, option]) => option);
   const hasMultipleAgents = agentOptions.length > 1;
-  const userOptions = user_admin
-    ? Array.from(
-        interviews.reduce((map, interview) => {
-          if (interview.starter_user_id) {
-            map.set(interview.starter_user_id, {
-              id: interview.starter_user_id,
-              name: interview.starter_user_name || "Utilisateur",
-            });
-          }
-          return map;
-        }, new Map<string, { id: string; name: string }>())
-      ).map(([, option]) => option)
-    : [];
+  const userOptions = useMemo(() => {
+    if (!user_admin) return [];
+    return Array.from(
+      interviews.reduce((map, interview) => {
+        if (interview.starter_user_id) {
+          map.set(interview.starter_user_id, {
+            id: interview.starter_user_id,
+            name: interview.starter_user_name || "Utilisateur",
+          });
+        }
+        return map;
+      }, new Map<string, { id: string; name: string }>())
+    ).map(([, option]) => option);
+  }, [interviews, user_admin]);
   const filteredByAgent =
     selectedAgentId === "all"
       ? interviews
