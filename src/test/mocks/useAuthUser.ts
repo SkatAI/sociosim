@@ -20,6 +20,7 @@ export const mockUseAuthUser = {
   user: mockUser,
   session: null,
   role: "student" as const,
+  user_admin: false,
   isLoading: false,
   refreshUser: vi.fn(),
   updateUserMetadata: vi.fn(),
