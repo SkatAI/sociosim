@@ -13,7 +13,7 @@ import {
   Card,
   IconButton,
 } from "@chakra-ui/react";
-import { LuEye, LuEyeClosed } from "react-icons/lu";
+import { LuEye, LuEyeClosed, LuFileCog } from "react-icons/lu";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
@@ -37,6 +37,8 @@ export default function PersonnasPage() {
   const [error, setError] = useState<string | null>(null);
   const [interactedAgents, setInteractedAgents] = useState<string[]>([]);
   const [togglingAgentId, setTogglingAgentId] = useState<string | null>(null);
+  const activeAgents = agents.filter((agent) => agent.active);
+  const inactiveAgents = agents.filter((agent) => !agent.active);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -228,85 +230,174 @@ export default function PersonnasPage() {
 
         {/* Agent Selection Cards */}
         {agents.length > 0 && (
-          <Grid
-            gridTemplateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
-            gap={6}
-          >
-            {agents.map((agent) => (
-              <Card.Root key={agent.id}>
-                <Card.Body display="flex" flexDirection="column" alignItems="stretch" gap={2} py={2} px={4}>
-                  <VStack gap={2} alignItems="flex-start">
-                    <HStack width="100%" justifyContent="space-between" alignItems="flex-start">
-                      <Text fontWeight="semibold" fontSize="md">
-                        {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
-                      </Text>
-                      <IconButton
-                        aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
-                        variant={agent.active ? "outline" : "subtle"}
-                        colorPalette={agent.active ? "red" : undefined}
-                        size="xs"
-                        onClick={() => handleToggleAgent(agent)}
-                        loading={togglingAgentId === agent.id}
-                        disabled={togglingAgentId === agent.id}
-                      >
-                        {agent.active ? <LuEye /> : <LuEyeClosed />}
-                      </IconButton>
-                    </HStack>
-                    <Text
-                      fontSize="sm"
-                      color="fg.muted"
-                      textAlign="left"
-                      lineHeight="1.4"
-                      whiteSpace="pre-line"
-                    >
-                      {(agent.description || "").replace(/\\n/g, "\n")}
-                    </Text>
-                  </VStack>
-                  <HStack gap={3} flexWrap="wrap" justifyContent="center">
-                    <VStack gap={1} alignItems="center">
-                      <Button
-                        onClick={() => handleSelectAgent(agent.id)}
-                        variant="subtle"
-                        size="xs"
-                        paddingInline={2}
-                        disabled={isCreatingSession || agent.has_published_prompt === false || !agent.active}
-                      >
-                        {isCreatingSession ? "Création..." : "Nouvel entretien"}
-                      </Button>
-                      {agent.has_published_prompt === false && (
-                        <Text fontSize="xs" color="fg.muted">
-                        (N&apos;a pas de prompt publié)
+          <VStack gap={6} alignItems="stretch">
+            {activeAgents.length > 0 && (
+              <Grid
+                gridTemplateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
+                gap={6}
+              >
+                {activeAgents.map((agent) => (
+                  <Card.Root key={agent.id}>
+                    <Card.Body display="flex" flexDirection="column" alignItems="stretch" gap={2} py={2} px={4}>
+                      <VStack gap={2} alignItems="flex-start">
+                        <HStack width="100%" justifyContent="space-between" alignItems="flex-start">
+                          <Text fontWeight="semibold" fontSize="md">
+                            {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
+                          </Text>
+                          <HStack gap={2}>
+                            <IconButton
+                              aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
+                              variant={agent.active ? "outline" : "subtle"}
+                              colorPalette={agent.active ? "red" : undefined}
+                              size="xs"
+                              onClick={() => handleToggleAgent(agent)}
+                              loading={togglingAgentId === agent.id}
+                              disabled={togglingAgentId === agent.id}
+                            >
+                              {agent.active ? <LuEye /> : <LuEyeClosed />}
+                            </IconButton>
+                            <IconButton
+                              aria-label="Modifier le prompt"
+                              variant="subtle"
+                              size="xs"
+                              onClick={() => router.push(`/personnas/${agent.id}/edit`)}
+                              disabled={!agent.active}
+                            >
+                              <LuFileCog />
+                            </IconButton>
+                          </HStack>
+                        </HStack>
+                        <Text
+                          fontSize="sm"
+                          color="fg.muted"
+                          textAlign="left"
+                          lineHeight="1.4"
+                          whiteSpace="pre-line"
+                        >
+                          {(agent.description || "").replace(/\\n/g, "\n")}
                         </Text>
-                      )}
-                    </VStack>
-                    {interactedAgents.includes(agent.agent_name) && (
-                      <Button
-                        onClick={() =>
-                          router.push(`/dashboard?agent=${encodeURIComponent(agent.agent_name)}`)
-                        }
-                        variant="subtle"
-                        size="xs"
-                        paddingInline={2}
-                        disabled={!agent.active}
-                      >
-                        Historique
-                      </Button>
-                    )}
-                    <Button
-                      aria-label="Modifier le prompt"
-                      variant="subtle"
-                      size="xs"
-                      paddingInline={2}
-                      onClick={() => router.push(`/personnas/${agent.id}/edit`)}
-                      disabled={!agent.active}
-                    >
-                      Prompt
-                    </Button>
-                  </HStack>
-                </Card.Body>
-              </Card.Root>
-            ))}
-          </Grid>
+                      </VStack>
+                      <HStack gap={3} flexWrap="wrap" justifyContent="center">
+                        {agent.active && (
+                          <VStack gap={1} alignItems="center">
+                            <Button
+                              onClick={() => handleSelectAgent(agent.id)}
+                              variant="subtle"
+                              size="xs"
+                              paddingInline={2}
+                              disabled={isCreatingSession || agent.has_published_prompt === false}
+                            >
+                              {isCreatingSession ? "Création..." : "Nouvel entretien"}
+                            </Button>
+                            {agent.has_published_prompt === false && (
+                              <Text fontSize="xs" color="fg.muted">
+                              (N&apos;a pas de prompt publié)
+                              </Text>
+                            )}
+                          </VStack>
+                        )}
+                        {agent.active && interactedAgents.includes(agent.agent_name) && (
+                          <Button
+                            onClick={() =>
+                              router.push(`/dashboard?agent=${encodeURIComponent(agent.agent_name)}`)
+                            }
+                            variant="subtle"
+                            size="xs"
+                            paddingInline={2}
+                          >
+                            Historique
+                          </Button>
+                        )}
+                      </HStack>
+                    </Card.Body>
+                  </Card.Root>
+                ))}
+              </Grid>
+            )}
+            {inactiveAgents.length > 0 && (
+              <Grid
+                gridTemplateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
+                gap={6}
+              >
+                {inactiveAgents.map((agent) => (
+                  <Card.Root key={agent.id}>
+                    <Card.Body display="flex" flexDirection="column" alignItems="stretch" gap={2} py={2} px={4}>
+                      <VStack gap={2} alignItems="flex-start">
+                        <HStack width="100%" justifyContent="space-between" alignItems="flex-start">
+                          <Text fontWeight="semibold" fontSize="md">
+                            {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
+                          </Text>
+                          <HStack gap={2}>
+                            <IconButton
+                              aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
+                              variant={agent.active ? "outline" : "subtle"}
+                              colorPalette={agent.active ? "red" : undefined}
+                              size="xs"
+                              onClick={() => handleToggleAgent(agent)}
+                              loading={togglingAgentId === agent.id}
+                              disabled={togglingAgentId === agent.id}
+                            >
+                              {agent.active ? <LuEye /> : <LuEyeClosed />}
+                            </IconButton>
+                            <IconButton
+                              aria-label="Modifier le prompt"
+                              variant="subtle"
+                              size="xs"
+                              onClick={() => router.push(`/personnas/${agent.id}/edit`)}
+                              disabled={!agent.active}
+                            >
+                              <LuFileCog />
+                            </IconButton>
+                          </HStack>
+                        </HStack>
+                        <Text
+                          fontSize="sm"
+                          color="fg.muted"
+                          textAlign="left"
+                          lineHeight="1.4"
+                          whiteSpace="pre-line"
+                        >
+                          {(agent.description || "").replace(/\\n/g, "\n")}
+                        </Text>
+                      </VStack>
+                      <HStack gap={3} flexWrap="wrap" justifyContent="center">
+                        {agent.active && (
+                          <VStack gap={1} alignItems="center">
+                            <Button
+                              onClick={() => handleSelectAgent(agent.id)}
+                              variant="subtle"
+                              size="xs"
+                              paddingInline={2}
+                              disabled={isCreatingSession || agent.has_published_prompt === false}
+                            >
+                              {isCreatingSession ? "Création..." : "Nouvel entretien"}
+                            </Button>
+                            {agent.has_published_prompt === false && (
+                              <Text fontSize="xs" color="fg.muted">
+                              (N&apos;a pas de prompt publié)
+                              </Text>
+                            )}
+                          </VStack>
+                        )}
+                        {agent.active && interactedAgents.includes(agent.agent_name) && (
+                          <Button
+                            onClick={() =>
+                              router.push(`/dashboard?agent=${encodeURIComponent(agent.agent_name)}`)
+                            }
+                            variant="subtle"
+                            size="xs"
+                            paddingInline={2}
+                          >
+                            Historique
+                          </Button>
+                        )}
+                      </HStack>
+                    </Card.Body>
+                  </Card.Root>
+                ))}
+              </Grid>
+            )}
+          </VStack>
         )}
       </VStack>
     </Container>
