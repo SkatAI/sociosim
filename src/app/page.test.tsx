@@ -31,7 +31,7 @@ describe("Home page auth flow", () => {
   it("renders content when user is logged out", async () => {
     renderWithChakra(<Home />);
 
-    expect(await screen.findByText("Bienvenue sur Sociosim")).toBeInTheDocument();
+    expect(await screen.findByText("Bienvenue sur Mimesis")).toBeInTheDocument();
   });
 
   it("redirects to dashboard when a session exists", async () => {

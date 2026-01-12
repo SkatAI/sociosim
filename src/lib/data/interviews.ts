@@ -199,3 +199,94 @@ export async function getUserInterviewsWithMessages(userId: string) {
 
   return result;
 }
+
+/**
+ * Fetch all interviews across users with usage and messages summary.
+ * Used for admin access in the dashboard.
+ */
+export async function getAllInterviewsWithMessages() {
+  const supabase = createServiceSupabaseClient();
+
+  console.log("[getAllInterviewsWithMessages] Starting query for all users");
+
+  const { data: userSessions, error: sessionError } = await supabase
+    .from("user_interview_session")
+    .select("interview_id, session_id, user_id, created_at, users(name)")
+    .order("created_at", { ascending: true });
+
+  throwIfError(sessionError, "Failed to load interview sessions");
+
+  if (!userSessions || userSessions.length === 0) {
+    return [];
+  }
+
+  const interviewIds = userSessions.map((session) => session.interview_id);
+  const sessionIds = userSessions.map((session) => session.session_id);
+
+  const sessionsByInterview = new Map<string, typeof userSessions>();
+  const starterByInterview = new Map<string, { id: string; name: string | null }>();
+  userSessions.forEach((session) => {
+    if (!sessionsByInterview.has(session.interview_id)) {
+      sessionsByInterview.set(session.interview_id, []);
+    }
+    sessionsByInterview.get(session.interview_id)!.push(session);
+    if (!starterByInterview.has(session.interview_id)) {
+      const linkedUser = Array.isArray(session.users) ? session.users[0] : session.users;
+      starterByInterview.set(session.interview_id, {
+        id: session.user_id,
+        name: linkedUser?.name ?? null,
+      });
+    }
+  });
+
+  const { data: interviews, error: interviewError } = await supabase
+    .from("interviews")
+    .select(
+      `
+      *,
+      agents!inner(agent_name, active),
+      interview_usage(total_input_tokens, total_output_tokens)
+    `
+    )
+    .in("id", interviewIds)
+    .eq("agents.active", true)
+    .order("updated_at", { ascending: false });
+
+  throwIfError(interviewError, "Failed to load interviews");
+
+  const { data: messages, error: messageError } = await supabase
+    .from("messages")
+    .select("session_id, content, role, created_at")
+    .in("session_id", sessionIds);
+
+  throwIfError(messageError, "Failed to load messages");
+
+  const messagesBySession = new Map<string, typeof messages>();
+  (messages || []).forEach((msg) => {
+    if (!messagesBySession.has(msg.session_id)) {
+      messagesBySession.set(msg.session_id, []);
+    }
+    messagesBySession.get(msg.session_id)!.push(msg);
+  });
+
+  return (interviews || []).map((interview) => {
+    const sessionsForInterview = sessionsByInterview.get(interview.id) || [];
+    const msgs = sessionsForInterview.flatMap(
+      (session) => messagesBySession.get(session.session_id) || []
+    );
+
+    msgs.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    return {
+      ...interview,
+      interview_usage: interview.interview_usage,
+      agents: interview.agents,
+      messages: msgs,
+      starter_user_id: starterByInterview.get(interview.id)?.id ?? null,
+      starter_user_name: starterByInterview.get(interview.id)?.name ?? null,
+    };
+  });
+}
