@@ -30,6 +30,7 @@ interface InterviewWithDetails {
   updated_at: string;
   agents?: {
     agent_name?: string;
+    active?: boolean;
   };
   interview_usage: Array<{
     total_input_tokens: number;

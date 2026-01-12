@@ -20,18 +20,21 @@ const mockAgents = [
     agent_name: "oriane",
     description: "Master 1 EOS\\nUtilisatrice pragmatique de l'IA",
     has_published_prompt: true,
+    active: true,
   },
   {
     id: "agent-theo",
     agent_name: "theo",
     description: "M2 Math. App. et Socio Quantitative\\nPassionné de technologie",
     has_published_prompt: true,
+    active: true,
   },
   {
     id: "agent-jade",
     agent_name: "jade",
     description: "M2 Sociologie et études de genre\\nTechno sceptique",
     has_published_prompt: false,
+    active: false,
   },
 ];
 

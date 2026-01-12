@@ -11,7 +11,9 @@ import {
   Spinner,
   Grid,
   Card,
+  IconButton,
 } from "@chakra-ui/react";
+import { LuEye, LuEyeClosed } from "react-icons/lu";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
@@ -34,6 +36,7 @@ export default function PersonnasPage() {
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [interactedAgents, setInteractedAgents] = useState<string[]>([]);
+  const [togglingAgentId, setTogglingAgentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -138,6 +141,37 @@ export default function PersonnasPage() {
     }
   };
 
+  const handleToggleAgent = async (agent: Agent) => {
+    setTogglingAgentId(agent.id);
+    setError(null);
+    try {
+      const response = await fetch(`/api/agents/${agent.id}/active`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: !agent.active }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        const message = data.error || "Impossible de mettre à jour le personna";
+        console.error("Error updating agent status:", message);
+        setError(message);
+        return;
+      }
+
+      setAgents((prev) =>
+        prev.map((item) =>
+          item.id === agent.id ? { ...item, active: !agent.active } : item
+        )
+      );
+    } catch (err) {
+      console.error("Error updating agent status:", err);
+      setError("Une erreur est survenue lors de la mise à jour du personna");
+    } finally {
+      setTogglingAgentId(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <Container maxWidth="4xl" height="100vh" display="flex" alignItems="center" justifyContent="center">
@@ -200,11 +234,24 @@ export default function PersonnasPage() {
           >
             {agents.map((agent) => (
               <Card.Root key={agent.id}>
-                <Card.Body display="flex" flexDirection="column" alignItems="stretch" gap={4} py={6} px={4}>
+                <Card.Body display="flex" flexDirection="column" alignItems="stretch" gap={2} py={2} px={4}>
                   <VStack gap={2} alignItems="flex-start">
-                    <Text fontWeight="semibold" fontSize="md">
-                      {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
-                    </Text>
+                    <HStack width="100%" justifyContent="space-between" alignItems="flex-start">
+                      <Text fontWeight="semibold" fontSize="md">
+                        {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
+                      </Text>
+                      <IconButton
+                        aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
+                        variant={agent.active ? "outline" : "subtle"}
+                        colorPalette={agent.active ? "red" : undefined}
+                        size="xs"
+                        onClick={() => handleToggleAgent(agent)}
+                        loading={togglingAgentId === agent.id}
+                        disabled={togglingAgentId === agent.id}
+                      >
+                        {agent.active ? <LuEye /> : <LuEyeClosed />}
+                      </IconButton>
+                    </HStack>
                     <Text
                       fontSize="sm"
                       color="fg.muted"
@@ -220,9 +267,9 @@ export default function PersonnasPage() {
                       <Button
                         onClick={() => handleSelectAgent(agent.id)}
                         variant="subtle"
-                        size="sm"
-                        paddingInline={5}
-                        disabled={isCreatingSession || agent.has_published_prompt === false}
+                        size="xs"
+                        paddingInline={2}
+                        disabled={isCreatingSession || agent.has_published_prompt === false || !agent.active}
                       >
                         {isCreatingSession ? "Création..." : "Nouvel entretien"}
                       </Button>
@@ -238,8 +285,9 @@ export default function PersonnasPage() {
                           router.push(`/dashboard?agent=${encodeURIComponent(agent.agent_name)}`)
                         }
                         variant="subtle"
-                        size="sm"
-                        paddingInline={5}
+                        size="xs"
+                        paddingInline={2}
+                        disabled={!agent.active}
                       >
                         Historique
                       </Button>
@@ -247,9 +295,10 @@ export default function PersonnasPage() {
                     <Button
                       aria-label="Modifier le prompt"
                       variant="subtle"
-                      size="sm"
-                      paddingInline={5}
+                      size="xs"
+                      paddingInline={2}
                       onClick={() => router.push(`/personnas/${agent.id}/edit`)}
+                      disabled={!agent.active}
                     >
                       Prompt
                     </Button>

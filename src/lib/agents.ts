@@ -8,5 +8,7 @@ export interface Agent {
   id: string;
   agent_name: string;
   description: string | null;
+  active: boolean;
+  is_template?: boolean;
   has_published_prompt?: boolean;
 }
