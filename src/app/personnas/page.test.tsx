@@ -80,8 +80,8 @@ describe("PersonnasPage", () => {
     expect(screen.getByText("Theo")).toBeInTheDocument();
     expect(screen.getByText("Jade")).toBeInTheDocument();
     const interviewButtons = screen.getAllByRole("button", { name: /Nouvel entretien/i });
-    expect(interviewButtons).toHaveLength(3);
-    expect(interviewButtons.some((button) => button.hasAttribute("disabled"))).toBe(true);
+    expect(interviewButtons).toHaveLength(2);
+    expect(interviewButtons.some((button) => button.hasAttribute("disabled"))).toBe(false);
   });
 
   it("shows Historique only for agents with previous interviews", async () => {

@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { type Agent } from "@/lib/agents";
+import { toaster } from "@/components/ui/toaster";
 
 interface InterviewWithDetails {
   agents?: {
@@ -147,10 +148,11 @@ export default function PersonnasPage() {
     setTogglingAgentId(agent.id);
     setError(null);
     try {
+      const nextActive = !agent.active;
       const response = await fetch(`/api/agents/${agent.id}/active`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: !agent.active }),
+        body: JSON.stringify({ active: nextActive }),
       });
 
       if (!response.ok) {
@@ -163,9 +165,15 @@ export default function PersonnasPage() {
 
       setAgents((prev) =>
         prev.map((item) =>
-          item.id === agent.id ? { ...item, active: !agent.active } : item
+          item.id === agent.id ? { ...item, active: nextActive } : item
         )
       );
+      toaster.create({
+        type: "success",
+        description: nextActive ? "L'agent est activé" : "L'agent est désactivé",
+        duration: 6000,
+        closable: true,
+      });
     } catch (err) {
       console.error("Error updating agent status:", err);
       setError("Une erreur est survenue lors de la mise à jour du personna");
