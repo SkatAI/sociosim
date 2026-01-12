@@ -16,6 +16,11 @@ All notable changes to this project will be documented in this file.
 - **User Roles:** Allow toggling user roles directly from the manage users list.
 - **Interview Export:** Add server-side PDF exports with the system prompt included.
 - **Personnas:** Add a creation flow with a prefilled prompt template and redirect to the editor.
+- **Personnas Admin Controls:** Add agent activation toggle on personna cards with admin-only access, icon-based status, and toast feedback.
+- **Personnas List:** Split active and inactive agents into separate sections and hide interview actions for inactive agents.
+- **Dashboard Filters:** Only show interviews for active agents.
+- **Auth Admin Flag:** Expose `user_admin` in auth context and gate the manage users link + redirect non-admins.
+- **Footer:** Add Université Gustave Eiffel footer with logo and legal/contact links.
 ### Changed
 - **Tests:** Auth flow tests now pass with bad input assertions and coverage reporting.
 - **Interview Intro:** Render the new interview intro from `public/docs/guide_entretien_court.md`.
@@ -29,6 +34,7 @@ All notable changes to this project will be documented in this file.
 - **Personnas:** Add prompt history selector on `/personnas/[id]/edit` to load and edit previous versions.
 - **Users:** Allow authenticated reads of user profiles for prompt history labels.
 - **Personnas:** Filter the list to `active` agents and track prompt availability on each card.
+- **Personnas:** Switch filtering to `is_template=false` for listing agents.
 ### Fixed
 - **Chakra Buttons:** Replace invalid `variant="link"` usage with Chakra v3-compatible variants.
 - **Next Config:** Move `outputFileTracingIncludes` to the top-level Next.js config.
