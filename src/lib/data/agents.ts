@@ -36,16 +36,22 @@ export async function getAgents(): Promise<AgentRecord[]> {
  * Fetch all agents with published prompt status.
  */
 export async function getAgentsWithPromptStatus(
-  activeOnly = false
+  templateFilter?: "exclude" | "only"
 ): Promise<AgentRecordWithPromptStatus[]> {
   const supabase = createServiceSupabaseClient();
 
-  const query = supabase
+  let query = supabase
     .from("agents")
     .select("id, agent_name, description, agent_prompts(published)")
     .order("agent_name");
 
-  const { data, error } = await (activeOnly ? query.eq("active", true) : query);
+  if (templateFilter === "only") {
+    query = query.eq("is_template", true);
+  } else if (templateFilter === "exclude") {
+    query = query.eq("is_template", false);
+  }
+
+  const { data, error } = await query;
 
   throwIfError(error, "Failed to load agents with prompt status");
 
@@ -64,16 +70,24 @@ export async function getAgentsWithPromptStatus(
 /**
  * Fetch published agents (with at least one published prompt).
  */
-export async function getPublishedAgents(activeOnly = false): Promise<AgentRecord[]> {
+export async function getPublishedAgents(
+  templateFilter?: "exclude" | "only"
+): Promise<AgentRecord[]> {
   const supabase = createServiceSupabaseClient();
 
-  const query = supabase
+  let query = supabase
     .from("agents")
     .select("id, agent_name, description, agent_prompts!inner(published)")
     .eq("agent_prompts.published", true)
     .order("agent_name");
 
-  const { data, error } = await (activeOnly ? query.eq("active", true) : query);
+  if (templateFilter === "only") {
+    query = query.eq("is_template", true);
+  } else if (templateFilter === "exclude") {
+    query = query.eq("is_template", false);
+  }
+
+  const { data, error } = await query;
 
   throwIfError(error, "Failed to load published agents");
 

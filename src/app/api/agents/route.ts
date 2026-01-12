@@ -3,21 +3,23 @@ import { getAgentsWithPromptStatus, getPublishedAgents } from "@/lib/data/agents
 import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
 
 /**
- * GET /api/agents?published=true&active=true
- * Returns all agents, optionally filtered to published-only and/or active-only.
+ * GET /api/agents?published=true&template=false
+ * Returns all agents, optionally filtered to published-only and/or template filtering.
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const publishedOnly = searchParams.get("published") === "true";
-    const activeOnly = searchParams.get("active") === "true";
+    const templateParam = searchParams.get("template");
+    const templateFilter =
+      templateParam === "true" ? "only" : templateParam === "false" ? "exclude" : undefined;
 
     const agents = publishedOnly
-      ? (await getPublishedAgents(activeOnly)).map((agent) => ({
+      ? (await getPublishedAgents(templateFilter)).map((agent) => ({
           ...agent,
           has_published_prompt: true,
         }))
-      : await getAgentsWithPromptStatus(activeOnly);
+      : await getAgentsWithPromptStatus(templateFilter);
 
     return NextResponse.json({ success: true, agents }, { status: 200 });
   } catch (error) {

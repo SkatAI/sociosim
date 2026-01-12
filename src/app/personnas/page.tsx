@@ -46,7 +46,7 @@ export default function PersonnasPage() {
     const loadData = async () => {
       try {
         const [agentsResult, interviewsResult] = await Promise.allSettled([
-          fetch("/api/agents?active=true"),
+          fetch("/api/agents?template=false"),
           fetch(`/api/user/interviews?userId=${user.id}`),
         ]);
 

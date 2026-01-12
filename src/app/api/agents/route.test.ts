@@ -24,7 +24,7 @@ describe("GET /api/agents", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(mockGetPublishedAgents).toHaveBeenCalledWith(false);
+    expect(mockGetPublishedAgents).toHaveBeenCalledWith(undefined);
     expect(body).toMatchObject({
       success: true,
       agents: [
@@ -52,7 +52,7 @@ describe("GET /api/agents", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(mockGetAgents).toHaveBeenCalledWith(false);
+    expect(mockGetAgents).toHaveBeenCalledWith(undefined);
     expect(body).toMatchObject({
       success: true,
       agents: [
@@ -66,27 +66,27 @@ describe("GET /api/agents", () => {
     });
   });
 
-  it("filters to active agents when active=true", async () => {
+  it("filters out template agents when template=false", async () => {
     mockGetAgents.mockResolvedValue([
       {
-        id: "agent-3",
-        agent_name: "jade",
+        id: "agent-4",
+        agent_name: "mona",
         description: "desc",
         has_published_prompt: false,
       },
     ]);
 
-    const response = await GET(new Request("http://localhost/api/agents?active=true"));
+    const response = await GET(new Request("http://localhost/api/agents?template=false"));
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(mockGetAgents).toHaveBeenCalledWith(true);
+    expect(mockGetAgents).toHaveBeenCalledWith("exclude");
     expect(body).toMatchObject({
       success: true,
       agents: [
         {
-          id: "agent-3",
-          agent_name: "jade",
+          id: "agent-4",
+          agent_name: "mona",
           description: "desc",
           has_published_prompt: false,
         },

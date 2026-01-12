@@ -56,7 +56,7 @@ describe("PersonnasPage", () => {
     vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
 
     global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
-      if (input === "/api/agents?active=true") {
+      if (input === "/api/agents?template=false") {
         return Promise.resolve(createAgentsResponse(mockAgents));
       }
       if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
@@ -83,7 +83,7 @@ describe("PersonnasPage", () => {
 
   it("shows Historique only for agents with previous interviews", async () => {
     global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
-      if (input === "/api/agents?active=true") {
+      if (input === "/api/agents?template=false") {
         return Promise.resolve(createAgentsResponse(mockAgents));
       }
       if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
@@ -104,7 +104,7 @@ describe("PersonnasPage", () => {
   it("navigates to dashboard with agent filter on Historique click", async () => {
     const user = userEvent.setup();
     global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
-      if (input === "/api/agents?active=true") {
+      if (input === "/api/agents?template=false") {
         return Promise.resolve(createAgentsResponse(mockAgents));
       }
       if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
@@ -126,7 +126,7 @@ describe("PersonnasPage", () => {
   it("creates a new interview when Nouvel entretien is clicked", async () => {
     const user = userEvent.setup();
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo) => {
-      if (input === "/api/agents?active=true") {
+      if (input === "/api/agents?template=false") {
         return Promise.resolve(createAgentsResponse(mockAgents));
       }
       if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
