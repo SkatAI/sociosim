@@ -121,7 +121,7 @@ export default function Header() {
             color="inherit"
             _hover={{ opacity: 0.8 }}
           >
-            Sociosim
+            Mimesis
           </Link>
           <Link
             as={NextLink}
