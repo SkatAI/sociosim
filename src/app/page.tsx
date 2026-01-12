@@ -26,9 +26,15 @@ export default function Home() {
     <Container py={16}>
       <Stack gap={8}>
         <Stack gap={4}>
-          <Heading size="lg">Bienvenue sur Sociosim</Heading>
+          <Heading size="lg">Bienvenue sur Mimesis</Heading>
           <Text fontSize="lg" color="fg.muted">
             Entraînez-vous à mener des entretiens de sociologie.
+          </Text>
+          <Text fontSize="md" color="fg.muted">
+            Mimesis vous aide à pratiquer l&apos;écoute active, les relances et la reformulation
+            grâce à des personnas réalistes.
+            <br />
+            Lancez un entretien guidé, explorez des parcours variés et progressez à votre rythme.
           </Text>
           <Stack direction={{ base: "column", sm: "row" }} gap={3}>
             <Button
