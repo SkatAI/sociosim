@@ -32,6 +32,8 @@ interface InterviewWithDetails {
     agent_name?: string;
     active?: boolean;
   };
+  starter_user_id?: string | null;
+  starter_user_name?: string | null;
   interview_usage: Array<{
     total_input_tokens: number;
     total_output_tokens: number;
@@ -69,7 +71,7 @@ const getLatestAssistantMessage = (
 export default function DashboardClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, isLoading: isAuthLoading } = useAuthUser();
+  const { user, isLoading: isAuthLoading, user_admin } = useAuthUser();
   const userDisplayName = (() => {
     if (!user) return "Utilisateur";
     const metadata = user.user_metadata || {};
@@ -86,6 +88,7 @@ export default function DashboardClient() {
   const [error, setError] = useState<string | null>(null);
   const [expandedInterviewId, setExpandedInterviewId] = useState<string | null>(null);
   const [selectedAgentId, setSelectedAgentId] = useState("all");
+  const [selectedUserId, setSelectedUserId] = useState("all");
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -203,10 +206,27 @@ export default function DashboardClient() {
     }, new Map<string, { id: string; name: string }>())
   ).map(([, option]) => option);
   const hasMultipleAgents = agentOptions.length > 1;
-  const filteredInterviews =
+  const userOptions = user_admin
+    ? Array.from(
+        interviews.reduce((map, interview) => {
+          if (interview.starter_user_id) {
+            map.set(interview.starter_user_id, {
+              id: interview.starter_user_id,
+              name: interview.starter_user_name || "Utilisateur",
+            });
+          }
+          return map;
+        }, new Map<string, { id: string; name: string }>())
+      ).map(([, option]) => option)
+    : [];
+  const filteredByAgent =
     selectedAgentId === "all"
       ? interviews
       : interviews.filter((interview) => interview.agent_id === selectedAgentId);
+  const filteredInterviews =
+    !user_admin || selectedUserId === "all"
+      ? filteredByAgent
+      : filteredByAgent.filter((interview) => interview.starter_user_id === selectedUserId);
   const totalPages = Math.max(1, Math.ceil(filteredInterviews.length / pageSize));
   const paginatedInterviews = filteredInterviews.slice(
     (currentPage - 1) * pageSize,
@@ -224,6 +244,16 @@ export default function DashboardClient() {
   }, [agentOptions, hasMultipleAgents, selectedAgentId]);
 
   useEffect(() => {
+    if (!user_admin) {
+      setSelectedUserId("all");
+      return;
+    }
+    if (selectedUserId !== "all" && !userOptions.some((option) => option.id === selectedUserId)) {
+      setSelectedUserId("all");
+    }
+  }, [selectedUserId, userOptions, user_admin]);
+
+  useEffect(() => {
     const agentParam = searchParams.get("agent");
     if (!agentParam || hasAppliedAgentParam.current || agentOptions.length === 0) return;
     const matchedById = agentOptions.find((option) => option.id === agentParam);
@@ -238,7 +268,7 @@ export default function DashboardClient() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedAgentId, pageSize]);
+  }, [selectedAgentId, selectedUserId, pageSize]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -263,11 +293,11 @@ export default function DashboardClient() {
         <HStack align="center" justify="space-between" gap={6} width="full">
           <HStack align="center" gap={6}>
             <Heading size="lg" marginBottom={0}>
-              Mes entretiens
+              {user_admin ? "Tous les entretiens" : "Mes entretiens"}
             </Heading>
             {hasMultipleAgents && (
               <NativeSelect.Root>
-              <NativeSelect.Field
+                <NativeSelect.Field
                   aria-label="Filtrer par agent"
                   value={selectedAgentId}
                   onChange={(event) => setSelectedAgentId(event.target.value)}
@@ -279,6 +309,28 @@ export default function DashboardClient() {
                 >
                   <option value="all">Tous</option>
                   {agentOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </NativeSelect.Field>
+                <NativeSelect.Indicator />
+              </NativeSelect.Root>
+            )}
+            {user_admin && userOptions.length > 0 && (
+              <NativeSelect.Root>
+                <NativeSelect.Field
+                  aria-label="Filtrer par utilisateur"
+                  value={selectedUserId}
+                  onChange={(event) => setSelectedUserId(event.target.value)}
+                  fontSize="sm"
+                  borderWidth="1px"
+                  borderColor="border.muted"
+                  borderRadius="md"
+                  backgroundColor="bg.surface"
+                >
+                  <option value="all">Tous les utilisateurs</option>
+                  {userOptions.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.name}
                     </option>
@@ -368,7 +420,9 @@ export default function DashboardClient() {
                       </HStack>
                       <HStack gap={3}>
                         <Text fontSize="sm" color="fg.muted">
-                          {userDisplayName}
+                          {user_admin
+                            ? interview.starter_user_name || "Utilisateur"
+                            : userDisplayName}
                         </Text>
                         <Text fontSize="sm" color="fg.muted">
                           {formatDate(interview.updated_at)}
