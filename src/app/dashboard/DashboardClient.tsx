@@ -9,15 +9,15 @@ import {
   Text,
   VStack,
   HStack,
-  Badge,
   ButtonGroup,
   Spinner,
   Card,
   NativeSelect,
   Pagination,
   IconButton,
+  Icon,
 } from "@chakra-ui/react";
-import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp } from "react-icons/lu";
 import NextLink from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -53,28 +53,6 @@ const formatDate = (dateString: string): string => {
   });
 };
 
-const getStatusColor = (status: string): string => {
-  const colors: Record<string, string> = {
-    in_progress: "blue",
-    completed: "green",
-    abandoned: "gray",
-    error: "red",
-    standby: "orange",
-  };
-  return colors[status] || "gray";
-};
-
-const getStatusLabel = (status: string): string => {
-  const labels: Record<string, string> = {
-    in_progress: "En cours",
-    completed: "Complété",
-    abandoned: "Abandonné",
-    error: "Erreur",
-    standby: "En pause",
-  };
-  return labels[status] || status;
-};
-
 const formatAgentName = (name?: string): string => {
   if (!name) return "Agent";
   return name.charAt(0).toUpperCase() + name.slice(1);
@@ -91,6 +69,17 @@ export default function DashboardClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading: isAuthLoading } = useAuthUser();
+  const userDisplayName = (() => {
+    if (!user) return "Utilisateur";
+    const metadata = user.user_metadata || {};
+    const firstName = (metadata.firstName as string) || "";
+    const lastName = (metadata.lastName as string) || "";
+    const fullName = `${firstName} ${lastName}`.trim();
+    if (fullName) return fullName;
+    const metadataName = (metadata.name as string) || "";
+    if (metadataName) return metadataName;
+    return user.email?.split("@")[0] ?? "Utilisateur";
+  })();
   const [interviews, setInterviews] = useState<InterviewWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -347,13 +336,17 @@ export default function DashboardClient() {
         )}
 
         {filteredInterviews.length > 0 && (
-          <Card.Root>
+          <Card.Root backgroundColor="bg.muted" borderWidth="0">
             <Card.Body display="flex" flexDirection="column" gap={4}>
               {paginatedInterviews.map((interview) => {
-                const usage = interview.interview_usage?.[0];
                 const latestAssistant = getLatestAssistantMessage(interview.messages || []);
-                const firstLine =
-                  latestAssistant?.content?.split("\n")[0]?.trim() ?? "Aucun message assistant";
+                const collapsedPreview = latestAssistant?.content
+                  ? latestAssistant.content
+                      .split("\n")
+                      .map((line) => line.trim())
+                      .filter((line) => line.length > 0)
+                      .join("\n")
+                  : "Aucun message assistant";
                 const isExpanded = expandedInterviewId === interview.id;
 
                 return (
@@ -362,6 +355,7 @@ export default function DashboardClient() {
                     borderWidth="1px"
                     borderColor="border.muted"
                     borderRadius="md"
+                    backgroundColor="bg.surface"
                     padding={4}
                     transition="all 0.2s"
                   >
@@ -370,13 +364,15 @@ export default function DashboardClient() {
                         <Text fontWeight="semibold" fontSize="md">
                           {formatAgentName(interview.agents?.agent_name)}
                         </Text>
-                        <Badge colorPalette={getStatusColor(interview.status)}>
-                          {getStatusLabel(interview.status)}
-                        </Badge>
                       </HStack>
-                      <Text fontSize="sm" color="fg.muted">
-                        {formatDate(interview.updated_at)}
-                      </Text>
+                      <HStack gap={3}>
+                        <Text fontSize="sm" color="fg.muted">
+                          {userDisplayName}
+                        </Text>
+                        <Text fontSize="sm" color="fg.muted">
+                          {formatDate(interview.updated_at)}
+                        </Text>
+                      </HStack>
                     </HStack>
 
                     <VStack align="stretch" gap={2} marginBottom={3}>
@@ -389,40 +385,39 @@ export default function DashboardClient() {
                         paddingLeft={2}
                         cursor="pointer"
                         _hover={{ color: "fg.default" }}
+                        position="relative"
                       >
                         <Text
                           color="fg.muted"
                           fontSize="sm"
                           flex="1"
-                          whiteSpace={isExpanded ? "pre-wrap" : "nowrap"}
-                          overflow="hidden"
-                          textOverflow="ellipsis"
+                          whiteSpace={isExpanded ? "pre-wrap" : "normal"}
+                          css={
+                            isExpanded
+                              ? undefined
+                              : {
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 3,
+                                  WebkitBoxOrient: "vertical",
+                                  overflow: "hidden",
+                                }
+                          }
                         >
-                          {isExpanded ? latestAssistant?.content : firstLine}
+                          {isExpanded ? latestAssistant?.content : collapsedPreview}
                         </Text>
+                        <Icon
+                          as={isExpanded ? LuChevronUp : LuChevronDown}
+                          position="absolute"
+                          bottom="2px"
+                          right="2px"
+                          color="fg.subtle"
+                        />
                       </Box>
                     </VStack>
 
                     <VStack align="stretch" gap={2}>
                       <HStack align="center" justify="space-between" gap={4}>
-                        {usage ? (
-                          <HStack justify="flex-start" gap={4}>
-                            <Text fontSize="xs" color="fg.muted">
-                              <Text as="span" fontWeight="semibold">
-                                {usage.total_input_tokens}
-                              </Text>{" "}
-                              tokens entrée
-                            </Text>
-                            <Text fontSize="xs" color="fg.muted">
-                              <Text as="span" fontWeight="semibold">
-                                {usage.total_output_tokens}
-                              </Text>{" "}
-                              tokens sortie
-                            </Text>
-                          </HStack>
-                        ) : (
-                          <Box />
-                        )}
+                        <Box />
 
                         <Button
                           variant="subtle"

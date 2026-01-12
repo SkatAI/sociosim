@@ -26,12 +26,12 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
 
   const { user, isLoading: isAuthLoading } = useAuthUser();
 
-  // Agent state - loaded from database (stored in interview)
-  const [agentInfo, setAgentInfo] = useState<{
-    agent_name: string;
-    description: string | null;
+  const [interviewSummary, setInterviewSummary] = useState<{
+    agentName: string;
+    userName: string;
+    startedAt: string;
   } | null>(null);
-  const [agentError, setAgentError] = useState<string | null>(null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   // Session management
   const { session, messages: loadedMessages, isResume, isLoading: isSessionLoading, error: sessionError } = useInterviewSession(user?.id ?? null, interviewId);
@@ -51,35 +51,52 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
     }
   }, [isAuthLoading, user?.id, router]);
 
-  // Load agent from database based on interview ID
+  const formatInterviewDate = (value?: string | null) => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  };
+  const formatAgentName = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
+
+  // Load interview summary from database based on interview ID
   useEffect(() => {
-    async function loadAgent() {
+    async function loadSummary() {
       try {
-        setAgentError(null);
-        const response = await fetch(`/api/interviews/agent?interviewId=${interviewId}`);
+        setSummaryError(null);
+        const response = await fetch(`/api/interviews/summary?interviewId=${interviewId}`);
         if (!response.ok) {
           const payload = await response.json().catch(() => null);
           const message = payload?.error ?? response.statusText;
           throw new Error(message);
         }
         const payload = (await response.json().catch(() => null)) as
-          | { agent?: { agent_name?: string; description?: string | null } }
+          | {
+              agent?: { agent_name?: string };
+              user?: { name?: string };
+              interview?: { started_at?: string };
+            }
           | null;
-        if (!payload?.agent?.agent_name) {
-          throw new Error("Agent information missing from interview");
+        if (!payload?.agent?.agent_name || !payload?.user?.name || !payload?.interview?.started_at) {
+          throw new Error("Interview summary missing required fields");
         }
-        setAgentInfo({
-          agent_name: payload.agent.agent_name,
-          description: payload.agent.description ?? null,
+        setInterviewSummary({
+          agentName: payload.agent.agent_name,
+          userName: payload.user.name,
+          startedAt: payload.interview.started_at,
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        console.error("[Interview] Failed to load agent:", errorMessage);
-        setAgentError(`Failed to load agent: ${errorMessage}`);
+        console.error("[Interview] Failed to load summary:", errorMessage);
+        setSummaryError(`Failed to load interview summary: ${errorMessage}`);
       }
     }
 
-    loadAgent();
+    loadSummary();
   }, [interviewId]);
 
   // Initialize messages from loaded data (resume mode)
@@ -249,7 +266,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   };
 
   const handleExportPdf = async () => {
-    if (!interviewId || !agentInfo || !user) return;
+    if (!interviewId || !interviewSummary || !user) return;
     setIsExporting(true);
     try {
       const response = await fetch(`/api/interviews/export?interviewId=${interviewId}`);
@@ -258,7 +275,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
       }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const safeAgentName = agentInfo.agent_name.replace(/\s+/g, "-").toLowerCase();
+      const safeAgentName = interviewSummary.agentName.replace(/\s+/g, "-").toLowerCase();
       const dateStamp = new Date().toISOString().slice(0, 10);
       const fileName = `entretien-${safeAgentName}-${dateStamp}.pdf`;
       const anchor = document.createElement("a");
@@ -322,30 +339,29 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         position="sticky"
         top={0}
       >
-        {agentError ? (
+        {summaryError ? (
           <Heading as="h1" size="lg" color="red.600">
-            Erreur: {agentError}
+            Erreur: {summaryError}
           </Heading>
         ) : (
           <HStack justify="space-between" align="center">
             <Heading as="h1" size="lg">
-              {agentInfo ? `Entretien avec ${agentInfo.agent_name}` : "Chargement de l'agent..."} {agentInfo && isResume && <Text as="span" fontSize="sm" color="accent.primary"> (reprise)</Text>}
+              {interviewSummary
+                ? `Entretien avec ${formatAgentName(interviewSummary.agentName)} par ${interviewSummary.userName} le ${formatInterviewDate(interviewSummary.startedAt)}`
+                : "Chargement de l'entretien..."}
             </Heading>
             <Button
               size="sm"
               variant="outline"
               onClick={handleExportPdf}
               loading={isExporting}
-              disabled={!agentInfo || !user || !interviewId}
+              disabled={!interviewSummary || !user || !interviewId}
               paddingInline={4}
             >
               Exporter
             </Button>
           </HStack>
         )}
-        <Text fontSize="sm" color="fg.muted" marginTop={1}>
-          Session: {session?.sessionId}
-        </Text>
       </Box>
 
       {/* Messages + Input */}
@@ -370,6 +386,8 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
                   key={msg.id}
                   role={msg.role}
                   text={msg.text}
+                  userName={interviewSummary?.userName}
+                  agentName={interviewSummary ? formatAgentName(interviewSummary.agentName) : undefined}
                   timestamp={msg.timestamp}
                 />
               ))}
