@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     const supabase = createServiceSupabaseClient();
     const { data: interview, error: interviewError } = await supabase
       .from("interviews")
-      .select("id, agent_id, created_at")
+      .select("id, agent_id, started_at, created_at")
       .eq("id", interviewId)
       .single();
 
@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
 
     const agentName = formatAgentName(agent.agent_name);
     const agentDescription = agent.description ?? "Aucune description.";
-    const interviewDate = formatDateTime(interview.created_at);
+    const interviewDate = formatDateTime(interview.started_at ?? interview.created_at);
     const exportDate = new Date().toLocaleDateString("fr-FR");
     const promptHtml = prompt?.system_prompt
       ? await marked.parse(prompt.system_prompt)
@@ -139,6 +139,11 @@ export async function GET(req: NextRequest) {
               font-size: 22px;
               margin: 0 0 6px 0;
               font-weight: 600;
+            }
+            .interview-heading {
+              font-size: 14px;
+              color: #4b5563;
+              margin: 0 0 10px 0;
             }
             .muted {
               color: #6b7280;
@@ -205,6 +210,7 @@ export async function GET(req: NextRequest) {
         <body>
           <div class="container">
             <h1>Entretien avec ${escapeHtml(agentName)}</h1>
+            <p class="interview-heading">Entretien avec ${escapeHtml(agentName)} par ${escapeHtml(fallbackUserName)} le ${escapeHtml(interviewDate)}</p>
             <div class="muted">Entretien du ${escapeHtml(interviewDate)}, Export du ${escapeHtml(exportDate)}</div>
             <div class="muted"><strong>Session</strong> : ${escapeHtml(primarySessionId)}</div>
             <div class="meta-line"><strong>Utilisateur</strong> : ${escapeHtml(userEmail)} ${escapeHtml(fallbackUserName)}</div>
