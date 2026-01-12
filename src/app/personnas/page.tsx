@@ -31,7 +31,7 @@ interface InterviewWithDetails {
 
 export default function PersonnasPage() {
   const router = useRouter();
-  const { user, isLoading: isAuthLoading } = useAuthUser();
+  const { user, isLoading: isAuthLoading, user_admin } = useAuthUser();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
@@ -254,17 +254,6 @@ export default function PersonnasPage() {
                           </Text>
                           <HStack gap={2}>
                             <IconButton
-                              aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
-                              variant={agent.active ? "outline" : "subtle"}
-                              colorPalette={agent.active ? "red" : undefined}
-                              size="xs"
-                              onClick={() => handleToggleAgent(agent)}
-                              loading={togglingAgentId === agent.id}
-                              disabled={togglingAgentId === agent.id}
-                            >
-                              {agent.active ? <LuEye /> : <LuEyeClosed />}
-                            </IconButton>
-                            <IconButton
                               aria-label="Modifier le prompt"
                               variant="subtle"
                               size="xs"
@@ -273,6 +262,19 @@ export default function PersonnasPage() {
                             >
                               <LuFileCog />
                             </IconButton>
+                            {user_admin && (
+                              <IconButton
+                                aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
+                                variant={agent.active ? "outline" : "subtle"}
+                                colorPalette={agent.active ? "red" : undefined}
+                                size="xs"
+                                onClick={() => handleToggleAgent(agent)}
+                                loading={togglingAgentId === agent.id}
+                                disabled={togglingAgentId === agent.id}
+                              >
+                                {agent.active ? <LuEye /> : <LuEyeClosed />}
+                              </IconButton>
+                            )}
                           </HStack>
                         </HStack>
                         <Text
@@ -337,17 +339,6 @@ export default function PersonnasPage() {
                           </Text>
                           <HStack gap={2}>
                             <IconButton
-                              aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
-                              variant={agent.active ? "outline" : "subtle"}
-                              colorPalette={agent.active ? "red" : undefined}
-                              size="xs"
-                              onClick={() => handleToggleAgent(agent)}
-                              loading={togglingAgentId === agent.id}
-                              disabled={togglingAgentId === agent.id}
-                            >
-                              {agent.active ? <LuEye /> : <LuEyeClosed />}
-                            </IconButton>
-                            <IconButton
                               aria-label="Modifier le prompt"
                               variant="subtle"
                               size="xs"
@@ -356,6 +347,19 @@ export default function PersonnasPage() {
                             >
                               <LuFileCog />
                             </IconButton>
+                            {user_admin && (
+                              <IconButton
+                                aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
+                                variant={agent.active ? "outline" : "subtle"}
+                                colorPalette={agent.active ? "red" : undefined}
+                                size="xs"
+                                onClick={() => handleToggleAgent(agent)}
+                                loading={togglingAgentId === agent.id}
+                                disabled={togglingAgentId === agent.id}
+                              >
+                                {agent.active ? <LuEye /> : <LuEyeClosed />}
+                              </IconButton>
+                            )}
                           </HStack>
                         </HStack>
                         <Text
