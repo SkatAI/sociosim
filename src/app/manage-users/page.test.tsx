@@ -22,7 +22,9 @@ describe("ManageUsersClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
-    vi.mocked(useAuthUser).mockReturnValue(createMockAuthUser() as ReturnType<typeof useAuthUser>);
+    vi.mocked(useAuthUser).mockReturnValue(
+      createMockAuthUser({ user_admin: true }) as ReturnType<typeof useAuthUser>
+    );
   });
 
   it("renders users list", async () => {
@@ -63,6 +65,20 @@ describe("ManageUsersClient", () => {
 
     await waitFor(() => {
       expect(mockRouter.push).toHaveBeenCalledWith("/login");
+    });
+  });
+
+  it("redirects when user is not admin", async () => {
+    vi.mocked(useAuthUser).mockReturnValue(
+      createMockAuthUser({ user_admin: false }) as ReturnType<typeof useAuthUser>
+    );
+    const mockFetch = vi.fn();
+    vi.stubGlobal("fetch", mockFetch);
+
+    renderWithChakra(<ManageUsersClient />);
+
+    await waitFor(() => {
+      expect(mockRouter.push).toHaveBeenCalledWith("/dashboard");
     });
   });
 

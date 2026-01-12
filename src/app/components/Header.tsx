@@ -20,7 +20,7 @@ type UserInfo = {
 
 export default function Header() {
   const router = useRouter();
-  const { user, isLoading, role } = useAuthUser();
+  const { user, isLoading, role, user_admin } = useAuthUser();
   const [userInfo, setUserInfo] = useState<UserInfo>(null);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [fontSize, setFontSize] = useState<"md" | "lg" | "xl">("md");
@@ -155,15 +155,17 @@ export default function Header() {
               >
                 Mes entretiens
               </Link>
-              <Link
-                as={NextLink}
-                href="/manage-users"
-                fontWeight="medium"
-                color="fg.muted"
-                _hover={{ color: "accent.primary" }}
-              >
-                Utilisateurs
-              </Link>
+              {user_admin && (
+                <Link
+                  as={NextLink}
+                  href="/manage-users"
+                  fontWeight="medium"
+                  color="fg.muted"
+                  _hover={{ color: "accent.primary" }}
+                >
+                  Utilisateurs
+                </Link>
+              )}
               <HStack gap={2}>
                 <Popover.Root
                   open={isPopoverOpen}

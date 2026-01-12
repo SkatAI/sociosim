@@ -54,7 +54,7 @@ const getRoleColor = (role: UserRole) => {
 
 export default function ManageUsersClient() {
   const router = useRouter();
-  const { user, isLoading: isAuthLoading } = useAuthUser();
+  const { user, isLoading: isAuthLoading, user_admin } = useAuthUser();
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +71,10 @@ export default function ManageUsersClient() {
     if (isAuthLoading) return;
     if (!user) {
       router.push("/login");
+      return;
+    }
+    if (!user_admin) {
+      router.push("/dashboard");
       return;
     }
 
@@ -94,7 +98,7 @@ export default function ManageUsersClient() {
     };
 
     loadUsers();
-  }, [isAuthLoading, router, user]);
+  }, [isAuthLoading, router, user, user_admin]);
 
   const handleInvite = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

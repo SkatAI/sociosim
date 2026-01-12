@@ -11,6 +11,7 @@ type AuthContextValue = {
   user: User | null;
   session: Session | null;
   role: UserRole | null;
+  user_admin: boolean;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
   updateUserMetadata: (metadata: Partial<{ firstName: string; lastName: string; name: string }>) => void;
@@ -184,16 +185,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("[refreshUser] Completed");
   }, [loadSession]);
 
+  const user_admin = role === "admin";
   const value = useMemo(
     () => ({
       user,
       session,
       role,
+      user_admin,
       isLoading,
       refreshUser,
       updateUserMetadata,
     }),
-    [user, session, role, isLoading, refreshUser, updateUserMetadata]
+    [user, session, role, user_admin, isLoading, refreshUser, updateUserMetadata]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
