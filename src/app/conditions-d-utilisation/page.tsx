@@ -35,7 +35,7 @@ export default function TermsPage() {
         <Stack gap={3}>
           <Heading size="md">Usage acceptable</Heading>
           <Text>Vous vous engagez à :</Text>
-          <List.Root pl={4} styleType="disc">
+          <List.Root pl={4} style={{ listStyleType: "disc" }}>
             <List.Item>Ne pas utiliser le service à des fins illégales.</List.Item>
             <List.Item>Ne pas tenter d&apos;accéder aux données d&apos;autrui.</List.Item>
             <List.Item>Ne pas perturber le fonctionnement de la plateforme.</List.Item>

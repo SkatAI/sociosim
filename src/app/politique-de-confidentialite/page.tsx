@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
         <Stack gap={3}>
           <Heading size="md">Données collectées</Heading>
           <Text>Nous pouvons collecter les informations suivantes :</Text>
-          <List.Root pl={4} styleType="disc">
+          <List.Root pl={4} style={{ listStyleType: "disc" }}>
             <List.Item>Identifiants de compte (nom, email).</List.Item>
             <List.Item>Données de profil (rôle, préférences).</List.Item>
             <List.Item>Historique d&apos;entretiens et messages associés.</List.Item>
@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
         <Stack gap={3}>
           <Heading size="md">Finalités</Heading>
           <Text>Ces données sont utilisées pour :</Text>
-          <List.Root pl={4} styleType="disc">
+          <List.Root pl={4} style={{ listStyleType: "disc" }}>
             <List.Item>Fournir et améliorer le service.</List.Item>
             <List.Item>Assurer la sécurité et prévenir les abus.</List.Item>
             <List.Item>Gérer les accès et le support.</List.Item>
@@ -62,7 +62,7 @@ export default function PrivacyPolicyPage() {
         <Stack gap={3}>
           <Heading size="md">Vos droits</Heading>
           <Text>Conformément au RGPD, vous disposez des droits suivants :</Text>
-          <List.Root pl={4} styleType="disc">
+          <List.Root pl={4} style={{ listStyleType: "disc" }}>
             <List.Item>Accès, rectification, effacement.</List.Item>
             <List.Item>Opposition et limitation du traitement.</List.Item>
             <List.Item>Portabilité des données lorsque applicable.</List.Item>
