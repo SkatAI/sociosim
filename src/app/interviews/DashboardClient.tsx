@@ -402,6 +402,11 @@ export default function DashboardClient() {
                       .join("\n")
                   : "Aucun message assistant";
                 const isExpanded = expandedInterviewId === interview.id;
+                const isOwner = Boolean(
+                  interview.starter_user_id && user?.id && interview.starter_user_id === user.id
+                );
+                const actionLabel =
+                  user_admin && !isOwner ? "Voir l'interview" : "Continuer";
 
                 return (
                   <Box
@@ -483,7 +488,7 @@ export default function DashboardClient() {
                           fontSize="xs"
                           onClick={() => router.push(`/interview/${interview.id}`)}
                         >
-                          Continuer
+                          {actionLabel}
                         </Button>
                       </HStack>
                     </VStack>

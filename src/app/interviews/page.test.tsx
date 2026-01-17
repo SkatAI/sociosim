@@ -75,6 +75,36 @@ describe("DashboardPage", () => {
     });
   });
 
+  it("shows view-only label for admin on interviews started by other users", async () => {
+    const adminUser = {
+      ...mockUseAuthUser,
+      user_admin: true,
+      user: {
+        ...mockUseAuthUser.user,
+        id: "admin-1",
+      },
+    };
+    vi.mocked(useAuthUser).mockReturnValue(adminUser as typeof mockUseAuthUser);
+
+    const adminInterviews = [
+      {
+        ...mockInterview,
+        starter_user_id: "user-2",
+        starter_user_name: "User B",
+      },
+    ];
+
+    global.fetch = vi.fn().mockResolvedValue(createInterviewsResponse(adminInterviews));
+
+    renderWithChakra(<DashboardClient />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByRole("button", { name: "Voir l'interview" })).toBeInTheDocument();
+  });
+
   it("navigates to personnas when creating without a selected agent", async () => {
     const user = userEvent.setup();
     renderWithChakra(<DashboardClient />);
