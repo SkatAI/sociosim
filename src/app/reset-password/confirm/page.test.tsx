@@ -170,4 +170,27 @@ describe("ResetPasswordConfirmPage", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = originalSupabaseUrl;
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = originalSupabaseAnonKey;
   });
+
+  it("shows french error when password matches the old one", async () => {
+    const user = userEvent.setup();
+    getSession.mockResolvedValue({
+      data: {
+        session: { user: { id: "user-1" } },
+      },
+    });
+    updateUser.mockResolvedValue({
+      error: { message: "New password should be different from the old password." },
+    });
+
+    renderWithChakra(<ResetPasswordConfirmPage />);
+
+    await waitForFormReady();
+    await user.type(screen.getByLabelText("Nouveau mot de passe"), "longenough");
+    await user.type(screen.getByLabelText("Confirmez le mot de passe"), "longenough");
+    await user.click(screen.getByRole("button", { name: /Réinitialiser/i }));
+
+    expect(
+      await screen.findByText("Le nouveau mot de passe doit être différent de l'ancien.")
+    ).toBeInTheDocument();
+  });
 });

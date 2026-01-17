@@ -122,15 +122,19 @@ export async function POST(req: NextRequest) {
     });
 
     if (authError) {
-      return NextResponse.json(
-        {
-          error:
-            authError.message === "User already registered"
-              ? "Cette adresse email est déjà utilisée."
-              : "Impossible de mettre à jour votre profil pour le moment.",
-        },
-        { status: 400 }
-      );
+      const normalizedMessage = authError.message.trim();
+      let errorMessage = "Impossible de mettre à jour votre profil pour le moment.";
+
+      if (normalizedMessage === "User already registered") {
+        errorMessage = "Cette adresse email est déjà utilisée.";
+      } else if (
+        normalizedMessage === "New password should be different from the old password." ||
+        normalizedMessage === "New password should be different from the old password"
+      ) {
+        errorMessage = "Le nouveau mot de passe doit être différent de l'ancien.";
+      }
+
+      return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
     let supabaseService;
