@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Button, Container, Heading, HStack, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
+import { FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { AssistantSkeleton } from "@/components/AssistantSkeleton";
@@ -57,6 +58,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   const [isStreaming, setIsStreaming] = useState(false);
   const [messagesContainerRef, setMessagesContainerRef] = useState<HTMLDivElement | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingGoogleDocs, setIsExportingGoogleDocs] = useState(false);
   const showAssistantSkeleton =
     isStreaming && messages.length > 0 && messages[messages.length - 1]?.role !== "assistant";
 
@@ -338,6 +340,48 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
     }
   };
 
+  const handleExportGoogleDocs = async () => {
+    if (!interviewId || !interviewSummary || !user) return;
+    setIsExportingGoogleDocs(true);
+    setSummaryError(null);
+    try {
+      const response = await fetch("/api/interviews/export-google-docs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interviewId }),
+      });
+
+      if (response.status === 401) {
+        const payload = await response.json().catch(() => null);
+        if (payload?.requiresAuth) {
+          window.location.href = `/api/auth/google/authorize?interviewId=${encodeURIComponent(interviewId)}`;
+          return;
+        }
+      }
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        const message = payload?.error ?? "Impossible d'exporter vers Google Docs.";
+        throw new Error(message);
+      }
+
+      const payload = (await response.json().catch(() => null)) as
+        | { documentUrl?: string }
+        | null;
+      if (!payload?.documentUrl) {
+        throw new Error("Lien du document Google Docs manquant.");
+      }
+
+      window.open(payload.documentUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("[Interview] Google Docs export error:", message);
+      setSummaryError("Impossible d'exporter vers Google Docs.");
+    } finally {
+      setIsExportingGoogleDocs(false);
+    }
+  };
+
   // Show loading state while checking auth
   if (isAuthLoading) {
     return (
@@ -400,16 +444,32 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
                 ? `Entretien avec ${formatAgentName(interviewSummary.agentName)} par ${interviewSummary.userName} le ${formatInterviewDate(interviewSummary.startedAt)}`
                 : "Chargement de l'entretien..."}
             </Heading>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleExportPdf}
-              loading={isExporting}
-              disabled={!interviewSummary || !user || !interviewId}
-              paddingInline={4}
-            >
-              Exporter
-            </Button>
+            <HStack gap={2}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleExportPdf}
+                loading={isExporting}
+                disabled={!interviewSummary || !user || !interviewId}
+                paddingInline={4}
+              >
+                Exporter PDF
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                colorPalette="blue"
+                onClick={handleExportGoogleDocs}
+                loading={isExportingGoogleDocs}
+                disabled={!interviewSummary || !user || !interviewId}
+                paddingInline={4}
+              >
+                <HStack gap={2}>
+                  <FileText size={16} />
+                  <Text as="span">Exporter vers Google Docs</Text>
+                </HStack>
+              </Button>
+            </HStack>
           </HStack>
         )}
       </Box>
