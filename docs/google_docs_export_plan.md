@@ -33,7 +33,7 @@ Based on user requirements:
 3. Document created immediately
 4. Document opens in new tab
 
-**Returning user (token expired after 1 hour):**
+**Returning user (token expired after 24 hour):**
 1. User clicks "Exporter vers Google Docs"
 2. May see Google consent screen again (or just flash redirect if permissions cached)
 3. Document created
@@ -43,7 +43,7 @@ Based on user requirements:
 - Users already logged into Google in their browser won't need to enter password
 - First authorization requires explicit consent (clicking "Allow")
 - Subsequent exports may be seamless or require re-consent depending on Google's session state
-- Our 1hr cookie expiry means users may need to re-authorize after that time
+- Our 24 hr cookie expiry means users may need to re-authorize after that time
 
 ### Tech Stack
 
@@ -75,6 +75,7 @@ Based on user requirements:
 GOOGLE_CLIENT_ID=your_client_id_here
 GOOGLE_CLIENT_SECRET=your_client_secret_here
 GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
+GOOGLE_OAUTH_STATE_SECRET=your_state_hmac_secret
 ```
 
 ### 2. npm Dependencies
@@ -116,7 +117,7 @@ export async function GET(req: NextRequest) {
   response.cookies.set("google_access_token", access_token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    maxAge: 3600, // 1 hour
+    maxAge: 86400, // 24 hours
   });
 
   return response;
@@ -162,7 +163,7 @@ export async function GET(req: NextRequest) {
 
 **Responsibility**:
 - Verify valid Google token exists (cookie)
-- Fetch interview data (same logic as PDF export)
+- Fetch interview data (same logic as PDF export; share helper to keep permissions aligned)
 - Create Google Docs document via API
 - Format content (title, metadata, messages)
 - Return created document URL
@@ -419,13 +420,26 @@ npm install googleapis
 
 1. **OAuth Tokens**:
    - Stored in httpOnly cookies
-   - Short lifetime (1h)
+   - Short lifetime (24h)
    - Never exposed to client JavaScript
    - Refresh token stored securely (optional for v1)
 
 2. **CSRF Protection**:
    - Use `state` parameter in OAuth flow
    - Verify state at callback
+   - State must be signed (HMAC) and include: interviewId, userId, issuedAt
+   - Reject expired or tampered state payloads
+   - **Example state format**:
+     - Base payload: `{ interviewId, userId, issuedAt }`
+    - Encoded: `base64url(JSON)` -> `payload`
+    - Signature: `HMAC_SHA256(payload, GOOGLE_OAUTH_STATE_SECRET)`
+    - Final state: `payload.signature`
+   - **Validation checklist**:
+     - Split `state` into `payload` and `signature`
+     - Verify `HMAC_SHA256(payload, secret)` matches `signature`
+     - Decode `payload` JSON; ensure `interviewId` + `userId` exist
+     - Validate `issuedAt` is within 24h
+     - Ensure `userId` matches current session user
 
 3. **Validation**:
    - Verify user has access to interview
@@ -462,4 +476,3 @@ npm install googleapis
 - Created document will belong to authenticated Google user
 - No need to activate Supabase Storage for this feature
 - PDF export remains available and unchanged
-- **All development communication in English**

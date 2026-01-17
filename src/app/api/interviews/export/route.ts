@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { chromium } from "playwright";
 import { marked } from "marked";
-import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
+import {
+  fetchInterviewExportData,
+  InterviewExportError,
+} from "@/lib/interviewExport";
 
 const escapeHtml = (value: string) =>
   value
@@ -10,18 +13,6 @@ const escapeHtml = (value: string) =>
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&#39;");
-
-const formatAgentName = (name?: string) => {
-  if (!name) return "Agent";
-  return name.charAt(0).toUpperCase() + name.slice(1);
-};
-
-const formatDateTime = (value?: string | null) => {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString("fr-FR");
-};
 
 export async function GET(req: NextRequest) {
   let browser;
@@ -36,78 +27,25 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const supabase = createServiceSupabaseClient();
-    const { data: interview, error: interviewError } = await supabase
-      .from("interviews")
-      .select("id, agent_id, started_at, created_at")
-      .eq("id", interviewId)
-      .single();
-
-    if (interviewError || !interview) {
-      const message = interviewError?.message ?? "Interview not found";
-      console.error("[/api/interviews/export GET] Interview error:", message);
-      return NextResponse.json({ error: "Entretien introuvable." }, { status: 404 });
-    }
-
-    const { data: agent, error: agentError } = await supabase
-      .from("agents")
-      .select("agent_name, description")
-      .eq("id", interview.agent_id)
-      .single();
-
-    if (agentError || !agent) {
-      const message = agentError?.message ?? "Agent not found";
-      console.error("[/api/interviews/export GET] Agent error:", message);
-      return NextResponse.json({ error: "Agent introuvable." }, { status: 404 });
-    }
-
-    const { data: userLink } = await supabase
-      .from("user_interview_session")
-      .select("user_id, users(name, email)")
-      .eq("interview_id", interviewId)
-      .limit(1)
-      .maybeSingle();
-
-    const linkedUser = Array.isArray(userLink?.users) ? userLink?.users[0] : userLink?.users;
-    const userName = linkedUser?.name ?? "";
-    const userEmail = linkedUser?.email ?? "";
-    const fallbackUserName = userName || (userEmail ? userEmail.split("@")[0] : "Utilisateur");
-
-    const { data: sessions } = await supabase
-      .from("user_interview_session")
-      .select("session_id")
-      .eq("interview_id", interviewId);
-
-    const sessionIds = (sessions ?? []).map((row) => row.session_id);
-    const primarySessionId = sessionIds[0] ?? "";
-    const { data: messages } = sessionIds.length
-      ? await supabase
-          .from("messages")
-          .select("id, role, content, created_at")
-          .in("session_id", sessionIds)
-          .order("created_at", { ascending: true })
-      : { data: [] as Array<{ id: string; role: string; content: string; created_at: string }> };
-
-    const { data: prompt } = await supabase
-      .from("agent_prompts")
-      .select("system_prompt, version")
-      .eq("agent_id", interview.agent_id)
-      .eq("published", true)
-      .order("version", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const agentName = formatAgentName(agent.agent_name);
-    const agentDescription = agent.description ?? "Aucune description.";
-    const interviewDate = formatDateTime(interview.started_at ?? interview.created_at);
+    const exportData = await fetchInterviewExportData(interviewId);
+    const {
+      agentName,
+      agentDescription,
+      interviewDate,
+      userName,
+      userEmail,
+      primarySessionId,
+      messages,
+      promptMarkdown,
+    } = exportData;
     const exportDate = new Date().toLocaleDateString("fr-FR");
-    const promptHtml = prompt?.system_prompt
-      ? await marked.parse(prompt.system_prompt)
+    const promptHtml = promptMarkdown
+      ? await marked.parse(promptMarkdown)
       : "<p>Prompt indisponible.</p>";
 
     const messageHtml = (messages ?? [])
       .map((msg) => {
-        const author = msg.role === "assistant" ? agentName : fallbackUserName;
+        const author = msg.role === "assistant" ? agentName : userName;
         const roleClass = msg.role === "assistant" ? "assistant" : "user";
         const content = escapeHtml(msg.content ?? "").replace(/\n/g, "<br />");
         return `
@@ -210,10 +148,10 @@ export async function GET(req: NextRequest) {
         <body>
           <div class="container">
             <h1>Entretien avec ${escapeHtml(agentName)}</h1>
-            <p class="interview-heading">Entretien avec ${escapeHtml(agentName)} par ${escapeHtml(fallbackUserName)} le ${escapeHtml(interviewDate)}</p>
+            <p class="interview-heading">Entretien avec ${escapeHtml(agentName)} par ${escapeHtml(userName)} le ${escapeHtml(interviewDate)}</p>
             <div class="muted">Entretien du ${escapeHtml(interviewDate)}, Export du ${escapeHtml(exportDate)}</div>
             <div class="muted"><strong>Session</strong> : ${escapeHtml(primarySessionId)}</div>
-            <div class="meta-line"><strong>Utilisateur</strong> : ${escapeHtml(userEmail)} ${escapeHtml(fallbackUserName)}</div>
+            <div class="meta-line"><strong>Utilisateur</strong> : ${escapeHtml(userEmail)} ${escapeHtml(userName)}</div>
             <div class="meta-line"><strong>Agent</strong> : ${escapeHtml(agentName)} ${escapeHtml(agentDescription)}</div>
 
             <div class="section-title">Entretien</div>
@@ -251,6 +189,9 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof InterviewExportError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[/api/interviews/export GET] Error:", message);
     return NextResponse.json(

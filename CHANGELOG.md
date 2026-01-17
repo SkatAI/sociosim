@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - **Test Coverage:** Add comprehensive test suite for main interview page (`/interview`) with 16 tests covering authentication, session creation, agent loading, and chat interaction.
+- **Google Docs Export:** Add OAuth flow and export pipeline to create interview documents in Google Docs.
 - **Auth Flow Tests:** Add tests for registration, login, password reset, and logout with invalid input coverage.
 - **Guide Page:** Add `/guide-entretien` rendered from `public/docs/guide_entretien.md` and link it in the header.
 - **Auth Emails:** Send signup confirmations and password reset emails via Supabase Auth (Inbucket in local dev).
