@@ -309,7 +309,7 @@ export default function PersonnasPage() {
                         {agent.active && interactedAgents.includes(agent.agent_name) && (
                           <Button
                             onClick={() =>
-                              router.push(`/dashboard?agent=${encodeURIComponent(agent.agent_name)}`)
+                              router.push(`/interviews?agent=${encodeURIComponent(agent.agent_name)}`)
                             }
                             variant="subtle"
                             size="xs"
@@ -394,7 +394,7 @@ export default function PersonnasPage() {
                         {agent.active && interactedAgents.includes(agent.agent_name) && (
                           <Button
                             onClick={() =>
-                              router.push(`/dashboard?agent=${encodeURIComponent(agent.agent_name)}`)
+                              router.push(`/interviews?agent=${encodeURIComponent(agent.agent_name)}`)
                             }
                             variant="subtle"
                             size="xs"

@@ -78,7 +78,7 @@ describe("ManageUsersClient", () => {
     renderWithChakra(<ManageUsersClient />);
 
     await waitFor(() => {
-      expect(mockRouter.push).toHaveBeenCalledWith("/dashboard");
+      expect(mockRouter.push).toHaveBeenCalledWith("/personnas");
     });
   });
 

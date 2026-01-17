@@ -93,8 +93,8 @@ function LoginPageInner() {
         return;
       }
 
-      console.log("[login] Sign in successful, redirecting to dashboard");
-      router.replace("/dashboard");
+      console.log("[login] Sign in successful, redirecting to interviews");
+      router.replace("/personnas");
     } catch (submitError) {
       console.error("[login] Sign in failed:", submitError);
       const isTimeout = submitError instanceof Error && submitError.message.includes("timed out");

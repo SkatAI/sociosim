@@ -74,7 +74,7 @@ export default function ManageUsersClient() {
       return;
     }
     if (!user_admin) {
-      router.push("/dashboard");
+      router.push("/personnas");
       return;
     }
 

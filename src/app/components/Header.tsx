@@ -115,22 +115,13 @@ export default function Header() {
         <HStack gap={6}>
           <Link
             as={NextLink}
-            href={!isLoading && user ? "/dashboard" : "/"}
+            href={!isLoading && user ? "/personnas" : "/"}
             fontWeight="bold"
             fontSize="3xl"
             color="inherit"
             _hover={{ opacity: 0.8 }}
           >
             Mimesis
-          </Link>
-          <Link
-            as={NextLink}
-            href="/guide-entretien"
-            fontWeight="medium"
-            color="fg.muted"
-            _hover={{ color: "accent.primary" }}
-          >
-            Guide d&apos;entretien
           </Link>
         </HStack>
 
@@ -148,7 +139,7 @@ export default function Header() {
               </Link>
               <Link
                 as={NextLink}
-                href="/dashboard"
+                href="/interviews"
                 fontWeight="medium"
                 color="fg.muted"
                 _hover={{ color: "accent.primary" }}
