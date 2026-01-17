@@ -40,4 +40,28 @@ describe("Header", () => {
     expect(signOutLocal).toHaveBeenCalled();
     expect(mockRouter.replace).toHaveBeenCalledWith("/login");
   });
+
+  it("shows admin label for interviews", () => {
+    vi.mocked(useAuthUser).mockReturnValue({
+      ...mockUseAuthUser,
+      role: "admin",
+    } as ReturnType<typeof useAuthUser>);
+
+    renderWithChakra(<Header />);
+
+    expect(screen.getByText("Interviews")).toBeInTheDocument();
+    expect(screen.queryByText("Mes entretiens")).not.toBeInTheDocument();
+  });
+
+  it("shows student label for interviews", () => {
+    vi.mocked(useAuthUser).mockReturnValue({
+      ...mockUseAuthUser,
+      role: "student",
+    } as ReturnType<typeof useAuthUser>);
+
+    renderWithChakra(<Header />);
+
+    expect(screen.getByText("Mes entretiens")).toBeInTheDocument();
+    expect(screen.queryByText("Interviews")).not.toBeInTheDocument();
+  });
 });
