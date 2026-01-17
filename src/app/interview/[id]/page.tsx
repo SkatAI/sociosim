@@ -24,17 +24,33 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   const router = useRouter();
   const { id: interviewId } = use(params);
 
-  const { user, isLoading: isAuthLoading } = useAuthUser();
+  const { user, isLoading: isAuthLoading, user_admin } = useAuthUser();
 
   const [interviewSummary, setInterviewSummary] = useState<{
     agentName: string;
     userName: string;
     startedAt: string;
+    starterUserId?: string | null;
   } | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [viewOnlyMessages, setViewOnlyMessages] = useState<Message[]>([]);
+  const [viewOnlyError, setViewOnlyError] = useState<string | null>(null);
+  const [isViewOnlyLoading, setIsViewOnlyLoading] = useState(false);
 
   // Session management
-  const { session, messages: loadedMessages, isResume, isLoading: isSessionLoading, error: sessionError } = useInterviewSession(user?.id ?? null, interviewId);
+  const isOwner =
+    Boolean(interviewSummary?.starterUserId && user?.id) &&
+    interviewSummary?.starterUserId === user?.id;
+  const isViewOnly = Boolean(user_admin && interviewSummary?.starterUserId && !isOwner);
+  const canCreateSession = !user_admin || isOwner;
+
+  const {
+    session,
+    messages: loadedMessages,
+    isResume,
+    isLoading: isSessionLoading,
+    error: sessionError,
+  } = useInterviewSession(user?.id ?? null, interviewId, { enabled: canCreateSession });
 
   // Chat state
   const [messages, setMessages] = useState<UIMessage[]>([]);
@@ -77,7 +93,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         const payload = (await response.json().catch(() => null)) as
           | {
               agent?: { agent_name?: string };
-              user?: { name?: string };
+              user?: { id?: string | null; name?: string };
               interview?: { started_at?: string };
             }
           | null;
@@ -88,6 +104,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
           agentName: payload.agent.agent_name,
           userName: payload.user.name,
           startedAt: payload.interview.started_at,
+          starterUserId: payload.user?.id ?? null,
         });
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -99,10 +116,41 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
     loadSummary();
   }, [interviewId]);
 
-  // Initialize messages from loaded data (resume mode)
   useEffect(() => {
-    if (loadedMessages.length > 0) {
-      const convertedMessages: UIMessage[] = loadedMessages.map((msg: Message) => ({
+    if (!isViewOnly || !interviewId) return;
+
+    const loadMessages = async () => {
+      try {
+        setIsViewOnlyLoading(true);
+        setViewOnlyError(null);
+
+        const response = await fetch(`/api/interviews/${interviewId}/messages`);
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          const message = payload?.error ?? response.statusText;
+          throw new Error(message);
+        }
+        const payload = (await response.json().catch(() => null)) as
+          | { messages?: Message[] }
+          | null;
+        setViewOnlyMessages(payload?.messages ?? []);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error("[Interview] Failed to load view-only messages:", errorMessage);
+        setViewOnlyError(`Impossible de charger les messages: ${errorMessage}`);
+      } finally {
+        setIsViewOnlyLoading(false);
+      }
+    };
+
+    loadMessages();
+  }, [interviewId, isViewOnly]);
+
+  // Initialize messages from loaded data (resume or view-only mode)
+  useEffect(() => {
+    const sourceMessages = isViewOnly ? viewOnlyMessages : loadedMessages;
+    if (sourceMessages.length > 0) {
+      const convertedMessages: UIMessage[] = sourceMessages.map((msg: Message) => ({
         id: msg.id,
         role: msg.role,
         text: msg.content,
@@ -112,8 +160,10 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         }),
       }));
       setMessages(convertedMessages);
+    } else {
+      setMessages([]);
     }
-  }, [loadedMessages]);
+  }, [isViewOnly, loadedMessages, viewOnlyMessages]);
 
   // Auto-scroll to bottom when messages load (resume mode)
   useEffect(() => {
@@ -301,7 +351,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   }
 
   // Show loading state while creating session
-  if (isSessionLoading) {
+  if (isSessionLoading && canCreateSession) {
     return (
       <Container maxWidth="2xl" height="100vh" display="flex" alignItems="center" justifyContent="center">
         <VStack gap={4}>
@@ -313,7 +363,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   }
 
   // Show error if session creation failed
-  if (sessionError) {
+  if (sessionError && canCreateSession) {
     return (
       <Container maxWidth="2xl" height="100vh" display="flex" alignItems="center" justifyContent="center">
         <VStack gap={4}>
@@ -339,9 +389,9 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         position="sticky"
         top={0}
       >
-        {summaryError ? (
+        {summaryError || viewOnlyError ? (
           <Heading as="h1" size="lg" color="red.600">
-            Erreur: {summaryError}
+            Erreur: {summaryError ?? viewOnlyError}
           </Heading>
         ) : (
           <HStack justify="space-between" align="center">
@@ -376,7 +426,13 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
           {messages.length === 0 ? (
             <VStack align="center" justify="center" height="100%" gap={4}>
               <Text color="fg.muted" fontSize="lg">
-                {isResume ? "Continuer votre entretien" : "Bonjour! Cliquez ci-dessous pour commencer."}
+                {!canCreateSession
+                  ? isViewOnlyLoading
+                    ? "Chargement des messages..."
+                    : "Aucun message pour cet entretien."
+                  : isResume
+                    ? "Continuer votre entretien"
+                    : "Bonjour! Cliquez ci-dessous pour commencer."}
               </Text>
             </VStack>
           ) : (
@@ -395,12 +451,14 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
             </Stack>
           )}
         </Box>
-        <MessageInput
-          onSendMessage={handleSendMessage}
-          isLoading={isStreaming}
-          placeholder="Tapez votre message..."
-          containerProps={{ width: "100%" }}
-        />
+        {canCreateSession && (
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            isLoading={isStreaming}
+            placeholder="Tapez votre message..."
+            containerProps={{ width: "100%" }}
+          />
+        )}
       </Box>
 
     </Box>

@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     const { data: userLink, error: userLinkError } = await supabase
       .from("user_interview_session")
-      .select("user_id, users(name, email), created_at")
+      .select("user_id, users(id, name, email), created_at")
       .eq("interview_id", interviewId)
       .order("created_at", { ascending: true })
       .limit(1)
@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
           agent_name: agent.agent_name,
         },
         user: {
+          id: linkedUser?.id ?? userLink?.user_id ?? null,
           name: fallbackUserName,
         },
         interview: {

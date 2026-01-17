@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - **Footer:** Add Université Gustave Eiffel footer with logo and legal/contact links.
 ### Changed
 - **Interviews Route:** Rename `/dashboard` to `/interviews`.
+- **Admin Interviews:** Admins can view all interviews without resuming someone else’s session.
 - **Tests:** Auth flow tests now pass with bad input assertions and coverage reporting.
 - **Interview Intro:** Render the new interview intro from `public/docs/guide_entretien_court.md`.
 - **Interview Intro:** Replace the collapsible guide with a header help link that opens a dialog.

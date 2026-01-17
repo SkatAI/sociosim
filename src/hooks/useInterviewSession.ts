@@ -13,7 +13,11 @@ interface InterviewSession {
  * Creates a session on mount (new or resume) and deletes it on unmount
  * If existingInterviewId is provided, resumes that interview and loads existing messages
  */
-export function useInterviewSession(userId: string | null, existingInterviewId?: string | null) {
+export function useInterviewSession(
+  userId: string | null,
+  existingInterviewId?: string | null,
+  options?: { enabled?: boolean }
+) {
   const [session, setSession] = useState<InterviewSession | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isResume, setIsResume] = useState(false);
@@ -24,6 +28,11 @@ export function useInterviewSession(userId: string | null, existingInterviewId?:
   const sessionRef = useRef<InterviewSession | null>(null);
 
   useEffect(() => {
+    if (options?.enabled === false) {
+      setIsLoading(false);
+      return;
+    }
+
     if (!userId) {
       setIsLoading(false);
       return;
@@ -113,7 +122,7 @@ export function useInterviewSession(userId: string | null, existingInterviewId?:
         );
       }
     };
-  }, [userId, existingInterviewId]);
+  }, [userId, existingInterviewId, options?.enabled]);
 
   return {
     session,
