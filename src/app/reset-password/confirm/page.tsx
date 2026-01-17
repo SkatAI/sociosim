@@ -24,6 +24,19 @@ type PasswordFormState = {
   confirmation: string;
 };
 
+const normalizeResetPasswordError = (message?: string | null) => {
+  if (!message) return null;
+  const normalized = message.trim();
+  if (!normalized) return null;
+  if (
+    normalized === "New password should be different from the old password." ||
+    normalized === "New password should be different from the old password"
+  ) {
+    return "Le nouveau mot de passe doit être différent de l'ancien.";
+  }
+  return normalized;
+};
+
 function ResetPasswordConfirmPageInner() {
   const router = useRouter();
   const [form, setForm] = useState<PasswordFormState>({
@@ -200,18 +213,15 @@ function ResetPasswordConfirmPageInner() {
 
           if (!response.ok) {
             const payload = await response.json().catch(() => null);
-            const message =
-              payload?.msg ||
-              payload?.error_description ||
-              payload?.message ||
-              `Erreur ${response.status}`;
-            setError(message);
+            const message = normalizeResetPasswordError(
+              payload?.msg || payload?.error_description || payload?.message
+            );
+            setError(message ?? `Erreur ${response.status}`);
             return;
           }
         } else {
-          setError(
-            updateError.message ?? "Impossible de réinitialiser votre mot de passe."
-          );
+          const message = normalizeResetPasswordError(updateError.message);
+          setError(message ?? "Impossible de réinitialiser votre mot de passe.");
           return;
         }
       }
