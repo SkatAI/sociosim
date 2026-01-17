@@ -41,7 +41,7 @@ Files:
 ### 4) UI + BFF callers
 Any place that currently posts `agent_name` should pass `agent_id`:
 - `src/app/personnas/page.tsx`
-- `src/app/dashboard/DashboardClient.tsx`
+- `src/app/interviews/DashboardClient.tsx`
 
 ### 5) Backwards compatibility (optional)
 If you want a soft rollout:

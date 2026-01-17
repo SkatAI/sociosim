@@ -163,7 +163,7 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: /Se connecter/i }));
 
     await waitFor(() => {
-      expect(mockRouter.replace).toHaveBeenCalledWith("/dashboard");
+      expect(mockRouter.replace).toHaveBeenCalledWith("/personnas");
     });
   });
 });

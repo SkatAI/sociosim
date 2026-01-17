@@ -323,8 +323,8 @@ export default function ProfilePage() {
               Enregistrer les changements
             </Button>
             <Box textAlign="center">
-              <Link as={NextLink} href="/dashboard" color="accent.primary" fontWeight="semibold">
-                Retour au tableau de bord
+              <Link as={NextLink} href="/interviews" color="accent.primary" fontWeight="semibold">
+                Retour aux entretiens
               </Link>
             </Box>
           </Stack>

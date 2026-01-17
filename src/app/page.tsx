@@ -18,7 +18,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!isLoading && user?.id) {
-      router.replace("/dashboard");
+      router.replace("/personnas");
     }
   }, [isLoading, router, user?.id]);
 

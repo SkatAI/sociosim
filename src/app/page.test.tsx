@@ -48,7 +48,7 @@ describe("Home page auth flow", () => {
     renderWithChakra(<Home />);
 
     await waitFor(() => {
-      expect(mockRouter.replace).toHaveBeenCalledWith("/dashboard");
+    expect(mockRouter.replace).toHaveBeenCalledWith("/personnas");
     });
   });
 });
