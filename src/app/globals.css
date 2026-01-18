@@ -67,6 +67,9 @@ body {
   height: 100dvh;
   overflow: hidden;
 }
+.interview-layout footer {
+  margin-top: 0 !important;
+}
 .interview-layout [data-scroll-container] {
   scrollbar-width: none;
 }
@@ -74,12 +77,21 @@ body {
   width: 0;
   height: 0;
 }
+.interview-layout [data-scroll-container]::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 999px;
+  transition: background-color 0.25s ease;
+}
 .interview-layout [data-scroll-container][data-scrolling="true"] {
   scrollbar-width: thin;
+  scrollbar-color: rgba(203, 213, 225, 0.8) transparent;
 }
 .interview-layout [data-scroll-container][data-scrolling="true"]::-webkit-scrollbar {
   width: 8px;
   height: 8px;
+}
+.interview-layout [data-scroll-container][data-scrolling="true"]::-webkit-scrollbar-thumb {
+  background-color: rgba(203, 213, 225, 0.8);
 }
 
 a {

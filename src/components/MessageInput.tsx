@@ -1,4 +1,5 @@
-import { Box, Button, HStack, Textarea, BoxProps } from "@chakra-ui/react";
+import { Box, IconButton, Textarea, BoxProps } from "@chakra-ui/react";
+import { ArrowRight } from "lucide-react";
 import { useRef, useState } from "react";
 
 interface MessageInputProps {
@@ -29,6 +30,7 @@ export function MessageInput({
       onSendMessage(message.trim());
       setMessage("");
       if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
         textareaRef.current.focus();
       }
     }
@@ -42,43 +44,67 @@ export function MessageInput({
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const nextValue = e.target.value;
+    setMessage(nextValue);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      const nextHeight = Math.min(textareaRef.current.scrollHeight, 128);
+      textareaRef.current.style.height = `${nextHeight}px`;
+    }
+  };
+
   return (
     <Box width="100%" {...containerProps}>
-      <HStack
+      <Box
         width="100%"
         padding={4}
-        gap={2}
         borderTop="1px solid"
         borderTopColor="border.muted"
         backgroundColor="bg.surface"
         flexShrink={0}
+        display="flex"
+        justifyContent="center"
       >
-        <Textarea
-          ref={textareaRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={isLoading}
-          minHeight={12}
-          maxHeight={32}
-          resize="vertical"
-          flexGrow={1}
-          backgroundColor="bg.surface"
-          color="fg.default"
-          borderColor="border.muted"
-          _placeholder={{ color: "fg.subtle" }}
-        />
-        <Button
-          onClick={handleSendMessage}
-          disabled={isLoading || !message.trim()}
-          colorPalette="blue"
-          minWidth={16}
-          height={12}
-        >
-          Envoyer
-        </Button>
-      </HStack>
+        <Box width="80%" position="relative">
+          <Textarea
+            ref={textareaRef}
+            value={message}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={isLoading}
+            rows={1}
+            minHeight={10}
+            maxHeight={32}
+            resize="none"
+            flexGrow={1}
+            overflow="hidden"
+            backgroundColor="bg.surface"
+            color="fg.default"
+            borderColor="border.muted"
+            borderRadius="2xl"
+            paddingRight="2.75rem"
+            _placeholder={{ color: "fg.subtle" }}
+          />
+          <IconButton
+            aria-label="Envoyer"
+            onClick={handleSendMessage}
+            disabled={isLoading || !message.trim()}
+            colorPalette="blue"
+            position="absolute"
+            right={1}
+            top="50%"
+            transform="translateY(calc(-50% - 4px))"
+            borderRadius="full"
+            width={8}
+            height={8}
+            minWidth={8}
+          >
+            <ArrowRight size={16} />
+          </IconButton>
+        </Box>
+      </Box>
     </Box>
   );
 }
