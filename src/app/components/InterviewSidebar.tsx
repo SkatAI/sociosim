@@ -214,7 +214,7 @@ export function InterviewSidebar({
               {stats.answeredQuestions} responses
             </Text>
             <Text fontSize="sm">
-              Tokens : {stats.inputTokens} → {stats.outputTokens}
+              Tokens : {stats.outputTokens} → {stats.inputTokens}
             </Text>
           </Stack>
           <Box
