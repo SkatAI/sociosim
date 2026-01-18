@@ -82,11 +82,9 @@ export default function PersonnasPage() {
           if (response.ok) {
             const data = await response.json();
             const agentIds = new Set<string>();
-            (data.interviews || [])
-              .filter((interview: InterviewWithDetails) => interview.messages?.length)
-              .forEach((interview: InterviewWithDetails) => {
-                if (interview.agent_id) agentIds.add(interview.agent_id);
-              });
+            (data.interviews || []).forEach((interview: InterviewWithDetails) => {
+              if (interview.agent_id) agentIds.add(interview.agent_id);
+            });
             setInteractedAgents(Array.from(agentIds));
           } else {
             console.error("Error fetching interviews for history:", response.statusText);

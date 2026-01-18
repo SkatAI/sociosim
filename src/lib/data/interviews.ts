@@ -7,6 +7,54 @@ import {
 } from "@/lib/schemas";
 import { ensureRecordFound, throwIfError } from "./errors";
 
+const chunkArray = <T,>(items: T[], size: number): T[][] => {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+};
+
+const fetchMessagesBySessionIds = async (sessionIds: string[]) => {
+  const supabase = createServiceSupabaseClient();
+  const chunks = chunkArray(sessionIds, 200);
+  const results = await Promise.all(
+    chunks.map(async (chunk) => {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("session_id, content, role, created_at")
+        .in("session_id", chunk);
+      throwIfError(error, "Failed to load messages");
+      return data ?? [];
+    })
+  );
+  return results.flat();
+};
+
+const fetchInterviewsByIds = async (interviewIds: string[]) => {
+  const supabase = createServiceSupabaseClient();
+  const chunks = chunkArray(interviewIds, 200);
+  const results = await Promise.all(
+    chunks.map(async (chunk) => {
+      const { data, error } = await supabase
+        .from("interviews")
+        .select(
+          `
+          *,
+          agents!inner(agent_name, active),
+          interview_usage(total_input_tokens, total_output_tokens)
+        `
+        )
+        .in("id", chunk)
+        .eq("agents.active", true)
+        .order("updated_at", { ascending: false });
+      throwIfError(error, "Failed to load interviews");
+      return data ?? [];
+    })
+  );
+  return results.flat();
+};
+
 /**
  * Create a new interview record with an agent.
  */
@@ -116,8 +164,16 @@ export async function getUserInterviewsWithMessages(userId: string) {
     return [];
   }
 
-  const interviewIds = userSessions.map((us) => us.interview_id);
-  const sessionIds = userSessions.map((us) => us.session_id);
+  const interviewIds = Array.from(new Set(userSessions
+    .map((us) => us.interview_id)
+    .filter((id): id is string => Boolean(id))));
+  const sessionIds = Array.from(new Set(userSessions
+    .map((us) => us.session_id)
+    .filter((id): id is string => Boolean(id))));
+
+  if (interviewIds.length === 0 || sessionIds.length === 0) {
+    return [];
+  }
 
   const sessionsByInterview = new Map<string, typeof userSessions>();
   userSessions.forEach((session) => {
@@ -128,20 +184,12 @@ export async function getUserInterviewsWithMessages(userId: string) {
   });
 
   // Step 2: Get full interview data with agent and usage
-  const { data: interviews, error: interviewError } = await supabase
-    .from("interviews")
-    .select(
-      `
-      *,
-      agents!inner(agent_name, active),
-      interview_usage(total_input_tokens, total_output_tokens)
-    `
-    )
-    .in("id", interviewIds)
-    .eq("agents.active", true)
-    .order("updated_at", { ascending: false });
-
-  throwIfError(interviewError, "Failed to load interviews");
+  const interviews = await fetchInterviewsByIds(interviewIds);
+  interviews.sort(
+    (a, b) =>
+      new Date(b.updated_at ?? b.created_at).getTime() -
+      new Date(a.updated_at ?? a.created_at).getTime()
+  );
 
   console.log(
     "[getUserInterviewsWithMessages] Query interviews - Found interviews:",
@@ -149,17 +197,11 @@ export async function getUserInterviewsWithMessages(userId: string) {
   );
 
   // Step 3: Get all messages for these sessions
-  const { data: messages, error: messageError } = await supabase
-    .from("messages")
-    .select("session_id, content, role, created_at")
-    .in("session_id", sessionIds);
-
+  const messages = await fetchMessagesBySessionIds(sessionIds);
   console.log(
     "[getUserInterviewsWithMessages] Query messages - Found messages:",
     messages?.length || 0
   );
-
-  throwIfError(messageError, "Failed to load messages");
 
   // Step 4: Build a map of messages by session
   const messagesBySession = new Map<string, typeof messages>();
@@ -220,8 +262,16 @@ export async function getAllInterviewsWithMessages() {
     return [];
   }
 
-  const interviewIds = userSessions.map((session) => session.interview_id);
-  const sessionIds = userSessions.map((session) => session.session_id);
+  const interviewIds = Array.from(new Set(userSessions
+    .map((session) => session.interview_id)
+    .filter((id): id is string => Boolean(id))));
+  const sessionIds = Array.from(new Set(userSessions
+    .map((session) => session.session_id)
+    .filter((id): id is string => Boolean(id))));
+
+  if (interviewIds.length === 0 || sessionIds.length === 0) {
+    return [];
+  }
 
   const sessionsByInterview = new Map<string, typeof userSessions>();
   const starterByInterview = new Map<string, { id: string; name: string | null }>();
@@ -239,27 +289,14 @@ export async function getAllInterviewsWithMessages() {
     }
   });
 
-  const { data: interviews, error: interviewError } = await supabase
-    .from("interviews")
-    .select(
-      `
-      *,
-      agents!inner(agent_name, active),
-      interview_usage(total_input_tokens, total_output_tokens)
-    `
-    )
-    .in("id", interviewIds)
-    .eq("agents.active", true)
-    .order("updated_at", { ascending: false });
+  const interviews = await fetchInterviewsByIds(interviewIds);
+  interviews.sort(
+    (a, b) =>
+      new Date(b.updated_at ?? b.created_at).getTime() -
+      new Date(a.updated_at ?? a.created_at).getTime()
+  );
 
-  throwIfError(interviewError, "Failed to load interviews");
-
-  const { data: messages, error: messageError } = await supabase
-    .from("messages")
-    .select("session_id, content, role, created_at")
-    .in("session_id", sessionIds);
-
-  throwIfError(messageError, "Failed to load messages");
+  const messages = await fetchMessagesBySessionIds(sessionIds);
 
   const messagesBySession = new Map<string, typeof messages>();
   (messages || []).forEach((msg) => {

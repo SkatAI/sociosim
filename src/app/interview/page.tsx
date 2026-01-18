@@ -41,6 +41,7 @@ function InterviewPageInner() {
   const [interviewSummary, setInterviewSummary] = useState<{
     agentId: string | null;
     agentName: string;
+    agentDescription?: string | null;
     userName: string;
     startedAt: string;
   } | null>(null);
@@ -100,7 +101,7 @@ function InterviewPageInner() {
         }
         const payload = (await response.json().catch(() => null)) as
           | {
-              agent?: { agent_id?: string | null; agent_name?: string };
+              agent?: { agent_id?: string | null; agent_name?: string; description?: string | null };
               user?: { name?: string };
               interview?: { started_at?: string };
               usage?: { total_input_tokens?: number; total_output_tokens?: number };
@@ -112,6 +113,7 @@ function InterviewPageInner() {
         setInterviewSummary({
           agentId: payload.agent.agent_id ?? null,
           agentName: payload.agent.agent_name,
+          agentDescription: payload.agent.description ?? null,
           userName: payload.user.name,
           startedAt: payload.interview.started_at,
         });
@@ -463,6 +465,7 @@ function InterviewPageInner() {
         agentDisplayName={agentDisplayName}
         agentId={interviewSummary?.agentId ?? null}
         userId={user?.id ?? null}
+        agentDescription={interviewSummary?.agentDescription ?? null}
         userName={interviewSummary?.userName}
         dateDisplay={dateDisplay}
         error={summaryError}

@@ -30,6 +30,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   const [interviewSummary, setInterviewSummary] = useState<{
     agentId: string | null;
     agentName: string;
+    agentDescription?: string | null;
     userName: string;
     startedAt: string;
     starterUserId?: string | null;
@@ -137,7 +138,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         }
         const payload = (await response.json().catch(() => null)) as
           | {
-              agent?: { agent_id?: string | null; agent_name?: string };
+              agent?: { agent_id?: string | null; agent_name?: string; description?: string | null };
               user?: { id?: string | null; name?: string };
               interview?: { started_at?: string };
               usage?: { total_input_tokens?: number; total_output_tokens?: number };
@@ -149,6 +150,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         setInterviewSummary({
           agentId: payload.agent.agent_id ?? null,
           agentName: payload.agent.agent_name,
+          agentDescription: payload.agent.description ?? null,
           userName: payload.user.name,
           startedAt: payload.interview.started_at,
           starterUserId: payload.user?.id ?? null,
@@ -503,6 +505,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         agentDisplayName={agentDisplayName}
         agentId={interviewSummary?.agentId ?? null}
         userId={user?.id ?? null}
+        agentDescription={interviewSummary?.agentDescription ?? null}
         userName={interviewSummary?.userName}
         dateDisplay={dateDisplay}
         error={summaryError ?? viewOnlyError}

@@ -2,7 +2,6 @@
 
 import {
   Box,
-  Button,
   ButtonGroup,
   Heading,
   HStack,
@@ -39,6 +38,7 @@ type InterviewSidebarProps = {
   agentDisplayName?: string;
   agentId?: string | null;
   userId?: string | null;
+  agentDescription?: string | null;
   userName?: string;
   dateDisplay?: string;
   error?: string | null;
@@ -56,6 +56,7 @@ export function InterviewSidebar({
   agentDisplayName,
   agentId,
   userId,
+  agentDescription,
   userName,
   dateDisplay,
   error,
@@ -73,7 +74,13 @@ export function InterviewSidebar({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [historyItems, setHistoryItems] = useState<
-    Array<{ id: string; agentName: string; date: string; agentId?: string | null }>
+    Array<{
+      id: string;
+      agentName: string;
+      date: string;
+      qaCount: number;
+      agentId?: string | null;
+    }>
   >([]);
   const [historyAgentId, setHistoryAgentId] = useState<string | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
@@ -113,12 +120,18 @@ export function InterviewSidebar({
                 updated_at?: string;
                 started_at?: string;
                 agents?: { agent_name?: string };
+                messages?: Array<{ role?: string }>;
               }>;
             }
           | null;
         const interviews = payload?.interviews ?? [];
         const formatted = interviews
-          .filter((item) => item.id && item.id !== currentInterviewId)
+          .filter((item) => {
+            if (!item.id) return false;
+            if (!item.messages || item.messages.length === 0) return false;
+            if (agentId && item.agent_id !== agentId) return false;
+            return true;
+          })
           .sort((a, b) => {
             const dateA = new Date(a.updated_at ?? a.started_at ?? 0).getTime();
             const dateB = new Date(b.updated_at ?? b.started_at ?? 0).getTime();
@@ -136,7 +149,14 @@ export function InterviewSidebar({
                   year: "2-digit",
                 })
               : "";
-            return { id: item.id, agentName, date: dateLabel, agentId: item.agent_id ?? null };
+            const qaCount = (item.messages || []).filter((msg) => msg.role === "assistant").length;
+            return {
+              id: item.id,
+              agentName,
+              date: dateLabel,
+              qaCount,
+              agentId: item.agent_id ?? null,
+            };
           });
         if (isMounted) {
           setHistoryItems(formatted);
@@ -157,7 +177,7 @@ export function InterviewSidebar({
     return () => {
       isMounted = false;
     };
-  }, [historyUserId, currentInterviewId]);
+  }, [historyUserId, currentInterviewId, agentId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -341,6 +361,11 @@ export function InterviewSidebar({
                       size="sm"
                       variant="outline"
                       rounded="full"
+                      colorPalette="blue"
+                      backgroundColor="blue.400"
+                      color="white"
+                      borderColor="blue.400"
+                      _hover={{ backgroundColor: "blue.500" }}
                       onClick={handleNewInterview}
                       loading={isCreatingSession}
                       disabled={isCreatingSession}
@@ -423,9 +448,14 @@ export function InterviewSidebar({
                 <ChevronsLeft size={16} />
               </IconButton>
             </HStack>
-            <Heading as="h2" size="md">
+            <Heading as="h2" size="lg" color={{ base: "blue.700", _dark: "blue.200" }}>
               {agentDisplayName ?? "Chargement de l'entretien..."}
             </Heading>
+            {agentDescription ? (
+              <Text fontSize="xs" color="fg.muted" lineHeight="1.4">
+                {agentDescription}
+              </Text>
+            ) : null}
             {agentDisplayName && userName && dateDisplay ? (
               <>
                 <Text fontSize="sm">par {userName}</Text>
@@ -480,23 +510,32 @@ export function InterviewSidebar({
               </Text>
             ) : (
               <Stack gap={1}>
-                {historyItems.map((item) => (
-                  <Link
-                    key={item.id}
-                    as={NextLink}
-                    href={`/interview/${item.id}`}
-                    display="block"
-                    paddingInline={2}
-                    paddingY={1}
-                    borderRadius="md"
-                    backgroundColor="transparent"
-                    _hover={{ textDecoration: "none", backgroundColor: "bg.surface" }}
-                  >
-                    <Text fontSize="sm">
-                      {item.agentName} - {item.date}
-                    </Text>
-                  </Link>
-                ))}
+                {historyItems.map((item) => {
+                  const isCurrent = item.id === currentInterviewId;
+                  return (
+                    <Link
+                      key={item.id}
+                      as={NextLink}
+                      href={`/interview/${item.id}`}
+                      display="block"
+                      paddingInline={2}
+                      paddingY={1}
+                      borderRadius="md"
+                      backgroundColor={isCurrent ? "cyan.50" : "transparent"}
+                      paddingInlineStart={2}
+                      fontWeight={isCurrent ? "medium" : "normal"}
+                      color={isCurrent ? "cyan.900" : "fg.muted"}
+                      _hover={{
+                        textDecoration: "none",
+                        backgroundColor: isCurrent ? "cyan.100" : "bg.muted",
+                      }}
+                    >
+                      <Text fontSize="sm">
+                        {item.agentName} - {item.date} · {item.qaCount}q.
+                      </Text>
+                    </Link>
+                  );
+                })}
               </Stack>
             )}
           </Stack>
