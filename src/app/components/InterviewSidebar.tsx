@@ -3,16 +3,14 @@
 import {
   Box,
   Button,
-  Dialog,
   Heading,
   HStack,
   IconButton,
-  Portal,
   Stack,
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { ChevronsLeft, FileDown, FileText, Menu } from "lucide-react";
+import { ChevronsLeft, FileDown, FileText, Menu, X } from "lucide-react";
 import { marked } from "marked";
 import { useEffect, useState } from "react";
 import { useBreakpointValue } from "@chakra-ui/react";
@@ -51,6 +49,7 @@ export function InterviewSidebar({
   const [introHtml, setIntroHtml] = useState<string>("");
   const [introPreview, setIntroPreview] = useState<string>("");
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const isCompact = useBreakpointValue({ base: true, lg: false }) ?? false;
 
   useEffect(() => {
@@ -255,59 +254,80 @@ export function InterviewSidebar({
                 </HStack>
               </Button>
             ) : null}
-            <Dialog.Root>
-              <Dialog.Trigger asChild>
-                <Button
-                  variant="plain"
-                  size="sm"
-                  colorPalette="blue"
-                  textDecoration="underline"
-                >
-                  Aide pour l&apos;entretien
-                </Button>
-              </Dialog.Trigger>
-              <Portal>
-                <Dialog.Backdrop />
-                <Dialog.Positioner>
-                  <Dialog.Content padding={8}>
-                    <Dialog.Header>
-                      <Dialog.Title>Guide d&apos;entretien</Dialog.Title>
-                    </Dialog.Header>
-                    <Dialog.Body>
-                      <VStack align="stretch" gap={3}>
-                        {introPreview ? (
-                          <Text fontWeight="600">{introPreview}</Text>
-                        ) : null}
-                        {introHtml ? (
-                          <Box
-                            css={{
-                              "& h2": { marginTop: "1.5rem", fontWeight: "600", color: "fg.default" },
-                              "& h3": { marginTop: "1rem", fontWeight: "600", color: "fg.default" },
-                              "& ul": { paddingLeft: "1.25rem", marginTop: "0.75rem" },
-                              "& li": { marginBottom: "0.5rem" },
-                              "& p": { marginBottom: "0.75rem" },
-                              "& strong": { color: "fg.default" },
-                            }}
-                            dangerouslySetInnerHTML={{ __html: introHtml }}
-                          />
-                        ) : (
-                          <Text color="fg.muted">Chargement du guide d&apos;entretien...</Text>
-                        )}
-                      </VStack>
-                    </Dialog.Body>
-                    <Dialog.Footer>
-                      <Dialog.ActionTrigger asChild>
-                        <Button variant="outline">Fermer</Button>
-                      </Dialog.ActionTrigger>
-                    </Dialog.Footer>
-                  </Dialog.Content>
-                </Dialog.Positioner>
-              </Portal>
-            </Dialog.Root>
+            <Button
+              variant="plain"
+              size="sm"
+              colorPalette="blue"
+              textDecoration="underline"
+              onClick={() => setIsHelpOpen(true)}
+            >
+              Aide pour l&apos;entretien
+            </Button>
           </Stack>
         </Stack>
       )}
     </Box>
+    <>
+      <Box
+        position="fixed"
+        inset={0}
+        backgroundColor="rgba(15, 23, 42, 0.2)"
+        zIndex={40}
+        onClick={() => setIsHelpOpen(false)}
+        opacity={isHelpOpen ? 1 : 0}
+        pointerEvents={isHelpOpen ? "auto" : "none"}
+        transition="opacity 0.2s ease"
+      />
+      <Box
+        position="fixed"
+        top={0}
+        right={0}
+        height="100dvh"
+        width={{ base: "100%", sm: "min(92vw, 520px)" }}
+        backgroundColor="bg.surface"
+        borderLeft="1px solid"
+        borderLeftColor="border.muted"
+        zIndex={45}
+        padding={6}
+        overflowY="auto"
+        transform={isHelpOpen ? "translateX(0)" : "translateX(100%)"}
+        transition="transform 0.25s ease"
+        pointerEvents={isHelpOpen ? "auto" : "none"}
+      >
+        <HStack justify="space-between" align="center" marginBottom={4}>
+          <Heading as="h3" size="md">
+            Guide d&apos;entretien
+          </Heading>
+          <IconButton
+            aria-label="Fermer"
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsHelpOpen(false)}
+            borderRadius="full"
+          >
+            <X size={16} />
+          </IconButton>
+        </HStack>
+        <VStack align="stretch" gap={3}>
+          {introPreview ? <Text fontWeight="600">{introPreview}</Text> : null}
+          {introHtml ? (
+            <Box
+              css={{
+                "& h2": { marginTop: "1.5rem", fontWeight: "600", color: "fg.default" },
+                "& h3": { marginTop: "1rem", fontWeight: "600", color: "fg.default" },
+                "& ul": { paddingLeft: "1.25rem", marginTop: "0.75rem" },
+                "& li": { marginBottom: "0.5rem" },
+                "& p": { marginBottom: "0.75rem" },
+                "& strong": { color: "fg.default" },
+              }}
+              dangerouslySetInnerHTML={{ __html: introHtml }}
+            />
+          ) : (
+            <Text color="fg.muted">Chargement du guide d&apos;entretien...</Text>
+          )}
+        </VStack>
+      </Box>
+    </>
     </>
   );
 }
