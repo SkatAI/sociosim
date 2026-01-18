@@ -1,11 +1,11 @@
 "use client";
 
-import { Box, Button, Container, Heading, HStack, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
-import { FileText } from "lucide-react";
+import { Box, Container, Heading, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { AssistantSkeleton } from "@/components/AssistantSkeleton";
 import { ChatMessage } from "@/components/ChatMessage";
+import { InterviewSidebar } from "@/app/components/InterviewSidebar";
 import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
 import { generateUuid } from "@/lib/uuid";
@@ -59,9 +59,11 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   const [messagesContainerRef, setMessagesContainerRef] = useState<HTMLDivElement | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingGoogleDocs, setIsExportingGoogleDocs] = useState(false);
-  const showAssistantSkeleton =
-    isStreaming && messages.length > 0 && messages[messages.length - 1]?.role !== "assistant";
-
+  const [interviewStats, setInterviewStats] = useState({
+    answeredQuestions: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+  });
   useEffect(() => {
     if (isAuthLoading) return;
     if (!user?.id) {
@@ -80,6 +82,14 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
     });
   };
   const formatAgentName = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
+
+  const showAssistantSkeleton =
+    isStreaming && messages.length > 0 && messages[messages.length - 1]?.role !== "assistant";
+
+  const agentDisplayName = interviewSummary
+    ? formatAgentName(interviewSummary.agentName)
+    : undefined;
+  const dateDisplay = interviewSummary ? formatInterviewDate(interviewSummary.startedAt) : undefined;
 
   // Load interview summary from database based on interview ID
   useEffect(() => {
@@ -162,8 +172,15 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         }),
       }));
       setMessages(convertedMessages);
+      const userCount = sourceMessages.filter((msg) => msg.role === "user").length;
+      const assistantCount = sourceMessages.filter((msg) => msg.role === "assistant").length;
+      setInterviewStats((prev) => ({
+        ...prev,
+        answeredQuestions: Math.min(userCount, assistantCount),
+      }));
     } else {
       setMessages([]);
+      setInterviewStats((prev) => ({ ...prev, answeredQuestions: 0 }));
     }
   }, [isViewOnly, loadedMessages, viewOnlyMessages]);
 
@@ -283,6 +300,11 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
                   input: data.event.total_input_tokens,
                   output: data.event.total_output_tokens,
                 });
+                setInterviewStats((prev) => ({
+                  answeredQuestions: prev.answeredQuestions + 1,
+                  inputTokens: data.event.total_input_tokens ?? prev.inputTokens,
+                  outputTokens: data.event.total_output_tokens ?? prev.outputTokens,
+                }));
               }
             } catch {
               // JSON parse error, incomplete data
@@ -430,76 +452,18 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
       backgroundColor="bg.surface"
     >
       {/* Interview sidebar */}
-      <Box
-        width={{ base: "100%", lg: "280px" }}
-        borderBottom={{ base: "1px solid", lg: "none" }}
-        borderRight={{ base: "none", lg: "1px solid" }}
-        borderColor={{ base: "rgba(226, 232, 240, 0.6)", _dark: "rgba(31, 41, 55, 0.6)" }}
-        backgroundColor="bg.subtle"
-        padding={4}
-        position={{ base: "static", lg: "sticky" }}
-        top={0}
-        height={{ base: "auto", lg: "100vh" }}
-        alignSelf={{ base: "stretch", lg: "flex-start" }}
-        zIndex={5}
-      >
-        {summaryError || viewOnlyError ? (
-          <Heading as="h1" size="lg" color="red.600">
-            Erreur: {summaryError ?? viewOnlyError}
-          </Heading>
-        ) : (
-          <Stack gap={4}>
-            <Stack gap={1}>
-              <Heading as="h2" size="md">
-                {interviewSummary
-                  ? formatAgentName(interviewSummary.agentName)
-                  : "Chargement de l'entretien..."}
-              </Heading>
-              {interviewSummary ? (
-                <>
-                  <Text>par {interviewSummary.userName}</Text>
-                  <Text>le {formatInterviewDate(interviewSummary.startedAt)}</Text>
-                </>
-              ) : (
-                <>
-                  <Text>par ...</Text>
-                  <Text>le ...</Text>
-                </>
-              )}
-            </Stack>
-            <Box height="1px" backgroundColor={{ base: "rgba(226, 232, 240, 0.6)", _dark: "rgba(31, 41, 55, 0.6)" }} />
-            <Stack gap={2}>
-              <Heading as="h3" size="sm">
-                Export
-              </Heading>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleExportPdf}
-                loading={isExporting}
-                disabled={!interviewSummary || !user || !interviewId}
-                paddingInline={4}
-              >
-                PDF
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                colorPalette="blue"
-                onClick={handleExportGoogleDocs}
-                loading={isExportingGoogleDocs}
-                disabled={!interviewSummary || !user || !interviewId}
-                paddingInline={4}
-              >
-                <HStack gap={2}>
-                  <FileText size={16} />
-                  <Text as="span">Google Docs</Text>
-                </HStack>
-              </Button>
-            </Stack>
-          </Stack>
-        )}
-      </Box>
+      <InterviewSidebar
+        agentDisplayName={agentDisplayName}
+        userName={interviewSummary?.userName}
+        dateDisplay={dateDisplay}
+        error={summaryError ?? viewOnlyError}
+        stats={interviewStats}
+        onExportPdf={handleExportPdf}
+        onExportGoogleDocs={handleExportGoogleDocs}
+        isExportingPdf={isExporting}
+        isExportingGoogleDocs={isExportingGoogleDocs}
+        disableExport={!interviewSummary || !user || !interviewId}
+      />
 
       {/* Messages + Input */}
       <Box display="flex" flexDirection="column" flex={1} minHeight={0} backgroundColor="bg.surface">

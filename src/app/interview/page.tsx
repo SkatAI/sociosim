@@ -6,7 +6,6 @@ import {
   Container,
   Dialog,
   Heading,
-  HStack,
   Portal,
   Spinner,
   Stack,
@@ -18,6 +17,7 @@ import { Suspense, useEffect, useState } from "react";
 import { marked } from "marked";
 import { AssistantSkeleton } from "@/components/AssistantSkeleton";
 import { ChatMessage } from "@/components/ChatMessage";
+import { InterviewSidebar } from "@/app/components/InterviewSidebar";
 import { MessageInput } from "@/components/MessageInput";
 import { useInterviewSession } from "@/hooks/useInterviewSession";
 import { generateUuid } from "@/lib/uuid";
@@ -134,8 +134,19 @@ function InterviewPageInner() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [messagesContainerRef, setMessagesContainerRef] = useState<HTMLDivElement | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingGoogleDocs, setIsExportingGoogleDocs] = useState(false);
+  const [interviewStats, setInterviewStats] = useState({
+    answeredQuestions: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+  });
   const showAssistantSkeleton =
     isStreaming && messages.length > 0 && messages[messages.length - 1]?.role !== "assistant";
+
+  const agentDisplayName = interviewSummary
+    ? formatAgentName(interviewSummary.agentName)
+    : undefined;
+  const dateDisplay = interviewSummary ? formatInterviewDate(interviewSummary.startedAt) : undefined;
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -296,6 +307,11 @@ function InterviewPageInner() {
                   input: data.event.total_input_tokens,
                   output: data.event.total_output_tokens,
                 });
+                setInterviewStats((prev) => ({
+                  answeredQuestions: prev.answeredQuestions + 1,
+                  inputTokens: data.event.total_input_tokens ?? prev.inputTokens,
+                  outputTokens: data.event.total_output_tokens ?? prev.outputTokens,
+                }));
               }
             } catch {
               // JSON parse error, incomplete data
@@ -353,6 +369,50 @@ function InterviewPageInner() {
     }
   };
 
+  const handleExportGoogleDocs = async () => {
+    if (!session?.interviewId || !interviewSummary || !user) return;
+    setIsExportingGoogleDocs(true);
+    setSummaryError(null);
+    try {
+      const response = await fetch("/api/interviews/export-google-docs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interviewId: session.interviewId }),
+      });
+
+      if (response.status === 401) {
+        const payload = await response.json().catch(() => null);
+        if (payload?.requiresAuth) {
+          window.location.href = `/api/auth/google/authorize?interviewId=${encodeURIComponent(
+            session.interviewId
+          )}`;
+          return;
+        }
+      }
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        const message = payload?.error ?? "Impossible d'exporter vers Google Docs.";
+        throw new Error(message);
+      }
+
+      const payload = (await response.json().catch(() => null)) as
+        | { documentUrl?: string }
+        | null;
+      if (!payload?.documentUrl) {
+        throw new Error("Lien du document Google Docs manquant.");
+      }
+
+      window.open(payload.documentUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("[Interview] Google Docs export error:", message);
+      setSummaryError("Impossible d'exporter vers Google Docs.");
+    } finally {
+      setIsExportingGoogleDocs(false);
+    }
+  };
+
   // Show loading state while checking auth
   if (isAuthLoading) {
     return (
@@ -393,97 +453,77 @@ function InterviewPageInner() {
 
   // Main interview interface
   return (
-    <Box flex={1} minHeight={0} display="flex" flexDirection="column" backgroundColor="bg.surface">
-      {/* Interview header */}
-      <Box
-        padding={4}
-        borderBottom="1px solid"
-        borderBottomColor="border.muted"
-        backgroundColor="bg.surface"
-        zIndex={10}
-        position="sticky"
-        top={0}
-      >
-        {summaryError ? (
-          <Heading as="h1" size="lg" color="red.600">
-            Erreur: {summaryError}
-          </Heading>
-        ) : (
-          <Stack
-            direction={{ base: "column", sm: "row" }}
-            align={{ base: "flex-start", sm: "center" }}
-            gap={{ base: 2, sm: 4 }}
-            justify="space-between"
-          >
-            <Heading as="h1" size="lg">
-              {interviewSummary
-                ? `Entretien avec ${formatAgentName(interviewSummary.agentName)} par ${interviewSummary.userName} le ${formatInterviewDate(interviewSummary.startedAt)}`
-                : "Chargement de l'entretien..."}
-            </Heading>
-            <HStack gap={3}>
+    <Box
+      flex={1}
+      minHeight="100vh"
+      display="flex"
+      flexDirection={{ base: "column", lg: "row" }}
+      backgroundColor="bg.surface"
+    >
+      {/* Interview sidebar */}
+      <InterviewSidebar
+        agentDisplayName={agentDisplayName}
+        userName={interviewSummary?.userName}
+        dateDisplay={dateDisplay}
+        error={summaryError}
+        stats={interviewStats}
+        onExportPdf={handleExportPdf}
+        onExportGoogleDocs={handleExportGoogleDocs}
+        isExportingPdf={isExporting}
+        isExportingGoogleDocs={isExportingGoogleDocs}
+        disableExport={!interviewSummary || !user || !session?.interviewId}
+        helpSlot={(
+          <Dialog.Root>
+            <Dialog.Trigger asChild>
               <Button
+                variant="plain"
                 size="sm"
-                variant="outline"
-                onClick={handleExportPdf}
-                loading={isExporting}
-                disabled={!interviewSummary || !user || !session?.interviewId}
-                paddingInline={4}
+                colorPalette="blue"
+                textDecoration="underline"
               >
-                Exporter
+                Aide pour l&apos;entretien
               </Button>
-              <Dialog.Root>
-                <Dialog.Trigger asChild>
-                  <Button
-                    variant="plain"
-                    size="sm"
-                    colorPalette="blue"
-                    textDecoration="underline"
-                  >
-                    Aide pour l&apos;entretien
-                  </Button>
-                </Dialog.Trigger>
-                <Portal>
-                  <Dialog.Backdrop />
-                  <Dialog.Positioner>
-                    <Dialog.Content padding={8}>
-                      <Dialog.Header>
-                        <Dialog.Title>Guide d&apos;entretien</Dialog.Title>
-                      </Dialog.Header>
-                      <Dialog.Body>
-                        <VStack align="stretch" gap={3}>
-                          {introPreview ? (
-                            <Text fontWeight="600">{introPreview}</Text>
-                          ) : null}
-                          {introHtml ? (
-                            <Box
-                              css={{
-                                "& h2": { marginTop: "1.5rem", fontWeight: "600", color: "fg.default" },
-                                "& h3": { marginTop: "1rem", fontWeight: "600", color: "fg.default" },
-                                "& ul": { paddingLeft: "1.25rem", marginTop: "0.75rem" },
-                                "& li": { marginBottom: "0.5rem" },
-                                "& p": { marginBottom: "0.75rem" },
-                                "& strong": { color: "fg.default" },
-                              }}
-                              dangerouslySetInnerHTML={{ __html: introHtml }}
-                            />
-                          ) : (
-                            <Text color="fg.muted">Chargement du guide d&apos;entretien...</Text>
-                          )}
-                        </VStack>
-                      </Dialog.Body>
-                      <Dialog.Footer>
-                        <Dialog.ActionTrigger asChild>
-                          <Button variant="outline">Fermer</Button>
-                        </Dialog.ActionTrigger>
-                      </Dialog.Footer>
-                    </Dialog.Content>
-                  </Dialog.Positioner>
-                </Portal>
-              </Dialog.Root>
-            </HStack>
-          </Stack>
+            </Dialog.Trigger>
+            <Portal>
+              <Dialog.Backdrop />
+              <Dialog.Positioner>
+                <Dialog.Content padding={8}>
+                  <Dialog.Header>
+                    <Dialog.Title>Guide d&apos;entretien</Dialog.Title>
+                  </Dialog.Header>
+                  <Dialog.Body>
+                    <VStack align="stretch" gap={3}>
+                      {introPreview ? (
+                        <Text fontWeight="600">{introPreview}</Text>
+                      ) : null}
+                      {introHtml ? (
+                        <Box
+                          css={{
+                            "& h2": { marginTop: "1.5rem", fontWeight: "600", color: "fg.default" },
+                            "& h3": { marginTop: "1rem", fontWeight: "600", color: "fg.default" },
+                            "& ul": { paddingLeft: "1.25rem", marginTop: "0.75rem" },
+                            "& li": { marginBottom: "0.5rem" },
+                            "& p": { marginBottom: "0.75rem" },
+                            "& strong": { color: "fg.default" },
+                          }}
+                          dangerouslySetInnerHTML={{ __html: introHtml }}
+                        />
+                      ) : (
+                        <Text color="fg.muted">Chargement du guide d&apos;entretien...</Text>
+                      )}
+                    </VStack>
+                  </Dialog.Body>
+                  <Dialog.Footer>
+                    <Dialog.ActionTrigger asChild>
+                      <Button variant="outline">Fermer</Button>
+                    </Dialog.ActionTrigger>
+                  </Dialog.Footer>
+                </Dialog.Content>
+              </Dialog.Positioner>
+            </Portal>
+          </Dialog.Root>
         )}
-      </Box>
+      />
 
       {/* Messages + Input */}
       <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
