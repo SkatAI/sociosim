@@ -107,6 +107,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
               agent?: { agent_name?: string };
               user?: { id?: string | null; name?: string };
               interview?: { started_at?: string };
+              usage?: { total_input_tokens?: number; total_output_tokens?: number };
             }
           | null;
         if (!payload?.agent?.agent_name || !payload?.user?.name || !payload?.interview?.started_at) {
@@ -118,6 +119,11 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
           startedAt: payload.interview.started_at,
           starterUserId: payload.user?.id ?? null,
         });
+        setInterviewStats((prev) => ({
+          ...prev,
+          inputTokens: payload.usage?.total_input_tokens ?? prev.inputTokens,
+          outputTokens: payload.usage?.total_output_tokens ?? prev.outputTokens,
+        }));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("[Interview] Failed to load summary:", errorMessage);
@@ -295,16 +301,22 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
                   }
                 });
               } else if (data.type === "done") {
+                console.log("[Interview SSE] done event:", data);
                 // Stream finished, token info available but not displayed yet
                 console.log("[Interview] Stream finished, tokens:", {
                   input: data.event.total_input_tokens,
-                  output: data.event.total_output_tokens,
+                  output: data.event.total_output_tokens ?? data.event.total_ouput_tokens,
                 });
+                const totalInputTokens = data.event.total_input_tokens;
+                const totalOutputTokens =
+                  data.event.total_output_tokens ?? data.event.total_ouput_tokens;
                 setInterviewStats((prev) => ({
                   answeredQuestions: prev.answeredQuestions + 1,
-                  inputTokens: data.event.total_input_tokens ?? prev.inputTokens,
-                  outputTokens: data.event.total_output_tokens ?? prev.outputTokens,
+                  inputTokens: totalInputTokens ?? prev.inputTokens,
+                  outputTokens: totalOutputTokens ?? prev.outputTokens,
                 }));
+              } else {
+                console.log("[Interview SSE] event:", data);
               }
             } catch {
               // JSON parse error, incomplete data
@@ -446,10 +458,11 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   return (
     <Box
       flex={1}
-      minHeight="100vh"
+      height="100vh"
       display="flex"
       flexDirection={{ base: "column", lg: "row" }}
       backgroundColor="bg.surface"
+      overflow="hidden"
     >
       {/* Interview sidebar */}
       <InterviewSidebar
@@ -466,7 +479,14 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
       />
 
       {/* Messages + Input */}
-      <Box display="flex" flexDirection="column" flex={1} minHeight={0} backgroundColor="bg.surface">
+      <Box
+        display="flex"
+        flexDirection="column"
+        flex={1}
+        minHeight={0}
+        backgroundColor="bg.surface"
+        overflow="hidden"
+      >
         <Box
           ref={setMessagesContainerRef}
           flex={1}

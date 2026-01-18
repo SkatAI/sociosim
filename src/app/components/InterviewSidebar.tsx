@@ -1,8 +1,9 @@
 "use client";
 
-import { Box, Button, Heading, HStack, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Dialog, Heading, HStack, Portal, Stack, Text, VStack } from "@chakra-ui/react";
 import { FileDown, FileText } from "lucide-react";
-import type { ReactNode } from "react";
+import { marked } from "marked";
+import { useEffect, useState } from "react";
 
 type InterviewStats = {
   answeredQuestions: number;
@@ -21,7 +22,6 @@ type InterviewSidebarProps = {
   isExportingPdf?: boolean;
   isExportingGoogleDocs?: boolean;
   disableExport?: boolean;
-  helpSlot?: ReactNode;
 };
 
 export function InterviewSidebar({
@@ -35,8 +35,53 @@ export function InterviewSidebar({
   isExportingPdf = false,
   isExportingGoogleDocs = false,
   disableExport = false,
-  helpSlot,
 }: InterviewSidebarProps) {
+  const [introHtml, setIntroHtml] = useState<string>("");
+  const [introPreview, setIntroPreview] = useState<string>("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadIntro() {
+      try {
+        const response = await fetch("/docs/guide_entretien_court.md");
+        if (!response.ok) {
+          throw new Error("Failed to load interview guide");
+        }
+        const markdown = await response.text();
+        if (isMounted) {
+          const lines = markdown.split(/\r?\n/);
+          const firstLineIndex = lines.findIndex((line) => line.trim().length > 0);
+          const previewLine = firstLineIndex >= 0 ? lines[firstLineIndex].trim() : "";
+          const remainingLines =
+            firstLineIndex >= 0 ? lines.slice(firstLineIndex + 1) : [];
+          if (remainingLines[0]?.trim() === "") {
+            remainingLines.shift();
+          }
+          const remainingMarkdown = remainingLines.join("\n");
+          const parsed = remainingMarkdown.trim()
+            ? await marked.parse(remainingMarkdown)
+            : "";
+          setIntroPreview(previewLine);
+          setIntroHtml(parsed);
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error("[Interview] Failed to load guide:", errorMessage);
+        if (isMounted) {
+          setIntroPreview("");
+          setIntroHtml("");
+        }
+      }
+    }
+
+    loadIntro();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <Box
       width={{ base: "100%", lg: "280px" }}
@@ -63,20 +108,25 @@ export function InterviewSidebar({
             </Heading>
             {agentDisplayName && userName && dateDisplay ? (
               <>
-                <Text>par {userName}</Text>
-                <Text>le {dateDisplay}</Text>
+                <Text fontSize="sm">par {userName}</Text>
+                <Text fontSize="sm">le {dateDisplay}</Text>
               </>
             ) : (
               <>
-                <Text>par ...</Text>
-                <Text>le ...</Text>
+                <Text fontSize="sm">par ...</Text>
+                <Text fontSize="sm">le ...</Text>
               </>
             )}
           </Stack>
+          <Box
+            height="1px"
+            backgroundColor={{ base: "rgba(226, 232, 240, 0.6)", _dark: "rgba(31, 41, 55, 0.6)" }}
+          />
           <Stack gap={1}>
-            <Text fontWeight="medium">Informations</Text>
-            <Text>Questions utilisateur : {stats.answeredQuestions}</Text>
-            <Text>
+            <Text fontSize="sm">
+              {stats.answeredQuestions} responses
+            </Text>
+            <Text fontSize="sm">
               Tokens : {stats.inputTokens} → {stats.outputTokens}
             </Text>
           </Stack>
@@ -117,7 +167,55 @@ export function InterviewSidebar({
                 </HStack>
               </Button>
             ) : null}
-            {helpSlot}
+            <Dialog.Root>
+              <Dialog.Trigger asChild>
+                <Button
+                  variant="plain"
+                  size="sm"
+                  colorPalette="blue"
+                  textDecoration="underline"
+                >
+                  Aide pour l&apos;entretien
+                </Button>
+              </Dialog.Trigger>
+              <Portal>
+                <Dialog.Backdrop />
+                <Dialog.Positioner>
+                  <Dialog.Content padding={8}>
+                    <Dialog.Header>
+                      <Dialog.Title>Guide d&apos;entretien</Dialog.Title>
+                    </Dialog.Header>
+                    <Dialog.Body>
+                      <VStack align="stretch" gap={3}>
+                        {introPreview ? (
+                          <Text fontWeight="600">{introPreview}</Text>
+                        ) : null}
+                        {introHtml ? (
+                          <Box
+                            css={{
+                              "& h2": { marginTop: "1.5rem", fontWeight: "600", color: "fg.default" },
+                              "& h3": { marginTop: "1rem", fontWeight: "600", color: "fg.default" },
+                              "& ul": { paddingLeft: "1.25rem", marginTop: "0.75rem" },
+                              "& li": { marginBottom: "0.5rem" },
+                              "& p": { marginBottom: "0.75rem" },
+                              "& strong": { color: "fg.default" },
+                            }}
+                            dangerouslySetInnerHTML={{ __html: introHtml }}
+                          />
+                        ) : (
+                          <Text color="fg.muted">Chargement du guide d&apos;entretien...</Text>
+                        )}
+                      </VStack>
+                    </Dialog.Body>
+                    <Dialog.Footer>
+                      <Dialog.ActionTrigger asChild>
+                        <Button variant="outline">Fermer</Button>
+                      </Dialog.ActionTrigger>
+                    </Dialog.Footer>
+                  </Dialog.Content>
+                </Dialog.Positioner>
+              </Portal>
+            </Dialog.Root>
           </Stack>
         </Stack>
       )}

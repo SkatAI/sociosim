@@ -2,11 +2,8 @@
 
 import {
   Box,
-  Button,
   Container,
-  Dialog,
   Heading,
-  Portal,
   Spinner,
   Stack,
   Text,
@@ -14,7 +11,6 @@ import {
 } from "@chakra-ui/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { marked } from "marked";
 import { AssistantSkeleton } from "@/components/AssistantSkeleton";
 import { ChatMessage } from "@/components/ChatMessage";
 import { InterviewSidebar } from "@/app/components/InterviewSidebar";
@@ -35,9 +31,6 @@ function InterviewPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading: isAuthLoading } = useAuthUser();
-
-  const [introHtml, setIntroHtml] = useState<string>("");
-  const [introPreview, setIntroPreview] = useState<string>("");
 
   // Extract session info from URL (passed from dashboard for new interviews)
   const interviewIdParam = searchParams.get("interviewId");
@@ -109,6 +102,7 @@ function InterviewPageInner() {
               agent?: { agent_name?: string };
               user?: { name?: string };
               interview?: { started_at?: string };
+              usage?: { total_input_tokens?: number; total_output_tokens?: number };
             }
           | null;
         if (!payload?.agent?.agent_name || !payload?.user?.name || !payload?.interview?.started_at) {
@@ -119,6 +113,11 @@ function InterviewPageInner() {
           userName: payload.user.name,
           startedAt: payload.interview.started_at,
         });
+        setInterviewStats((prev) => ({
+          ...prev,
+          inputTokens: payload.usage?.total_input_tokens ?? prev.inputTokens,
+          outputTokens: payload.usage?.total_output_tokens ?? prev.outputTokens,
+        }));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("[Interview] Failed to load summary:", errorMessage);
@@ -155,48 +154,6 @@ function InterviewPageInner() {
     }
   }, [isAuthLoading, user?.id, router]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadIntro() {
-      try {
-        const response = await fetch("/docs/guide_entretien_court.md");
-        if (!response.ok) {
-          throw new Error("Failed to load interview guide");
-        }
-        const markdown = await response.text();
-        if (isMounted) {
-          const lines = markdown.split(/\r?\n/);
-          const firstLineIndex = lines.findIndex((line) => line.trim().length > 0);
-          const previewLine = firstLineIndex >= 0 ? lines[firstLineIndex].trim() : "";
-          const remainingLines =
-            firstLineIndex >= 0 ? lines.slice(firstLineIndex + 1) : [];
-          if (remainingLines[0]?.trim() === "") {
-            remainingLines.shift();
-          }
-          const remainingMarkdown = remainingLines.join("\n");
-          const parsed = remainingMarkdown.trim()
-            ? await marked.parse(remainingMarkdown)
-            : "";
-          setIntroPreview(previewLine);
-          setIntroHtml(parsed);
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        console.error("[Interview] Failed to load guide:", errorMessage);
-        if (isMounted) {
-          setIntroPreview("");
-          setIntroHtml("");
-        }
-      }
-    }
-
-    loadIntro();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -302,16 +259,22 @@ function InterviewPageInner() {
                   }
                 });
               } else if (data.type === "done") {
+                console.log("[Interview SSE] done event:", data);
                 // Stream finished, token info available but not displayed yet
                 console.log("[Interview] Stream finished, tokens:", {
                   input: data.event.total_input_tokens,
-                  output: data.event.total_output_tokens,
+                  output: data.event.total_output_tokens ?? data.event.total_ouput_tokens,
                 });
+                const totalInputTokens = data.event.total_input_tokens;
+                const totalOutputTokens =
+                  data.event.total_output_tokens ?? data.event.total_ouput_tokens;
                 setInterviewStats((prev) => ({
                   answeredQuestions: prev.answeredQuestions + 1,
-                  inputTokens: data.event.total_input_tokens ?? prev.inputTokens,
-                  outputTokens: data.event.total_output_tokens ?? prev.outputTokens,
+                  inputTokens: totalInputTokens ?? prev.inputTokens,
+                  outputTokens: totalOutputTokens ?? prev.outputTokens,
                 }));
+              } else {
+                console.log("[Interview SSE] event:", data);
               }
             } catch {
               // JSON parse error, incomplete data
@@ -455,10 +418,11 @@ function InterviewPageInner() {
   return (
     <Box
       flex={1}
-      minHeight="100vh"
+      height="100vh"
       display="flex"
       flexDirection={{ base: "column", lg: "row" }}
       backgroundColor="bg.surface"
+      overflow="hidden"
     >
       {/* Interview sidebar */}
       <InterviewSidebar
@@ -472,61 +436,10 @@ function InterviewPageInner() {
         isExportingPdf={isExporting}
         isExportingGoogleDocs={isExportingGoogleDocs}
         disableExport={!interviewSummary || !user || !session?.interviewId}
-        helpSlot={(
-          <Dialog.Root>
-            <Dialog.Trigger asChild>
-              <Button
-                variant="plain"
-                size="sm"
-                colorPalette="blue"
-                textDecoration="underline"
-              >
-                Aide pour l&apos;entretien
-              </Button>
-            </Dialog.Trigger>
-            <Portal>
-              <Dialog.Backdrop />
-              <Dialog.Positioner>
-                <Dialog.Content padding={8}>
-                  <Dialog.Header>
-                    <Dialog.Title>Guide d&apos;entretien</Dialog.Title>
-                  </Dialog.Header>
-                  <Dialog.Body>
-                    <VStack align="stretch" gap={3}>
-                      {introPreview ? (
-                        <Text fontWeight="600">{introPreview}</Text>
-                      ) : null}
-                      {introHtml ? (
-                        <Box
-                          css={{
-                            "& h2": { marginTop: "1.5rem", fontWeight: "600", color: "fg.default" },
-                            "& h3": { marginTop: "1rem", fontWeight: "600", color: "fg.default" },
-                            "& ul": { paddingLeft: "1.25rem", marginTop: "0.75rem" },
-                            "& li": { marginBottom: "0.5rem" },
-                            "& p": { marginBottom: "0.75rem" },
-                            "& strong": { color: "fg.default" },
-                          }}
-                          dangerouslySetInnerHTML={{ __html: introHtml }}
-                        />
-                      ) : (
-                        <Text color="fg.muted">Chargement du guide d&apos;entretien...</Text>
-                      )}
-                    </VStack>
-                  </Dialog.Body>
-                  <Dialog.Footer>
-                    <Dialog.ActionTrigger asChild>
-                      <Button variant="outline">Fermer</Button>
-                    </Dialog.ActionTrigger>
-                  </Dialog.Footer>
-                </Dialog.Content>
-              </Dialog.Positioner>
-            </Portal>
-          </Dialog.Root>
-        )}
       />
 
       {/* Messages + Input */}
-      <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
+      <Box display="flex" flexDirection="column" flex={1} minHeight={0} overflow="hidden">
         <Box
           ref={setMessagesContainerRef}
           flex={1}

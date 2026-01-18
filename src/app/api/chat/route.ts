@@ -206,6 +206,18 @@ function handleStreamingResponse(
 
         console.log(`[/api/chat] Finished streaming ${eventCount} events`);
 
+        if (tokenUsage) {
+          const doneEvent = `data: ${JSON.stringify({
+            type: "done",
+            event: {
+              total_input_tokens: tokenUsage.input,
+              total_output_tokens: tokenUsage.output,
+            },
+            interviewId,
+          })}\n\n`;
+          controller.enqueue(encoder.encode(doneEvent));
+        }
+
         // Store messages in database after streaming completes
         console.log("[/api/chat] Checking database storage...", { interviewId, hasTokenUsage: !!tokenUsage });
 

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const supabase = createServiceSupabaseClient();
     const { data: interview, error: interviewError } = await supabase
       .from("interviews")
-      .select("id, started_at, created_at, agent_id, agents(agent_name)")
+      .select("id, started_at, created_at, agent_id, agents(agent_name), interview_usage(total_input_tokens, total_output_tokens)")
       .eq("id", interviewId)
       .single();
 
@@ -57,6 +57,11 @@ export async function GET(request: NextRequest) {
     const userEmail = linkedUser?.email ?? "";
     const fallbackUserName = userName || (userEmail ? userEmail.split("@")[0] : "Utilisateur");
     const startedAt = interview.started_at ?? interview.created_at;
+    const usageEntry = Array.isArray(interview.interview_usage)
+      ? interview.interview_usage[0]
+      : null;
+    const totalInputTokens = usageEntry?.total_input_tokens ?? 0;
+    const totalOutputTokens = usageEntry?.total_output_tokens ?? 0;
 
     return NextResponse.json(
       {
@@ -69,6 +74,10 @@ export async function GET(request: NextRequest) {
         },
         interview: {
           started_at: startedAt,
+        },
+        usage: {
+          total_input_tokens: totalInputTokens,
+          total_output_tokens: totalOutputTokens,
         },
       },
       { status: 200 }
