@@ -6,6 +6,7 @@ import {
   Heading,
   HStack,
   IconButton,
+  Link,
   Stack,
   Text,
   VStack,
@@ -374,22 +375,21 @@ export function InterviewSidebar({
               ) : (
                 <Stack gap={1}>
                   {historyItems.map((item) => (
-                    <Button
+                    <Link
                       key={item.id}
                       as={NextLink}
                       href={`/interview/${item.id}`}
-                      variant="ghost"
-                      size="sm"
-                      justifyContent="flex-start"
-                      whiteSpace="normal"
-                      height="auto"
+                      display="block"
                       paddingInline={2}
                       paddingY={1}
+                      borderRadius="md"
+                      backgroundColor="transparent"
+                      _hover={{ textDecoration: "none", backgroundColor: "bg.surface" }}
                     >
                       <Text fontSize="sm">
                         {item.agentName} - {item.date}
                       </Text>
-                    </Button>
+                    </Link>
                   ))}
                 </Stack>
               )}
