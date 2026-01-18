@@ -13,7 +13,16 @@ import {
   Tooltip,
   VStack,
 } from "@chakra-ui/react";
-import { ChevronsLeft, FileDown, FileText, Menu, X, ArrowRight, CirclePlus } from "lucide-react";
+import {
+  ChevronsLeft,
+  FileDown,
+  FileText,
+  Menu,
+  X,
+  ArrowRight,
+  CirclePlus,
+  BookOpenText,
+} from "lucide-react";
 import { marked } from "marked";
 import { useEffect, useState } from "react";
 import { useBreakpointValue } from "@chakra-ui/react";
@@ -325,26 +334,44 @@ export function InterviewSidebar({
           <Stack gap={2}>
             <HStack justify="space-between" align="center">
               <HStack gap={1}>
-              <Tooltip.Root openDelay={150}>
-                <Tooltip.Trigger asChild>
-                  <IconButton
-                    aria-label="Commencer un nouvel entretien"
-                    size="sm"
-                    variant="outline"
-                    rounded="full"
-                    onClick={handleNewInterview}
-                    loading={isCreatingSession}
-                    disabled={isCreatingSession}
-                  >
-                    {isCreatingSession ? "Création..." : <CirclePlus size={18} />}
-                  </IconButton>
-                </Tooltip.Trigger>
-                <Tooltip.Positioner>
-                  <Tooltip.Content px={3} py={2}>
-                    Commencer un nouvel entretien
-                  </Tooltip.Content>
-                </Tooltip.Positioner>
-              </Tooltip.Root>
+                <Tooltip.Root openDelay={150}>
+                  <Tooltip.Trigger asChild>
+                    <IconButton
+                      aria-label="Commencer un nouvel entretien"
+                      size="sm"
+                      variant="outline"
+                      rounded="full"
+                      onClick={handleNewInterview}
+                      loading={isCreatingSession}
+                      disabled={isCreatingSession}
+                    >
+                      {isCreatingSession ? "Création..." : <CirclePlus size={18} />}
+                    </IconButton>
+                  </Tooltip.Trigger>
+                  <Tooltip.Positioner>
+                    <Tooltip.Content px={3} py={2}>
+                      Commencer un nouvel entretien
+                    </Tooltip.Content>
+                  </Tooltip.Positioner>
+                </Tooltip.Root>
+                <Tooltip.Root openDelay={150}>
+                  <Tooltip.Trigger asChild>
+                    <IconButton
+                      aria-label="Aide pour l'entretien"
+                      size="sm"
+                      variant="outline"
+                      rounded="full"
+                      onClick={() => setIsHelpOpen(true)}
+                    >
+                      <BookOpenText size={18} />
+                    </IconButton>
+                  </Tooltip.Trigger>
+                  <Tooltip.Positioner>
+                    <Tooltip.Content px={3} py={2}>
+                      Aide pour l&apos;entretien
+                    </Tooltip.Content>
+                  </Tooltip.Positioner>
+                </Tooltip.Root>
                 <ButtonGroup size="sm" variant="outline" marginLeft={2}>
                   <Tooltip.Root openDelay={150}>
                     <Tooltip.Trigger asChild>
@@ -429,64 +456,49 @@ export function InterviewSidebar({
             backgroundColor={{ base: "rgba(226, 232, 240, 0.6)", _dark: "rgba(31, 41, 55, 0.6)" }}
           />
           <Stack gap={2}>
-            <Button
-              variant="plain"
-              size="sm"
-              colorPalette="blue"
-              textDecoration="underline"
-              onClick={() => setIsHelpOpen(true)}
-            >
-              Aide pour l&apos;entretien
-            </Button>
-            <Box
-              height="1px"
-              backgroundColor={{ base: "rgba(226, 232, 240, 0.6)", _dark: "rgba(31, 41, 55, 0.6)" }}
-            />
-            <Stack gap={2}>
-              <HStack justify="space-between" align="center">
-                <Heading as="h3" size="sm">
-                  Historique
-                </Heading>
-                <IconButton
-                  aria-label="Voir plus"
-                  size="xs"
-                  variant="ghost"
-                  onClick={() => router.push(`/interviews${historyAgentId ? `?agent=${historyAgentId}` : ""}`)}
-                  borderRadius="full"
-                >
-                  <ArrowRight size={14} />
-                </IconButton>
-              </HStack>
-              {historyError ? (
-                <Text fontSize="sm" color="red.600">
-                  {historyError}
-                </Text>
-              ) : historyItems.length === 0 ? (
-                <Text fontSize="sm" color="fg.muted">
-                  Aucun entretien précédent.
-                </Text>
-              ) : (
-                <Stack gap={1}>
-                  {historyItems.map((item) => (
-                    <Link
-                      key={item.id}
-                      as={NextLink}
-                      href={`/interview/${item.id}`}
-                      display="block"
-                      paddingInline={2}
-                      paddingY={1}
-                      borderRadius="md"
-                      backgroundColor="transparent"
-                      _hover={{ textDecoration: "none", backgroundColor: "bg.surface" }}
-                    >
-                      <Text fontSize="sm">
-                        {item.agentName} - {item.date}
-                      </Text>
-                    </Link>
-                  ))}
-                </Stack>
-              )}
-            </Stack>
+            <HStack justify="space-between" align="center">
+              <Heading as="h3" size="sm">
+                Historique
+              </Heading>
+              <IconButton
+                aria-label="Voir plus"
+                size="xs"
+                variant="ghost"
+                onClick={() => router.push(`/interviews${historyAgentId ? `?agent=${historyAgentId}` : ""}`)}
+                borderRadius="full"
+              >
+                <ArrowRight size={14} />
+              </IconButton>
+            </HStack>
+            {historyError ? (
+              <Text fontSize="sm" color="red.600">
+                {historyError}
+              </Text>
+            ) : historyItems.length === 0 ? (
+              <Text fontSize="sm" color="fg.muted">
+                Aucun entretien précédent.
+              </Text>
+            ) : (
+              <Stack gap={1}>
+                {historyItems.map((item) => (
+                  <Link
+                    key={item.id}
+                    as={NextLink}
+                    href={`/interview/${item.id}`}
+                    display="block"
+                    paddingInline={2}
+                    paddingY={1}
+                    borderRadius="md"
+                    backgroundColor="transparent"
+                    _hover={{ textDecoration: "none", backgroundColor: "bg.surface" }}
+                  >
+                    <Text fontSize="sm">
+                      {item.agentName} - {item.date}
+                    </Text>
+                  </Link>
+                ))}
+              </Stack>
+            )}
           </Stack>
         </Stack>
       )}
