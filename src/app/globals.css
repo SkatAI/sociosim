@@ -67,6 +67,20 @@ body {
   height: 100dvh;
   overflow: hidden;
 }
+.interview-layout [data-scroll-container] {
+  scrollbar-width: none;
+}
+.interview-layout [data-scroll-container]::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.interview-layout [data-scroll-container][data-scrolling="true"] {
+  scrollbar-width: thin;
+}
+.interview-layout [data-scroll-container][data-scrolling="true"]::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
 
 a {
   color: inherit;

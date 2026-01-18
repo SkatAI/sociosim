@@ -161,6 +161,31 @@ function InterviewPageInner() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!messagesContainerRef) return;
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const handleScroll = () => {
+      messagesContainerRef.dataset.scrolling = "true";
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        delete messagesContainerRef.dataset.scrolling;
+      }, 1200);
+    };
+
+    messagesContainerRef.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      messagesContainerRef.removeEventListener("scroll", handleScroll);
+    };
+  }, [messagesContainerRef]);
+
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -452,6 +477,7 @@ function InterviewPageInner() {
           flex={1}
           minHeight={0}
           overflowY="auto"
+          data-scroll-container
           backgroundColor="bg.surface"
           paddingX={4}
           paddingY={4}

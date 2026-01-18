@@ -78,6 +78,31 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
     };
   }, []);
 
+  useEffect(() => {
+    if (!messagesContainerRef) return;
+
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const handleScroll = () => {
+      messagesContainerRef.dataset.scrolling = "true";
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        delete messagesContainerRef.dataset.scrolling;
+      }, 1200);
+    };
+
+    messagesContainerRef.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      messagesContainerRef.removeEventListener("scroll", handleScroll);
+    };
+  }, [messagesContainerRef]);
+
   const formatInterviewDate = (value?: string | null) => {
     if (!value) return "";
     const date = new Date(value);
@@ -499,6 +524,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
           flex={1}
           minHeight={0}
           overflowY="auto"
+          data-scroll-container
           paddingX={4}
           paddingY={4}
         >
