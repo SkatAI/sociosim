@@ -154,6 +154,13 @@ function InterviewPageInner() {
     }
   }, [isAuthLoading, user?.id, router]);
 
+  useEffect(() => {
+    document.body.classList.add("interview-layout");
+    return () => {
+      document.body.classList.remove("interview-layout");
+    };
+  }, []);
+
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -418,7 +425,7 @@ function InterviewPageInner() {
   return (
     <Box
       flex={1}
-      height="100vh"
+      height="100%"
       display="flex"
       flexDirection={{ base: "column", lg: "row" }}
       backgroundColor="bg.surface"
@@ -443,6 +450,7 @@ function InterviewPageInner() {
         <Box
           ref={setMessagesContainerRef}
           flex={1}
+          minHeight={0}
           overflowY="auto"
           backgroundColor="bg.surface"
           paddingX={4}

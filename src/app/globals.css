@@ -44,6 +44,29 @@ body {
   display: flex;
   flex-direction: column;
 }
+.interview-layout .app-shell {
+  padding-bottom: 0;
+}
+.app-root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.interview-layout .app-root {
+  height: 100dvh;
+  overflow: hidden;
+}
+.interview-layout .app-shell {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.interview-layout,
+.interview-layout body {
+  height: 100dvh;
+  overflow: hidden;
+}
 
 a {
   color: inherit;

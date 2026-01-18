@@ -92,7 +92,7 @@ export function InterviewSidebar({
       padding={4}
       position={{ base: "static", lg: "sticky" }}
       top={0}
-      height={{ base: "auto", lg: "100vh" }}
+      height={{ base: "auto", lg: "100%" }}
       alignSelf={{ base: "stretch", lg: "flex-start" }}
       zIndex={5}
     >

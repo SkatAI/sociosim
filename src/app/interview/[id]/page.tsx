@@ -71,6 +71,13 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
     }
   }, [isAuthLoading, user?.id, router]);
 
+  useEffect(() => {
+    document.body.classList.add("interview-layout");
+    return () => {
+      document.body.classList.remove("interview-layout");
+    };
+  }, []);
+
   const formatInterviewDate = (value?: string | null) => {
     if (!value) return "";
     const date = new Date(value);
@@ -458,7 +465,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   return (
     <Box
       flex={1}
-      height="100vh"
+      height="100%"
       display="flex"
       flexDirection={{ base: "column", lg: "row" }}
       backgroundColor="bg.surface"
@@ -490,6 +497,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         <Box
           ref={setMessagesContainerRef}
           flex={1}
+          minHeight={0}
           overflowY="auto"
           paddingX={4}
           paddingY={4}

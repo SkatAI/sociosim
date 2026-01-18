@@ -29,9 +29,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
-          <Header />
-          <main className="app-shell">{children}</main>
-          <Footer />
+          <div className="app-root">
+            <Header />
+            <main className="app-shell">{children}</main>
+            <Footer />
+          </div>
         </Providers>
       </body>
     </html>
