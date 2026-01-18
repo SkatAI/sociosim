@@ -422,29 +422,56 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
 
   // Main interview interface
   return (
-    <Box flex={1} minHeight={0} display="flex" flexDirection="column" backgroundColor="bg.surface">
-      {/* Interview header */}
+    <Box
+      flex={1}
+      minHeight="100vh"
+      display="flex"
+      flexDirection={{ base: "column", lg: "row" }}
+      backgroundColor="bg.surface"
+    >
+      {/* Interview sidebar */}
       <Box
+        width={{ base: "100%", lg: "280px" }}
+        borderBottom={{ base: "1px solid", lg: "none" }}
+        borderRight={{ base: "none", lg: "1px solid" }}
+        borderColor={{ base: "rgba(226, 232, 240, 0.6)", _dark: "rgba(31, 41, 55, 0.6)" }}
+        backgroundColor="bg.subtle"
         padding={4}
-        borderBottom="1px solid"
-        borderBottomColor="border.muted"
-        backgroundColor="bg.surface"
-        zIndex={10}
-        position="sticky"
+        position={{ base: "static", lg: "sticky" }}
         top={0}
+        height={{ base: "auto", lg: "100vh" }}
+        alignSelf={{ base: "stretch", lg: "flex-start" }}
+        zIndex={5}
       >
         {summaryError || viewOnlyError ? (
           <Heading as="h1" size="lg" color="red.600">
             Erreur: {summaryError ?? viewOnlyError}
           </Heading>
         ) : (
-          <HStack justify="space-between" align="center">
-            <Heading as="h1" size="lg">
-              {interviewSummary
-                ? `Entretien avec ${formatAgentName(interviewSummary.agentName)} par ${interviewSummary.userName} le ${formatInterviewDate(interviewSummary.startedAt)}`
-                : "Chargement de l'entretien..."}
-            </Heading>
-            <HStack gap={2}>
+          <Stack gap={4}>
+            <Stack gap={1}>
+              <Heading as="h2" size="md">
+                {interviewSummary
+                  ? formatAgentName(interviewSummary.agentName)
+                  : "Chargement de l'entretien..."}
+              </Heading>
+              {interviewSummary ? (
+                <>
+                  <Text>par {interviewSummary.userName}</Text>
+                  <Text>le {formatInterviewDate(interviewSummary.startedAt)}</Text>
+                </>
+              ) : (
+                <>
+                  <Text>par ...</Text>
+                  <Text>le ...</Text>
+                </>
+              )}
+            </Stack>
+            <Box height="1px" backgroundColor={{ base: "rgba(226, 232, 240, 0.6)", _dark: "rgba(31, 41, 55, 0.6)" }} />
+            <Stack gap={2}>
+              <Heading as="h3" size="sm">
+                Export
+              </Heading>
               <Button
                 size="sm"
                 variant="outline"
@@ -453,7 +480,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
                 disabled={!interviewSummary || !user || !interviewId}
                 paddingInline={4}
               >
-                Exporter PDF
+                PDF
               </Button>
               <Button
                 size="sm"
@@ -466,11 +493,11 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
               >
                 <HStack gap={2}>
                   <FileText size={16} />
-                  <Text as="span">Exporter vers Google Docs</Text>
+                  <Text as="span">Google Docs</Text>
                 </HStack>
               </Button>
-            </HStack>
-          </HStack>
+            </Stack>
+          </Stack>
         )}
       </Box>
 

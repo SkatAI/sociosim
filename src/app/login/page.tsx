@@ -116,7 +116,7 @@ function LoginPageInner() {
         <Stack gap={2} textAlign="center" maxW="lg" width="full">
           <Heading size="lg">Se connecter</Heading>
           <Text color="fg.muted">
-            Accédez à votre espace Sociosim pour continuer vos simulations.
+            Accédez à votre espace Mimesis pour continuer vos simulations.
           </Text>
         </Stack>
 

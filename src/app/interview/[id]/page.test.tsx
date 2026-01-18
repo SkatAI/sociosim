@@ -171,7 +171,8 @@ describe("ResumeInterviewPage - Admin view-only access", () => {
       expect(screen.queryByText("Chargement...")).not.toBeInTheDocument();
     });
 
-    expect(await screen.findByRole("heading", { name: /Entretien avec/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Oriane/i })).toBeInTheDocument();
+    expect(await screen.findByText("par User B")).toBeInTheDocument();
     expect(await screen.findByText("Bonjour, je suis Oriane.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Envoyer" })).not.toBeInTheDocument();
   });
