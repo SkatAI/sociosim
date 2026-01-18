@@ -123,7 +123,7 @@ describe("PersonnasPage", () => {
     });
 
     await user.click(screen.getByRole("button", { name: /Historique/i }));
-    expect(mockRouter.push).toHaveBeenCalledWith("/interviews?agent=oriane");
+    expect(mockRouter.push).toHaveBeenCalledWith("/interviews?agent=agent-oriane");
   });
 
   it("creates a new interview when Nouvel entretien is clicked", async () => {

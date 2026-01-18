@@ -49,7 +49,7 @@ describe("Header", () => {
 
     renderWithChakra(<Header />);
 
-    expect(screen.getByText("Interviews")).toBeInTheDocument();
+    expect(screen.getByText("Entretiens")).toBeInTheDocument();
     expect(screen.queryByText("Mes entretiens")).not.toBeInTheDocument();
   });
 

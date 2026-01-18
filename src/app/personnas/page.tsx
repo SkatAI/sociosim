@@ -21,6 +21,7 @@ import { type Agent } from "@/lib/agents";
 import { toaster } from "@/components/ui/toaster";
 
 interface InterviewWithDetails {
+  agent_id?: string;
   agents?: {
     agent_name?: string;
   };
@@ -80,14 +81,13 @@ export default function PersonnasPage() {
           const response = interviewsResult.value;
           if (response.ok) {
             const data = await response.json();
-            const agentNames = new Set<string>();
+            const agentIds = new Set<string>();
             (data.interviews || [])
               .filter((interview: InterviewWithDetails) => interview.messages?.length)
               .forEach((interview: InterviewWithDetails) => {
-                const name = interview.agents?.agent_name;
-                if (name) agentNames.add(name);
+                if (interview.agent_id) agentIds.add(interview.agent_id);
               });
-            setInteractedAgents(Array.from(agentNames));
+            setInteractedAgents(Array.from(agentIds));
           } else {
             console.error("Error fetching interviews for history:", response.statusText);
           }
@@ -306,11 +306,9 @@ export default function PersonnasPage() {
                             )}
                           </VStack>
                         )}
-                        {agent.active && interactedAgents.includes(agent.agent_name) && (
+                        {agent.active && interactedAgents.includes(agent.id) && (
                           <Button
-                            onClick={() =>
-                              router.push(`/interviews?agent=${encodeURIComponent(agent.agent_name)}`)
-                            }
+                            onClick={() => router.push(`/interviews?agent=${encodeURIComponent(agent.id)}`)}
                             variant="subtle"
                             size="xs"
                             paddingInline={2}
@@ -391,11 +389,9 @@ export default function PersonnasPage() {
                             )}
                           </VStack>
                         )}
-                        {agent.active && interactedAgents.includes(agent.agent_name) && (
+                        {agent.active && interactedAgents.includes(agent.id) && (
                           <Button
-                            onClick={() =>
-                              router.push(`/interviews?agent=${encodeURIComponent(agent.agent_name)}`)
-                            }
+                            onClick={() => router.push(`/interviews?agent=${encodeURIComponent(agent.id)}`)}
                             variant="subtle"
                             size="xs"
                             paddingInline={2}
