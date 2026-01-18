@@ -144,7 +144,7 @@ export default function Header() {
                 color="fg.muted"
                 _hover={{ color: "accent.primary" }}
               >
-                {role === "admin" ? "Interviews" : "Mes entretiens"}
+                {role === "admin" ? "Entretiens" : "Mes entretiens"}
               </Link>
               {user_admin && (
                 <Link
