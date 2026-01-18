@@ -15,6 +15,7 @@ import {
 import { ChevronsLeft, FileDown, FileText, Menu } from "lucide-react";
 import { marked } from "marked";
 import { useEffect, useState } from "react";
+import { useBreakpointValue } from "@chakra-ui/react";
 
 type InterviewStats = {
   answeredQuestions: number;
@@ -50,6 +51,15 @@ export function InterviewSidebar({
   const [introHtml, setIntroHtml] = useState<string>("");
   const [introPreview, setIntroPreview] = useState<string>("");
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const isCompact = useBreakpointValue({ base: true, lg: false }) ?? false;
+
+  useEffect(() => {
+    if (isCompact) {
+      setIsCollapsed(true);
+    } else {
+      setIsCollapsed(false);
+    }
+  }, [isCompact]);
 
   useEffect(() => {
     let isMounted = true;
@@ -95,21 +105,67 @@ export function InterviewSidebar({
   }, []);
 
   return (
-    <Box
-      width={{ base: isCollapsed ? "56px" : "100%", lg: isCollapsed ? "56px" : "280px" }}
-      minWidth={{ base: isCollapsed ? "56px" : "100%", lg: isCollapsed ? "56px" : "280px" }}
+    <>
+      {isCompact && isCollapsed ? (
+        <IconButton
+          aria-label="Ouvrir le panneau"
+          size="sm"
+          variant="ghost"
+          onClick={() => setIsCollapsed(false)}
+          position="fixed"
+          top="5rem"
+          left={4}
+          borderRadius="full"
+          zIndex={30}
+          backgroundColor="bg.subtle"
+        >
+          <Menu size={16} />
+        </IconButton>
+      ) : null}
+      {isCompact && !isCollapsed ? (
+        <Box
+          position="fixed"
+          inset={0}
+          backgroundColor="rgba(15, 23, 42, 0.12)"
+          zIndex={20}
+          onClick={() => setIsCollapsed(true)}
+        />
+      ) : null}
+      <Box
+        width={
+          isCompact
+            ? "min(85vw, 320px)"
+            : isCollapsed
+              ? "56px"
+              : "280px"
+        }
+        minWidth={
+          isCompact
+            ? "min(85vw, 320px)"
+            : isCollapsed
+              ? "56px"
+              : "280px"
+        }
       borderBottom={{ base: "1px solid", lg: "none" }}
       borderRight={{ base: "none", lg: "1px solid" }}
       borderRightColor={{ base: "transparent", lg: "rgba(15, 23, 42, 0.08)" }}
       backgroundColor="bg.subtle"
-      padding={isCollapsed ? 2 : 4}
-      position={{ base: "static", lg: "sticky" }}
+      padding={isCompact ? 4 : isCollapsed ? 2 : 4}
+      position={isCompact ? "fixed" : "sticky"}
       top={0}
-      height={{ base: "auto", lg: "100%" }}
+      left={isCompact ? 0 : "auto"}
+      height={isCompact ? "100dvh" : "100%"}
       alignSelf={{ base: "stretch", lg: "flex-start" }}
-      zIndex={5}
+      zIndex={25}
       overflow="hidden"
-      transition="width 0.2s ease, padding 0.2s ease"
+      transition={isCompact ? "transform 0.2s ease" : "width 0.2s ease, padding 0.2s ease"}
+      transform={
+        isCompact
+          ? isCollapsed
+            ? "translateX(-100%)"
+            : "translateX(0)"
+          : "translateX(0)"
+      }
     >
       <IconButton
         aria-label={isCollapsed ? "Ouvrir le panneau" : "Réduire le panneau"}
@@ -252,5 +308,6 @@ export function InterviewSidebar({
         </Stack>
       )}
     </Box>
+    </>
   );
 }
