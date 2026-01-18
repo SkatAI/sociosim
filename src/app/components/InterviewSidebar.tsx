@@ -10,10 +10,12 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import { ChevronsLeft, FileDown, FileText, Menu, X } from "lucide-react";
+import { ChevronsLeft, FileDown, FileText, Menu, X, ArrowRight } from "lucide-react";
 import { marked } from "marked";
 import { useEffect, useState } from "react";
 import { useBreakpointValue } from "@chakra-ui/react";
+import { useRouter } from "next/navigation";
+import NextLink from "next/link";
 
 type InterviewStats = {
   answeredQuestions: number;
@@ -27,6 +29,8 @@ type InterviewSidebarProps = {
   dateDisplay?: string;
   error?: string | null;
   stats: InterviewStats;
+  historyUserId?: string | null;
+  currentInterviewId?: string | null;
   onExportPdf: () => void;
   onExportGoogleDocs?: () => void;
   isExportingPdf?: boolean;
@@ -40,6 +44,8 @@ export function InterviewSidebar({
   dateDisplay,
   error,
   stats,
+  historyUserId,
+  currentInterviewId,
   onExportPdf,
   onExportGoogleDocs,
   isExportingPdf = false,
@@ -50,7 +56,13 @@ export function InterviewSidebar({
   const [introPreview, setIntroPreview] = useState<string>("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [historyItems, setHistoryItems] = useState<
+    Array<{ id: string; agentName: string; date: string; agentId?: string | null }>
+  >([]);
+  const [historyAgentId, setHistoryAgentId] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const isCompact = useBreakpointValue({ base: true, lg: false }) ?? false;
+  const router = useRouter();
 
   useEffect(() => {
     if (isCompact) {
@@ -59,6 +71,75 @@ export function InterviewSidebar({
       setIsCollapsed(false);
     }
   }, [isCompact]);
+
+  useEffect(() => {
+    if (!historyUserId) return;
+    let isMounted = true;
+
+    const loadHistory = async () => {
+      try {
+        setHistoryError(null);
+        const response = await fetch(`/api/user/interviews?userId=${historyUserId}`, {
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          const message = payload?.error ?? "Impossible de charger l'historique.";
+          throw new Error(message);
+        }
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              interviews?: Array<{
+                id: string;
+                agent_id?: string;
+                updated_at?: string;
+                started_at?: string;
+                agents?: { agent_name?: string };
+              }>;
+            }
+          | null;
+        const interviews = payload?.interviews ?? [];
+        const formatted = interviews
+          .filter((item) => item.id && item.id !== currentInterviewId)
+          .sort((a, b) => {
+            const dateA = new Date(a.updated_at ?? a.started_at ?? 0).getTime();
+            const dateB = new Date(b.updated_at ?? b.started_at ?? 0).getTime();
+            return dateB - dateA;
+          })
+          .slice(0, 6)
+          .map((item) => {
+            const rawName = item.agents?.agent_name ?? "Agent";
+            const agentName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+            const dateValue = item.updated_at ?? item.started_at ?? "";
+            const dateLabel = dateValue
+              ? new Date(dateValue).toLocaleDateString("fr-FR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "2-digit",
+                })
+              : "";
+            return { id: item.id, agentName, date: dateLabel, agentId: item.agent_id ?? null };
+          });
+        if (isMounted) {
+          setHistoryItems(formatted);
+          const agentId = formatted[0]?.agentId ?? null;
+          setHistoryAgentId(agentId);
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error("[Interview] Failed to load history:", message);
+        if (isMounted) {
+          setHistoryError(message);
+        }
+      }
+    };
+
+    loadHistory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [historyUserId, currentInterviewId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -263,6 +344,56 @@ export function InterviewSidebar({
             >
               Aide pour l&apos;entretien
             </Button>
+            <Box
+              height="1px"
+              backgroundColor={{ base: "rgba(226, 232, 240, 0.6)", _dark: "rgba(31, 41, 55, 0.6)" }}
+            />
+            <Stack gap={2}>
+              <HStack justify="space-between" align="center">
+                <Heading as="h3" size="sm">
+                  Historique
+                </Heading>
+                <IconButton
+                  aria-label="Voir plus"
+                  size="xs"
+                  variant="ghost"
+                  onClick={() => router.push(`/interviews${historyAgentId ? `?agent=${historyAgentId}` : ""}`)}
+                  borderRadius="full"
+                >
+                  <ArrowRight size={14} />
+                </IconButton>
+              </HStack>
+              {historyError ? (
+                <Text fontSize="sm" color="red.600">
+                  {historyError}
+                </Text>
+              ) : historyItems.length === 0 ? (
+                <Text fontSize="sm" color="fg.muted">
+                  Aucun entretien précédent.
+                </Text>
+              ) : (
+                <Stack gap={1}>
+                  {historyItems.map((item) => (
+                    <Button
+                      key={item.id}
+                      as={NextLink}
+                      href={`/interview/${item.id}`}
+                      variant="ghost"
+                      size="sm"
+                      justifyContent="flex-start"
+                      whiteSpace="normal"
+                      height="auto"
+                      paddingInline={2}
+                      paddingY={1}
+                    >
+                      <Text fontSize="sm">
+                        {item.agentName} - {item.date}
+                      </Text>
+                    </Button>
+                  ))}
+                </Stack>
+              )}
+            </Stack>
           </Stack>
         </Stack>
       )}

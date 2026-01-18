@@ -503,6 +503,8 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         dateDisplay={dateDisplay}
         error={summaryError ?? viewOnlyError}
         stats={interviewStats}
+        historyUserId={interviewSummary?.starterUserId ?? user?.id ?? null}
+        currentInterviewId={interviewId}
         onExportPdf={handleExportPdf}
         onExportGoogleDocs={handleExportGoogleDocs}
         isExportingPdf={isExporting}

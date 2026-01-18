@@ -463,6 +463,8 @@ function InterviewPageInner() {
         dateDisplay={dateDisplay}
         error={summaryError}
         stats={interviewStats}
+        historyUserId={user?.id}
+        currentInterviewId={session?.interviewId ?? null}
         onExportPdf={handleExportPdf}
         onExportGoogleDocs={handleExportGoogleDocs}
         isExportingPdf={isExporting}
