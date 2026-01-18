@@ -2,11 +2,12 @@
 
 import { Box, Container, HStack, Image, Link, Stack, Text } from "@chakra-ui/react";
 import NextLink from "next/link";
+import { MAX_CONTENT_WIDTH, CONTAINER_PADDING } from "@/constants/layout";
 
 export default function Footer() {
   return (
     <Box as="footer" borderTopWidth="1px" borderTopColor="border.muted" mt={10}>
-      <Container maxW="6xl" px={{ base: 4, md: 6 }} py={6}>
+      <Container maxW={MAX_CONTENT_WIDTH} px={CONTAINER_PADDING} py={6}>
         <Stack
           direction={{ base: "column", md: "row" }}
           align={{ base: "flex-start", md: "center" }}
