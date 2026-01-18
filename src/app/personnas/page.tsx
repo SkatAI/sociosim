@@ -22,6 +22,7 @@ import { toaster } from "@/components/ui/toaster";
 
 interface InterviewWithDetails {
   agent_id?: string;
+  message_count?: number;
   agents?: {
     agent_name?: string;
   };
@@ -83,7 +84,9 @@ export default function PersonnasPage() {
             const data = await response.json();
             const agentIds = new Set<string>();
             (data.interviews || []).forEach((interview: InterviewWithDetails) => {
-              if (interview.agent_id) agentIds.add(interview.agent_id);
+              if (interview.message_count && interview.message_count > 0 && interview.agent_id) {
+                agentIds.add(interview.agent_id);
+              }
             });
             setInteractedAgents(Array.from(agentIds));
           } else {

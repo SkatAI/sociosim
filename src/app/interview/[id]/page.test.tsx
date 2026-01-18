@@ -133,14 +133,26 @@ describe("ResumeInterviewPage - Admin view-only access", () => {
     } as ReturnType<typeof useAuthUser>);
 
     global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (typeof input === "string" && input.startsWith("/docs/guide_entretien_court.md")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => "Guide court",
+        });
+      }
       if (typeof input === "string" && input.startsWith("/api/interviews/summary")) {
         return Promise.resolve({
           ok: true,
           json: async () => ({
-            agent: { agent_name: "oriane" },
+            agent: { agent_id: "agent-oriane", agent_name: "oriane", description: "Master 1 EOS" },
             user: { id: "owner-1", name: "User B" },
             interview: { started_at: "2025-12-29T10:00:00Z" },
           }),
+        });
+      }
+      if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ interviews: [] }),
         });
       }
       if (typeof input === "string" && input.startsWith("/api/interviews/interview-123/messages")) {
@@ -188,14 +200,26 @@ describe("ResumeInterviewPage - Admin view-only access", () => {
     } as ReturnType<typeof useAuthUser>);
 
     global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (typeof input === "string" && input.startsWith("/docs/guide_entretien_court.md")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => "Guide court",
+        });
+      }
       if (typeof input === "string" && input.startsWith("/api/interviews/summary")) {
         return Promise.resolve({
           ok: true,
           json: async () => ({
-            agent: { agent_name: "oriane" },
+            agent: { agent_id: "agent-oriane", agent_name: "oriane", description: "Master 1 EOS" },
             user: { id: "admin-1", name: "Admin User" },
             interview: { started_at: "2025-12-29T10:00:00Z" },
           }),
+        });
+      }
+      if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ interviews: [] }),
         });
       }
       return Promise.resolve({

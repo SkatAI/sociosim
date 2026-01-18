@@ -38,6 +38,8 @@ All notable changes to this project will be documented in this file.
 - **Users:** Allow authenticated reads of user profiles for prompt history labels.
 - **Personnas:** Filter the list to `active` agents and track prompt availability on each card.
 - **Personnas:** Switch filtering to `is_template=false` for listing agents.
+- **Interview Sidebar:** Refresh the header layout with icon-only actions and agent details in the sidebar.
+- **Interview History:** Use agent IDs for history filters and links across personnas and interviews.
 ### Fixed
 - **Chakra Buttons:** Replace invalid `variant="link"` usage with Chakra v3-compatible variants.
 - **Next Config:** Move `outputFileTracingIncludes` to the top-level Next.js config.
@@ -45,6 +47,8 @@ All notable changes to this project will be documented in this file.
 - **Auth Concurrency:** Centralize client auth calls behind a serialized auth service to avoid Supabase auth deadlocks.
 - **Client DB Calls:** Move personna edits/creation and interview agent lookups to API routes to avoid auth-client hangs.
 - **Registration Guard:** Block banned users from re-registering via email aliases.
+- **Interview History:** Stabilize history visibility by using server-computed message counts and chunked queries to avoid URI length errors.
+- **Interview Summary:** Include agent descriptions in interview summaries for sidebar context.
 
 ### Changed
 - **Agents Data Source:** Load agent_name and description from `public.agents` instead of static in-code definitions.

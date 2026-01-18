@@ -3,6 +3,7 @@ export const mockInterview = {
   agent_id: "agent-oriane",
   status: "in_progress",
   updated_at: "2025-12-29T10:30:00Z",
+  message_count: 2,
   agents: {
     agent_name: "oriane",
   },

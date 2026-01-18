@@ -22,10 +22,19 @@ function createMarkdownResponse(markdown = "Guide court") {
   };
 }
 
-function createAgentResponse() {
+function createSummaryResponse() {
   return {
     ok: true,
-    json: async () => ({ agent: { agent_name: "oriane", description: null } }),
+    json: async () => ({
+      agent: {
+        agent_id: "agent-oriane",
+        agent_name: "oriane",
+        description: "Master 1 EOS",
+      },
+      user: { id: "test-user-123", name: "Test User" },
+      interview: { started_at: "2025-12-29T10:00:00Z" },
+      usage: { total_input_tokens: 10, total_output_tokens: 20 },
+    }),
   };
 }
 
@@ -34,8 +43,8 @@ function createBaseFetch() {
     if (typeof input === "string" && input.startsWith("/docs/guide_entretien_court.md")) {
       return Promise.resolve(createMarkdownResponse());
     }
-    if (typeof input === "string" && input.startsWith("/api/interviews/agent")) {
-      return Promise.resolve(createAgentResponse());
+    if (typeof input === "string" && input.startsWith("/api/interviews/summary")) {
+      return Promise.resolve(createSummaryResponse());
     }
     return Promise.reject(new Error("Unexpected fetch"));
   });
@@ -169,7 +178,7 @@ describe("InterviewPage - Agent Loading", () => {
 
     // Agent name should be displayed in header (loaded asynchronously)
     // The mock doesn't return agent data, so it will show "Chargement de l'agent..."
-    const header = screen.getByRole("heading", { level: 1 });
+    const header = screen.getByRole("heading", { level: 2 });
     expect(header).toBeInTheDocument();
   });
 

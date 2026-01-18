@@ -230,6 +230,7 @@ export async function getUserInterviewsWithMessages(userId: string) {
       interview_usage: interview.interview_usage,
       agents: interview.agents,
       messages: msgs,
+      message_count: msgs.length,
     };
   });
 
@@ -322,6 +323,7 @@ export async function getAllInterviewsWithMessages() {
       interview_usage: interview.interview_usage,
       agents: interview.agents,
       messages: msgs,
+      message_count: msgs.length,
       starter_user_id: starterByInterview.get(interview.id)?.id ?? null,
       starter_user_name: starterByInterview.get(interview.id)?.name ?? null,
     };
