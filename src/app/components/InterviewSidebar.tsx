@@ -3,6 +3,7 @@
 import {
   Box,
   Button,
+  ButtonGroup,
   Heading,
   HStack,
   IconButton,
@@ -323,18 +324,19 @@ export function InterviewSidebar({
         >
           <Stack gap={2}>
             <HStack justify="space-between" align="center">
+              <HStack gap={1}>
               <Tooltip.Root openDelay={150}>
                 <Tooltip.Trigger asChild>
                   <IconButton
                     aria-label="Commencer un nouvel entretien"
                     size="sm"
-                    variant="subtle"
+                    variant="outline"
                     rounded="full"
                     onClick={handleNewInterview}
                     loading={isCreatingSession}
                     disabled={isCreatingSession}
                   >
-                    {isCreatingSession ? "Création..." : <CirclePlus size={20} />}
+                    {isCreatingSession ? "Création..." : <CirclePlus size={18} />}
                   </IconButton>
                 </Tooltip.Trigger>
                 <Tooltip.Positioner>
@@ -343,6 +345,47 @@ export function InterviewSidebar({
                   </Tooltip.Content>
                 </Tooltip.Positioner>
               </Tooltip.Root>
+                <ButtonGroup size="sm" variant="outline" marginLeft={2}>
+                  <Tooltip.Root openDelay={150}>
+                    <Tooltip.Trigger asChild>
+                      <IconButton
+                        aria-label="Exporter en PDF"
+                        rounded="full"
+                        onClick={onExportPdf}
+                        loading={isExportingPdf}
+                        disabled={disableExport}
+                      >
+                        <FileDown size={18} />
+                      </IconButton>
+                    </Tooltip.Trigger>
+                    <Tooltip.Positioner>
+                      <Tooltip.Content px={3} py={2}>
+                        Exporter en PDF
+                      </Tooltip.Content>
+                    </Tooltip.Positioner>
+                  </Tooltip.Root>
+                  {onExportGoogleDocs ? (
+                    <Tooltip.Root openDelay={150}>
+                    <Tooltip.Trigger asChild>
+                      <IconButton
+                        aria-label="Exporter vers Google docs"
+                        rounded="full"
+                        onClick={onExportGoogleDocs}
+                        loading={isExportingGoogleDocs}
+                        disabled={disableExport}
+                      >
+                        <FileText size={18} />
+                      </IconButton>
+                      </Tooltip.Trigger>
+                      <Tooltip.Positioner>
+                        <Tooltip.Content px={3} py={2}>
+                          Exporter vers Google docs
+                        </Tooltip.Content>
+                      </Tooltip.Positioner>
+                    </Tooltip.Root>
+                  ) : null}
+                </ButtonGroup>
+              </HStack>
               <IconButton
                 aria-label="Réduire le panneau"
                 size="sm"
@@ -373,10 +416,6 @@ export function InterviewSidebar({
               </Text>
             ) : null}
           </Stack>
-          <Box
-            height="1px"
-            backgroundColor={{ base: "rgba(226, 232, 240, 0.6)", _dark: "rgba(31, 41, 55, 0.6)" }}
-          />
           <Stack gap={1}>
             <Text fontSize="sm">
               {stats.answeredQuestions} responses
@@ -390,38 +429,6 @@ export function InterviewSidebar({
             backgroundColor={{ base: "rgba(226, 232, 240, 0.6)", _dark: "rgba(31, 41, 55, 0.6)" }}
           />
           <Stack gap={2}>
-            <Heading as="h3" size="sm">
-              Export
-            </Heading>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onExportPdf}
-              loading={isExportingPdf}
-              disabled={disableExport}
-              paddingInline={4}
-            >
-              <HStack gap={2}>
-                <FileDown size={16} />
-                <Text as="span">PDF</Text>
-              </HStack>
-            </Button>
-            {onExportGoogleDocs ? (
-              <Button
-                size="sm"
-                variant="outline"
-                colorPalette="blue"
-                onClick={onExportGoogleDocs}
-                loading={isExportingGoogleDocs}
-                disabled={disableExport}
-                paddingInline={4}
-              >
-                <HStack gap={2}>
-                  <FileText size={16} />
-                  <Text as="span">Google Docs</Text>
-                </HStack>
-              </Button>
-            ) : null}
             <Button
               variant="plain"
               size="sm"
