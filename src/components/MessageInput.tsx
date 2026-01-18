@@ -59,8 +59,7 @@ export function MessageInput({
       <Box
         width="100%"
         padding={4}
-        borderTop="1px solid"
-        borderTopColor="border.muted"
+        borderTop="none"
         backgroundColor="bg.surface"
         flexShrink={0}
         display="flex"

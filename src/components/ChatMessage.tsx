@@ -40,7 +40,11 @@ export function ChatMessage({ role, text, userName, agentName, timestamp }: Chat
         </Avatar.Root>
       )}
 
-      <Box maxWidth="70%" wordBreak="break-word">
+      <Box
+        maxWidth={isUser ? "50%" : "70%"}
+        width="fit-content"
+        wordBreak="break-word"
+      >
         <Box
           padding={3}
           borderRadius="md"

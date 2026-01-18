@@ -1,7 +1,18 @@
 "use client";
 
-import { Box, Button, Dialog, Heading, HStack, Portal, Stack, Text, VStack } from "@chakra-ui/react";
-import { FileDown, FileText } from "lucide-react";
+import {
+  Box,
+  Button,
+  Dialog,
+  Heading,
+  HStack,
+  IconButton,
+  Portal,
+  Stack,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
+import { ChevronsLeft, FileDown, FileText, Menu } from "lucide-react";
 import { marked } from "marked";
 import { useEffect, useState } from "react";
 
@@ -38,6 +49,7 @@ export function InterviewSidebar({
 }: InterviewSidebarProps) {
   const [introHtml, setIntroHtml] = useState<string>("");
   const [introPreview, setIntroPreview] = useState<string>("");
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -84,24 +96,44 @@ export function InterviewSidebar({
 
   return (
     <Box
-      width={{ base: "100%", lg: "280px" }}
+      width={{ base: isCollapsed ? "56px" : "100%", lg: isCollapsed ? "56px" : "280px" }}
+      minWidth={{ base: isCollapsed ? "56px" : "100%", lg: isCollapsed ? "56px" : "280px" }}
       borderBottom={{ base: "1px solid", lg: "none" }}
       borderRight={{ base: "none", lg: "1px solid" }}
-      borderColor={{ base: "rgba(226, 232, 240, 0.6)", _dark: "rgba(31, 41, 55, 0.6)" }}
+      borderRightColor={{ base: "transparent", lg: "rgba(15, 23, 42, 0.08)" }}
       backgroundColor="bg.subtle"
-      padding={4}
+      padding={isCollapsed ? 2 : 4}
       position={{ base: "static", lg: "sticky" }}
       top={0}
       height={{ base: "auto", lg: "100%" }}
       alignSelf={{ base: "stretch", lg: "flex-start" }}
       zIndex={5}
+      overflow="hidden"
+      transition="width 0.2s ease, padding 0.2s ease"
     >
+      <IconButton
+        aria-label={isCollapsed ? "Ouvrir le panneau" : "Réduire le panneau"}
+        size="sm"
+        variant="ghost"
+        onClick={() => setIsCollapsed((prev) => !prev)}
+        position="absolute"
+        top={2}
+        right={2}
+        borderRadius="full"
+      >
+        {isCollapsed ? <Menu size={16} /> : <ChevronsLeft size={16} />}
+      </IconButton>
       {error ? (
         <Heading as="h1" size="lg" color="red.600">
           Erreur: {error}
         </Heading>
       ) : (
-        <Stack gap={4}>
+        <Stack
+          gap={4}
+          opacity={isCollapsed ? 0 : 1}
+          pointerEvents={isCollapsed ? "none" : "auto"}
+          transition="opacity 0.2s ease"
+        >
           <Stack gap={1}>
             <Heading as="h2" size="md">
               {agentDisplayName ?? "Chargement de l'entretien..."}
