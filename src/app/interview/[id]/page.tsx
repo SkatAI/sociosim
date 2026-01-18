@@ -520,50 +520,60 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         overflow="hidden"
       >
         <Box
-          ref={setMessagesContainerRef}
+          display="flex"
+          flexDirection="column"
           flex={1}
           minHeight={0}
-          overflowY="auto"
-          data-scroll-container
-          paddingX={4}
-          paddingY={4}
+          width="100%"
+          maxWidth={{ base: "100%", lg: "4xl" }}
+          marginX="auto"
         >
-          {messages.length === 0 ? (
-            <VStack align="center" justify="center" height="100%" gap={4}>
-              <Text color="fg.muted" fontSize="lg">
-                {!canCreateSession
-                  ? isViewOnlyLoading
-                    ? "Chargement des messages..."
-                    : "Aucun message pour cet entretien."
-                  : isResume
-                    ? "Continuer votre entretien"
-                    : "Bonjour! Cliquez ci-dessous pour commencer."}
-              </Text>
-            </VStack>
-          ) : (
-            <Stack gap={0}>
-              {messages.map((msg) => (
-                <ChatMessage
-                  key={msg.id}
-                  role={msg.role}
-                  text={msg.text}
-                  userName={interviewSummary?.userName}
-                  agentName={interviewSummary ? formatAgentName(interviewSummary.agentName) : undefined}
-                  timestamp={msg.timestamp}
-                />
-              ))}
-              {showAssistantSkeleton && <AssistantSkeleton />}
-            </Stack>
+          <Box
+            ref={setMessagesContainerRef}
+            flex={1}
+            minHeight={0}
+            overflowY="auto"
+            data-scroll-container
+            paddingX={4}
+            paddingY={4}
+          >
+            {messages.length === 0 ? (
+              <VStack align="center" justify="center" height="100%" gap={4}>
+                <Text color="fg.muted" fontSize="lg">
+                  {!canCreateSession
+                    ? isViewOnlyLoading
+                      ? "Chargement des messages..."
+                      : "Aucun message pour cet entretien."
+                    : isResume
+                      ? "Continuer votre entretien"
+                      : "Bonjour! Cliquez ci-dessous pour commencer."}
+                </Text>
+              </VStack>
+            ) : (
+              <Stack gap={0}>
+                {messages.map((msg) => (
+                  <ChatMessage
+                    key={msg.id}
+                    role={msg.role}
+                    text={msg.text}
+                    userName={interviewSummary?.userName}
+                    agentName={interviewSummary ? formatAgentName(interviewSummary.agentName) : undefined}
+                    timestamp={msg.timestamp}
+                  />
+                ))}
+                {showAssistantSkeleton && <AssistantSkeleton />}
+              </Stack>
+            )}
+          </Box>
+          {canCreateSession && (
+            <MessageInput
+              onSendMessage={handleSendMessage}
+              isLoading={isStreaming}
+              placeholder="Tapez votre message..."
+              containerProps={{ width: "100%" }}
+            />
           )}
         </Box>
-        {canCreateSession && (
-          <MessageInput
-            onSendMessage={handleSendMessage}
-            isLoading={isStreaming}
-            placeholder="Tapez votre message..."
-            containerProps={{ width: "100%" }}
-          />
-        )}
       </Box>
 
     </Box>

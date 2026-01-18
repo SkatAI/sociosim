@@ -473,44 +473,53 @@ function InterviewPageInner() {
       {/* Messages + Input */}
       <Box display="flex" flexDirection="column" flex={1} minHeight={0} overflow="hidden">
         <Box
-          ref={setMessagesContainerRef}
+          display="flex"
+          flexDirection="column"
           flex={1}
           minHeight={0}
-          overflowY="auto"
-          data-scroll-container
-          backgroundColor="bg.surface"
-          paddingX={4}
-          paddingY={4}
-          marginX="auto"
           width="100%"
+          maxWidth={{ base: "100%", lg: "4xl" }}
+          marginX="auto"
         >
-          {messages.length === 0 ? (
-            <VStack align="center" justify="center" height="100%" gap={4}>
-              <Text color="fg.muted">
-                Posez votre première question pour commencer l&apos;entretien.
-              </Text>
-            </VStack>
-          ) : (
-            <Stack gap={0}>
-              {messages.map((msg) => (
-                <ChatMessage
-                  key={msg.id}
-                  role={msg.role}
-                  text={msg.text}
-                  userName={interviewSummary?.userName}
-                  agentName={interviewSummary ? formatAgentName(interviewSummary.agentName) : undefined}
-                  timestamp={msg.timestamp}
-                />
-              ))}
-              {showAssistantSkeleton && <AssistantSkeleton />}
-            </Stack>
-          )}
+          <Box
+            ref={setMessagesContainerRef}
+            flex={1}
+            minHeight={0}
+            overflowY="auto"
+            data-scroll-container
+            backgroundColor="bg.surface"
+            paddingX={4}
+            paddingY={4}
+            width="100%"
+          >
+            {messages.length === 0 ? (
+              <VStack align="center" justify="center" height="100%" gap={4}>
+                <Text color="fg.muted">
+                  Posez votre première question pour commencer l&apos;entretien.
+                </Text>
+              </VStack>
+            ) : (
+              <Stack gap={0}>
+                {messages.map((msg) => (
+                  <ChatMessage
+                    key={msg.id}
+                    role={msg.role}
+                    text={msg.text}
+                    userName={interviewSummary?.userName}
+                    agentName={interviewSummary ? formatAgentName(interviewSummary.agentName) : undefined}
+                    timestamp={msg.timestamp}
+                  />
+                ))}
+                {showAssistantSkeleton && <AssistantSkeleton />}
+              </Stack>
+            )}
+          </Box>
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            isLoading={isStreaming}
+            placeholder="Tapez votre message..."
+          />
         </Box>
-        <MessageInput
-          onSendMessage={handleSendMessage}
-          isLoading={isStreaming}
-          placeholder="Tapez votre message..."
-        />
       </Box>
 
     </Box>
