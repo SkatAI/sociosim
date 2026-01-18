@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         agent: {
+          agent_id: interview.agent_id,
           agent_name: agent.agent_name,
         },
         user: {

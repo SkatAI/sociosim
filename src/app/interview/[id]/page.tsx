@@ -28,6 +28,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
   const { user, isLoading: isAuthLoading, user_admin } = useAuthUser();
 
   const [interviewSummary, setInterviewSummary] = useState<{
+    agentId: string | null;
     agentName: string;
     userName: string;
     startedAt: string;
@@ -136,7 +137,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
         }
         const payload = (await response.json().catch(() => null)) as
           | {
-              agent?: { agent_name?: string };
+              agent?: { agent_id?: string | null; agent_name?: string };
               user?: { id?: string | null; name?: string };
               interview?: { started_at?: string };
               usage?: { total_input_tokens?: number; total_output_tokens?: number };
@@ -146,6 +147,7 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
           throw new Error("Interview summary missing required fields");
         }
         setInterviewSummary({
+          agentId: payload.agent.agent_id ?? null,
           agentName: payload.agent.agent_name,
           userName: payload.user.name,
           startedAt: payload.interview.started_at,
@@ -499,6 +501,8 @@ export default function ResumeInterviewPage({ params }: { params: Promise<{ id: 
       {/* Interview sidebar */}
       <InterviewSidebar
         agentDisplayName={agentDisplayName}
+        agentId={interviewSummary?.agentId ?? null}
+        userId={user?.id ?? null}
         userName={interviewSummary?.userName}
         dateDisplay={dateDisplay}
         error={summaryError ?? viewOnlyError}

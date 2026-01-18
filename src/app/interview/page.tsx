@@ -39,6 +39,7 @@ function InterviewPageInner() {
   const hasSessionParams = !!(interviewIdParam && sessionIdParam && adkSessionIdParam);
 
   const [interviewSummary, setInterviewSummary] = useState<{
+    agentId: string | null;
     agentName: string;
     userName: string;
     startedAt: string;
@@ -99,7 +100,7 @@ function InterviewPageInner() {
         }
         const payload = (await response.json().catch(() => null)) as
           | {
-              agent?: { agent_name?: string };
+              agent?: { agent_id?: string | null; agent_name?: string };
               user?: { name?: string };
               interview?: { started_at?: string };
               usage?: { total_input_tokens?: number; total_output_tokens?: number };
@@ -109,6 +110,7 @@ function InterviewPageInner() {
           throw new Error("Interview summary missing required fields");
         }
         setInterviewSummary({
+          agentId: payload.agent.agent_id ?? null,
           agentName: payload.agent.agent_name,
           userName: payload.user.name,
           startedAt: payload.interview.started_at,
@@ -459,6 +461,8 @@ function InterviewPageInner() {
       {/* Interview sidebar */}
       <InterviewSidebar
         agentDisplayName={agentDisplayName}
+        agentId={interviewSummary?.agentId ?? null}
+        userId={user?.id ?? null}
         userName={interviewSummary?.userName}
         dateDisplay={dateDisplay}
         error={summaryError}

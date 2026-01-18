@@ -9,9 +9,10 @@ import {
   Link,
   Stack,
   Text,
+  Tooltip,
   VStack,
 } from "@chakra-ui/react";
-import { ChevronsLeft, FileDown, FileText, Menu, X, ArrowRight } from "lucide-react";
+import { ChevronsLeft, FileDown, FileText, Menu, X, ArrowRight, CirclePlus } from "lucide-react";
 import { marked } from "marked";
 import { useEffect, useState } from "react";
 import { useBreakpointValue } from "@chakra-ui/react";
@@ -26,6 +27,8 @@ type InterviewStats = {
 
 type InterviewSidebarProps = {
   agentDisplayName?: string;
+  agentId?: string | null;
+  userId?: string | null;
   userName?: string;
   dateDisplay?: string;
   error?: string | null;
@@ -41,6 +44,8 @@ type InterviewSidebarProps = {
 
 export function InterviewSidebar({
   agentDisplayName,
+  agentId,
+  userId,
   userName,
   dateDisplay,
   error,
@@ -62,6 +67,8 @@ export function InterviewSidebar({
   >([]);
   const [historyAgentId, setHistoryAgentId] = useState<string | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [newInterviewError, setNewInterviewError] = useState<string | null>(null);
   const isCompact = useBreakpointValue({ base: true, lg: false }) ?? false;
   const router = useRouter();
 
@@ -185,6 +192,47 @@ export function InterviewSidebar({
     };
   }, []);
 
+  const handleNewInterview = async () => {
+    if (!userId) {
+      setNewInterviewError("Impossible de démarrer un entretien sans utilisateur.");
+      return;
+    }
+    if (!agentId) {
+      setNewInterviewError("Impossible de démarrer un entretien sans agent.");
+      return;
+    }
+
+    try {
+      setIsCreatingSession(true);
+      setNewInterviewError(null);
+      const response = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          agent_id: agentId,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message = payload?.error ?? "Impossible de créer une nouvelle session";
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+      router.push(
+        `/interview?interviewId=${data.interviewId}&sessionId=${data.sessionId}&adkSessionId=${data.adkSessionId}`
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("[InterviewSidebar] Failed to start new interview:", message);
+      setNewInterviewError(message);
+    } finally {
+      setIsCreatingSession(false);
+    }
+  };
+
   return (
     <>
       {isCompact && isCollapsed ? (
@@ -248,18 +296,20 @@ export function InterviewSidebar({
           : "translateX(0)"
       }
     >
-      <IconButton
-        aria-label={isCollapsed ? "Ouvrir le panneau" : "Réduire le panneau"}
-        size="sm"
-        variant="ghost"
-        onClick={() => setIsCollapsed((prev) => !prev)}
-        position="absolute"
-        top={2}
-        right={2}
-        borderRadius="full"
-      >
-        {isCollapsed ? <Menu size={16} /> : <ChevronsLeft size={16} />}
-      </IconButton>
+      {!isCompact && isCollapsed ? (
+        <IconButton
+          aria-label="Ouvrir le panneau"
+          size="sm"
+          variant="ghost"
+          onClick={() => setIsCollapsed(false)}
+          position="absolute"
+          top={2}
+          right={2}
+          borderRadius="full"
+        >
+          <Menu size={16} />
+        </IconButton>
+      ) : null}
       {error ? (
         <Heading as="h1" size="lg" color="red.600">
           Erreur: {error}
@@ -271,7 +321,38 @@ export function InterviewSidebar({
           pointerEvents={isCollapsed ? "none" : "auto"}
           transition="opacity 0.2s ease"
         >
-          <Stack gap={1}>
+          <Stack gap={2}>
+            <HStack justify="space-between" align="center">
+              <Tooltip.Root openDelay={150}>
+                <Tooltip.Trigger asChild>
+                  <IconButton
+                    aria-label="Commencer un nouvel entretien"
+                    size="sm"
+                    variant="subtle"
+                    rounded="full"
+                    onClick={handleNewInterview}
+                    loading={isCreatingSession}
+                    disabled={isCreatingSession}
+                  >
+                    {isCreatingSession ? "Création..." : <CirclePlus size={20} />}
+                  </IconButton>
+                </Tooltip.Trigger>
+                <Tooltip.Positioner>
+                  <Tooltip.Content px={3} py={2}>
+                    Commencer un nouvel entretien
+                  </Tooltip.Content>
+                </Tooltip.Positioner>
+              </Tooltip.Root>
+              <IconButton
+                aria-label="Réduire le panneau"
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsCollapsed(true)}
+                borderRadius="full"
+              >
+                <ChevronsLeft size={16} />
+              </IconButton>
+            </HStack>
             <Heading as="h2" size="md">
               {agentDisplayName ?? "Chargement de l'entretien..."}
             </Heading>
@@ -286,6 +367,11 @@ export function InterviewSidebar({
                 <Text fontSize="sm">le ...</Text>
               </>
             )}
+            {newInterviewError ? (
+              <Text fontSize="sm" color="red.600">
+                {newInterviewError}
+              </Text>
+            ) : null}
           </Stack>
           <Box
             height="1px"
