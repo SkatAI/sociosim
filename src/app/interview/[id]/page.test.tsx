@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
@@ -9,6 +10,7 @@ import { useInterviewSession } from "@/hooks/useInterviewSession";
 import { mockUseAuthUser } from "@/test/mocks/useAuthUser";
 import { mockRouter } from "@/test/mocks/router";
 import { mockUseInterviewSession } from "@/test/mocks/useInterviewSession";
+import { createMockStreamingResponse } from "@/test/helpers/streaming";
 
 // Mock modules
 vi.mock("@/hooks/useAuthUser");
@@ -21,6 +23,24 @@ function renderWithChakra(component: React.ReactElement) {
       <Suspense fallback={<div>Chargement...</div>}>{component}</Suspense>
     </ChakraProvider>
   );
+}
+
+function createSummaryResponse(ownerId = "test-user-123") {
+  return {
+    ok: true,
+    json: async () => ({
+      agent: { agent_id: "agent-oriane", agent_name: "oriane", description: "Master 1 EOS" },
+      user: { id: ownerId, name: "Test User" },
+      interview: { started_at: "2025-12-29T10:00:00Z" },
+    }),
+  };
+}
+
+function createHistoryResponse() {
+  return {
+    ok: true,
+    json: async () => ({ interviews: [] }),
+  };
 }
 
 describe("ResumeInterviewPage - Load Previous Messages", () => {
@@ -239,5 +259,161 @@ describe("ResumeInterviewPage - Admin view-only access", () => {
     });
 
     expect(await screen.findByRole("button", { name: /Envoyer/i })).toBeInTheDocument();
+  });
+});
+
+describe("ResumeInterviewPage - Chat Interaction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser as ReturnType<typeof useAuthUser>);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
+    vi.mocked(useParams).mockReturnValue({ id: "interview-123" } as ReturnType<typeof useParams>);
+    vi.mocked(useInterviewSession).mockReturnValue(
+      mockUseInterviewSession as ReturnType<typeof useInterviewSession>
+    );
+
+    global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (typeof input === "string" && input.startsWith("/docs/guide_entretien_court.md")) {
+        return Promise.resolve({ ok: true, text: async () => "Guide court" });
+      }
+      if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
+        return Promise.resolve(createHistoryResponse());
+      }
+      if (typeof input === "string" && input.startsWith("/api/interviews/summary")) {
+        return Promise.resolve(createSummaryResponse("test-user-123"));
+      }
+      if (input === "/api/chat") {
+        return Promise.resolve(createMockStreamingResponse("Réponse"));
+      }
+      return Promise.reject(new Error("Unexpected fetch"));
+    });
+  });
+
+  it("sends a message and renders assistant response", async () => {
+    const user = userEvent.setup();
+    await act(async () => {
+      renderWithChakra(
+        <ResumeInterviewPage params={Promise.resolve({ id: "interview-123" })} />
+      );
+    });
+
+    await screen.findByRole("heading", { name: /Oriane/i });
+
+    const input = screen.getByPlaceholderText(/Tapez votre message/i);
+    const sendButton = screen.getByRole("button", { name: /Envoyer/i });
+
+    await user.type(input, "Test message");
+    await user.click(sendButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("Test message")).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByText("Réponse")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("ResumeInterviewPage - Summary Errors", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser as ReturnType<typeof useAuthUser>);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
+    vi.mocked(useParams).mockReturnValue({ id: "interview-123" } as ReturnType<typeof useParams>);
+    vi.mocked(useInterviewSession).mockReturnValue(
+      mockUseInterviewSession as ReturnType<typeof useInterviewSession>
+    );
+
+    global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (typeof input === "string" && input.startsWith("/docs/guide_entretien_court.md")) {
+        return Promise.resolve({ ok: true, text: async () => "Guide court" });
+      }
+      if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
+        return Promise.resolve(createHistoryResponse());
+      }
+      if (typeof input === "string" && input.startsWith("/api/interviews/summary")) {
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "Boom" }),
+          statusText: "Bad Request",
+        });
+      }
+      return Promise.reject(new Error("Unexpected fetch"));
+    });
+  });
+
+  it("shows summary error in sidebar when summary fetch fails", async () => {
+    await act(async () => {
+      renderWithChakra(
+        <ResumeInterviewPage params={Promise.resolve({ id: "interview-123" })} />
+      );
+    });
+
+    expect(
+      await screen.findByRole("heading", { name: /Erreur: Failed to load interview summary: Boom/i })
+    ).toBeInTheDocument();
+  });
+});
+
+describe("ResumeInterviewPage - Exports", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser as ReturnType<typeof useAuthUser>);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
+    vi.mocked(useParams).mockReturnValue({ id: "interview-123" } as ReturnType<typeof useParams>);
+    vi.mocked(useInterviewSession).mockReturnValue(
+      mockUseInterviewSession as ReturnType<typeof useInterviewSession>
+    );
+
+    global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (typeof input === "string" && input.startsWith("/docs/guide_entretien_court.md")) {
+        return Promise.resolve({ ok: true, text: async () => "Guide court" });
+      }
+      if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
+        return Promise.resolve(createHistoryResponse());
+      }
+      if (typeof input === "string" && input.startsWith("/api/interviews/summary")) {
+        return Promise.resolve(createSummaryResponse("test-user-123"));
+      }
+      if (typeof input === "string" && input.startsWith("/api/interviews/export?interviewId=")) {
+        return Promise.resolve({
+          ok: true,
+          blob: async () => new Blob(["pdf"]),
+        });
+      }
+      return Promise.reject(new Error("Unexpected fetch"));
+    });
+
+    if (!URL.createObjectURL) {
+      Object.defineProperty(URL, "createObjectURL", { value: vi.fn(), writable: true });
+    }
+    if (!URL.revokeObjectURL) {
+      Object.defineProperty(URL, "revokeObjectURL", { value: vi.fn(), writable: true });
+    }
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:pdf");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+  });
+
+  it("exports PDF using the interviewId", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    await act(async () => {
+      renderWithChakra(
+        <ResumeInterviewPage params={Promise.resolve({ id: "interview-123" })} />
+      );
+    });
+
+    await screen.findByRole("heading", { name: /Oriane/i });
+
+    await user.click(screen.getByRole("button", { name: "Exporter en PDF" }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/interviews/export?interviewId=interview-123"
+      );
+    });
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalled();
   });
 });

@@ -38,6 +38,13 @@ function createSummaryResponse() {
   };
 }
 
+function createHistoryResponse() {
+  return {
+    ok: true,
+    json: async () => ({ interviews: [] }),
+  };
+}
+
 function createBaseFetch() {
   return vi.fn().mockImplementation((input: RequestInfo) => {
     if (typeof input === "string" && input.startsWith("/docs/guide_entretien_court.md")) {
@@ -45,6 +52,9 @@ function createBaseFetch() {
     }
     if (typeof input === "string" && input.startsWith("/api/interviews/summary")) {
       return Promise.resolve(createSummaryResponse());
+    }
+    if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
+      return Promise.resolve(createHistoryResponse());
     }
     return Promise.reject(new Error("Unexpected fetch"));
   });
@@ -57,6 +67,33 @@ function createChatFetch(responseText: string) {
       return Promise.resolve(createMockStreamingResponse(responseText));
     }
     return baseFetch(input);
+  });
+}
+
+function createExportFetch() {
+  return vi.fn().mockImplementation((input: RequestInfo, init?: RequestInit) => {
+    if (typeof input === "string" && input.startsWith("/docs/guide_entretien_court.md")) {
+      return Promise.resolve(createMarkdownResponse());
+    }
+    if (typeof input === "string" && input.startsWith("/api/interviews/summary")) {
+      return Promise.resolve(createSummaryResponse());
+    }
+    if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
+      return Promise.resolve(createHistoryResponse());
+    }
+    if (typeof input === "string" && input.startsWith("/api/interviews/export?interviewId=")) {
+      return Promise.resolve({
+        ok: true,
+        blob: async () => new Blob(["pdf"]),
+      });
+    }
+    if (input === "/api/interviews/export-google-docs") {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ documentUrl: "https://docs.example.com/doc" }),
+      });
+    }
+    return Promise.reject(new Error(`Unexpected fetch: ${String(input)} ${init?.method ?? "GET"}`));
   });
 }
 
@@ -363,5 +400,121 @@ describe("InterviewPage - UI States", () => {
     await waitFor(() => {
       expect(screen.getByText("Message")).toBeInTheDocument();
     });
+  });
+});
+
+describe("InterviewPage - Summary Errors", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser as ReturnType<typeof useAuthUser>);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
+    vi.mocked(useSearchParams).mockReturnValue(
+      new URLSearchParams({
+        interviewId: "interview-123",
+        sessionId: "session-456",
+        adkSessionId: "adk-789",
+      }) as unknown as ReadonlyURLSearchParams
+    );
+    vi.mocked(useInterviewSession).mockReturnValue({
+      ...mockUseInterviewSession,
+      isResume: false,
+    } as ReturnType<typeof useInterviewSession>);
+
+    global.fetch = vi.fn().mockImplementation((input: RequestInfo) => {
+      if (typeof input === "string" && input.startsWith("/docs/guide_entretien_court.md")) {
+        return Promise.resolve(createMarkdownResponse());
+      }
+      if (typeof input === "string" && input.startsWith("/api/user/interviews")) {
+        return Promise.resolve(createHistoryResponse());
+      }
+      if (typeof input === "string" && input.startsWith("/api/interviews/summary")) {
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "Boom" }),
+          statusText: "Bad Request",
+        });
+      }
+      return Promise.reject(new Error("Unexpected fetch"));
+    });
+  });
+
+  it("shows summary error in sidebar when summary fetch fails", async () => {
+    await renderInterviewPage();
+
+    expect(
+      await screen.findByRole("heading", { name: /Erreur: Failed to load interview summary: Boom/i })
+    ).toBeInTheDocument();
+  });
+});
+
+describe("InterviewPage - Exports", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useAuthUser).mockReturnValue(mockUseAuthUser as ReturnType<typeof useAuthUser>);
+    vi.mocked(useRouter).mockReturnValue(mockRouter as ReturnType<typeof useRouter>);
+    vi.mocked(useSearchParams).mockReturnValue(
+      new URLSearchParams({
+        interviewId: "interview-123",
+        sessionId: "session-456",
+        adkSessionId: "adk-789",
+      }) as unknown as ReadonlyURLSearchParams
+    );
+    vi.mocked(useInterviewSession).mockReturnValue({
+      ...mockUseInterviewSession,
+      isResume: false,
+    } as ReturnType<typeof useInterviewSession>);
+
+    global.fetch = createExportFetch();
+    if (!URL.createObjectURL) {
+      Object.defineProperty(URL, "createObjectURL", { value: vi.fn(), writable: true });
+    }
+    if (!URL.revokeObjectURL) {
+      Object.defineProperty(URL, "revokeObjectURL", { value: vi.fn(), writable: true });
+    }
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:pdf");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    vi.spyOn(window, "open").mockImplementation(() => null);
+  });
+
+  it("exports PDF using the interviewId", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    await renderInterviewPage();
+
+    await screen.findByRole("heading", { name: /Oriane/i });
+    await user.click(screen.getByRole("button", { name: "Exporter en PDF" }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/interviews/export?interviewId=interview-123"
+      );
+    });
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalled();
+  });
+
+  it("exports Google Docs and opens the document URL", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    await renderInterviewPage();
+
+    await screen.findByRole("heading", { name: /Oriane/i });
+    await user.click(screen.getByRole("button", { name: "Exporter vers Google docs" }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/interviews/export-google-docs",
+        expect.objectContaining({
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ interviewId: "interview-123" }),
+        })
+      );
+    });
+    expect(window.open).toHaveBeenCalledWith(
+      "https://docs.example.com/doc",
+      "_blank",
+      "noopener,noreferrer"
+    );
   });
 });
