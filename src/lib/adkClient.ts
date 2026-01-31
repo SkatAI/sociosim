@@ -233,16 +233,15 @@ export class AdkClient {
     input: number;
     output: number;
   } | null {
-    // ADK returns total_input_tokens and total_output_tokens in final response
+    // ADK returns token usage via usageMetadata on events.
     for (const event of events) {
-      if (event && "total_input_tokens" in event && "total_output_tokens" in event) {
-        const finalResponse = event as AdkFinalResponse;
-        if (finalResponse.total_input_tokens && finalResponse.total_output_tokens) {
-          return {
-            input: finalResponse.total_input_tokens,
-            output: finalResponse.total_output_tokens,
-          };
-        }
+      const eventTyped = event as Record<string, unknown>;
+      const usageMetadata = eventTyped.usageMetadata as Record<string, unknown> | undefined;
+      if (!usageMetadata) continue;
+      const promptTokenCount = usageMetadata.promptTokenCount as number | undefined;
+      const candidatesTokenCount = usageMetadata.candidatesTokenCount as number | undefined;
+      if (promptTokenCount !== undefined && candidatesTokenCount !== undefined) {
+        return { input: promptTokenCount, output: candidatesTokenCount };
       }
     }
 

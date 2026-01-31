@@ -50,6 +50,11 @@ export interface AdkEvent {
     role: "assistant" | "user";
     parts: MessagePart[];
   };
+  /** Optional: token usage metadata */
+  usageMetadata?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+  };
   /** Optional: tool calls triggered by the agent */
   tool_calls?: Array<{
     id: string;

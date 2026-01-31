@@ -125,11 +125,10 @@ export async function sendInterviewMessage({
               // Stream finished, token info available but not displayed yet
               console.log("[Interview] Stream finished, tokens:", {
                 input: data.event.total_input_tokens,
-                output: data.event.total_output_tokens ?? data.event.total_ouput_tokens,
+                output: data.event.total_output_tokens,
               });
               const totalInputTokens = data.event.total_input_tokens;
-              const totalOutputTokens =
-                data.event.total_output_tokens ?? data.event.total_ouput_tokens;
+              const totalOutputTokens = data.event.total_output_tokens;
               setInterviewStats((prev) => ({
                 answeredQuestions: prev.answeredQuestions + 1,
                 inputTokens: totalInputTokens ?? prev.inputTokens,

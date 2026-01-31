@@ -133,11 +133,11 @@ function handleStreamingResponse(
         for await (const event of adkClient.streamMessage(adkRequest)) {
           eventCount++;
           const eventTyped = event as Record<string, unknown>;
-          const hasTokens = event.hasOwnProperty("total_input_tokens");
+          const hasUsageMetadata = "usageMetadata" in eventTyped;
 
           console.log(`[/api/chat] Received event ${eventCount}:`, {
             hasContent: !!eventTyped.content,
-            hasTokens,
+            hasUsageMetadata,
             eventKeys: Object.keys(eventTyped).slice(0, 5),
           });
 
@@ -153,47 +153,26 @@ function handleStreamingResponse(
             }
           }
 
-          // Extract token usage from event
+          // Extract token usage from event.usageMetadata only.
           if (eventTyped.usageMetadata && typeof eventTyped.usageMetadata === "object") {
             const usageMetadata = eventTyped.usageMetadata as Record<string, unknown>;
 
-            // ADK returns: promptTokenCount (input) and candidatesTokenCount (output)
             const promptTokenCount = usageMetadata.promptTokenCount as number | undefined;
             const candidatesTokenCount = usageMetadata.candidatesTokenCount as number | undefined;
 
-            // Also support older format with input/output tokens
-            const inputTokens =
-              promptTokenCount ||
-              (usageMetadata.inputTokens as number | undefined) ||
-              (usageMetadata.input_tokens as number | undefined) ||
-              (usageMetadata.total_input_tokens as number | undefined);
-
-            const outputTokens =
-              candidatesTokenCount ||
-              (usageMetadata.outputTokens as number | undefined) ||
-              (usageMetadata.output_tokens as number | undefined) ||
-              (usageMetadata.total_output_tokens as number | undefined);
-
-            if (inputTokens && outputTokens) {
+            if (promptTokenCount !== undefined && candidatesTokenCount !== undefined) {
               tokenUsage = {
-                input: inputTokens,
-                output: outputTokens,
+                input: promptTokenCount,
+                output: candidatesTokenCount,
               };
               console.log("[/api/chat] Token usage extracted:", tokenUsage);
             }
-          } else if (event.hasOwnProperty("total_input_tokens") && event.hasOwnProperty("total_output_tokens")) {
-            // Old format fallback
-            tokenUsage = {
-              input: (event as Record<string, unknown>).total_input_tokens as number,
-              output: (event as Record<string, unknown>).total_output_tokens as number,
-            };
-            console.log("[/api/chat] Token usage extracted from direct properties:", tokenUsage);
           }
 
           try {
             // Send event as SSE
             const sseData = `data: ${JSON.stringify({
-              type: event.hasOwnProperty("total_input_tokens") ? "done" : "message",
+              type: "message",
               event,
               interviewId,
             })}\n\n`;
