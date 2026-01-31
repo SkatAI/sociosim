@@ -131,8 +131,8 @@ export async function sendInterviewMessage({
               const totalOutputTokens = data.event.total_output_tokens;
               setInterviewStats((prev) => ({
                 answeredQuestions: prev.answeredQuestions + 1,
-                inputTokens: totalInputTokens ?? prev.inputTokens,
-                outputTokens: totalOutputTokens ?? prev.outputTokens,
+                inputTokens: prev.inputTokens + (totalInputTokens ?? 0),
+                outputTokens: prev.outputTokens + (totalOutputTokens ?? 0),
               }));
             } else {
               console.log("[Interview SSE] event:", data);

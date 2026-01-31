@@ -475,10 +475,10 @@ export function InterviewSidebar({
           </Stack>
           <Stack gap={1}>
             <Text fontSize="sm">
-              {stats.answeredQuestions} responses
+              {stats.answeredQuestions} {stats.answeredQuestions === 1 ? "réponse" : "réponses"}
             </Text>
             <Text fontSize="sm">
-              Tokens : {stats.outputTokens} → {stats.inputTokens}
+              Tokens : {stats.inputTokens} → {stats.outputTokens}
             </Text>
           </Stack>
           <Box

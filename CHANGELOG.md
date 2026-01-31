@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - **Interviews Route:** Rename `/dashboard` to `/interviews`.
 - **Admin Interviews:** Admins can view all interviews without resuming someone else’s session.
 - **Tests:** Auth flow tests now pass with bad input assertions and coverage reporting.
+- **Interview Layout:** Extract shared interview layout and hooks to reduce duplication across interview pages.
 - **Interview Intro:** Render the new interview intro from `public/docs/guide_entretien_court.md`.
 - **Interview Intro:** Replace the collapsible guide with a header help link that opens a dialog.
 - **Interview Intro:** Allow font size settings to scale the intro text.
@@ -40,6 +41,7 @@ All notable changes to this project will be documented in this file.
 - **Personnas:** Switch filtering to `is_template=false` for listing agents.
 - **Interview Sidebar:** Refresh the header layout with icon-only actions and agent details in the sidebar.
 - **Interview History:** Use agent IDs for history filters and links across personnas and interviews.
+- **Interview Tokens:** Rely exclusively on ADK `usageMetadata` (`promptTokenCount`/`candidatesTokenCount`) for token usage storage.
 ### Fixed
 - **Chakra Buttons:** Replace invalid `variant="link"` usage with Chakra v3-compatible variants.
 - **Next Config:** Move `outputFileTracingIncludes` to the top-level Next.js config.
