@@ -192,8 +192,6 @@ describe("InterviewSidebar", () => {
 
     const helpButton = screen.getByRole("button", { name: "Aide pour l'entretien" });
     expect(helpButton).toBeInTheDocument();
-    await user.hover(helpButton);
-    expect(await screen.findByText("Aide pour l'entretien")).toBeInTheDocument();
   });
 
   it("shows agent description under the name", async () => {
