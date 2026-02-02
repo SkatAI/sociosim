@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { useEditor } from "@tiptap/react";
 import { Markdown } from "@tiptap/markdown";
 import Bold from "@tiptap/extension-bold";
 import BulletList from "@tiptap/extension-bullet-list";
@@ -24,6 +24,7 @@ import Paragraph from "@tiptap/extension-paragraph";
 import TextExtension from "@tiptap/extension-text";
 import { ChevronDown } from "lucide-react";
 import { toaster } from "@/components/ui/toaster";
+import { RichTextEditor, Control } from "@/components/ui/rich-text-editor";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { withTimeout } from "@/lib/withTimeout";
 
@@ -387,87 +388,71 @@ export default function EditAgentPromptPage() {
         )}
 
         <VStack gap={3} alignItems="stretch">
-          <HStack gap={2} align="center" flexWrap="wrap" width="full">
-            <HStack gap={2} flexWrap="wrap" flex="1">
-            <Button
-              size="sm"
-              variant={editor?.isActive("heading", { level: 2 }) ? "solid" : "outline"}
-              colorPalette="blue"
-              onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
-              disabled={!editor}
-            >
-              Section
-            </Button>
-            <Button
-              size="sm"
-              variant={editor?.isActive("bold") ? "solid" : "outline"}
-              colorPalette="blue"
-              onClick={() => editor?.chain().focus().toggleBold().run()}
-              disabled={!editor}
-            >
-              Gras
-            </Button>
-            <Button
-              size="sm"
-              variant={editor?.isActive("bulletList") ? "solid" : "outline"}
-              colorPalette="blue"
-              onClick={() => editor?.chain().focus().toggleBulletList().run()}
-              disabled={!editor}
-            >
-              Liste
-            </Button>
-            </HStack>
-            <Text
-              fontSize="sm"
-              color={
-                isSelectedPublished
-                  ? "fg.default"
-                  : "fg.muted"
-              }
-              fontWeight={
-                isSelectedPublished
-                  ? "semibold"
-                  : "normal"
-              }
-            >
-              {isSelectedPublished ? "Publié" : "Brouillon"}
-            </Text>
-            <HStack gap={2} flex="1" justify="flex-end" flexWrap="wrap">
-              <Button
-                size="sm"
-                variant="subtle"
-                onClick={handleSave}
-                loading={isSaving}
-                disabled={!isDirty || isSaving}
-                paddingInline={5}
-              >
-                Enregistrer
-              </Button>
-              <Button
-                size="sm"
-                variant="subtle"
-                onClick={handlePublish}
-                loading={isPublishing}
-                disabled={!selectedPromptId || isSelectedPublished}
-                paddingInline={5}
-              >
-                Publier
-              </Button>
-            </HStack>
-          </HStack>
-          <Box
-            borderWidth="1px"
-            borderColor={{ base: "gray.200", _dark: "gray.700" }}
-            borderRadius="md"
-            padding={4}
-            minH="520px"
+          <RichTextEditor.Root
+            editor={editor}
             fontSize="sm"
+            borderColor={{ base: "gray.200", _dark: "gray.700" }}
             _focusWithin={{ borderColor: "blue.500", boxShadow: "0 0 0 1px var(--chakra-colors-blue-500)" }}
+            css={{ "--content-min-height": "520px" }}
           >
-            <EditorContent editor={editor} />
-          </Box>
+            <HStack
+              gap={2}
+              align="center"
+              flexWrap="wrap"
+              width="full"
+              paddingX={4}
+              paddingTop={3}
+              paddingBottom={2}
+            >
+              <HStack gap={2} flexWrap="wrap" flex="1">
+                <RichTextEditor.ControlGroup>
+                  <Control.H2 />
+                  <Control.Bold />
+                  <Control.BulletList />
+                </RichTextEditor.ControlGroup>
+              </HStack>
+              <Text
+                fontSize="sm"
+                color={
+                  isSelectedPublished
+                    ? "fg.default"
+                    : "fg.muted"
+                }
+                fontWeight={
+                  isSelectedPublished
+                    ? "semibold"
+                    : "normal"
+                }
+              >
+                {isSelectedPublished ? "Publié" : "Brouillon"}
+              </Text>
+              <HStack gap={2} flex="1" justify="flex-end" flexWrap="wrap">
+                <Button
+                  size="sm"
+                  variant="subtle"
+                  onClick={handleSave}
+                  loading={isSaving}
+                  disabled={!isDirty || isSaving}
+                  paddingInline={5}
+                >
+                  Enregistrer
+                </Button>
+                <Button
+                  size="sm"
+                  variant="subtle"
+                  onClick={handlePublish}
+                  loading={isPublishing}
+                  disabled={!selectedPromptId || isSelectedPublished}
+                  paddingInline={5}
+                >
+                  Publier
+                </Button>
+              </HStack>
+            </HStack>
+            <RichTextEditor.Content />
+          </RichTextEditor.Root>
           <Text color="fg.muted" fontSize="sm">
-            Utilisez les boutons pour ajouter des sections, du gras et des listes sans saisir la syntaxe Markdown.
+            Utilisez les icônes pour ajouter des sections, du gras et des listes sans saisir la syntaxe Markdown.
           </Text>
         </VStack>
 
