@@ -18,6 +18,7 @@ import {
   Icon,
   Tooltip,
 } from "@chakra-ui/react";
+import { CirclePlus } from "lucide-react";
 import { LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp } from "react-icons/lu";
 import NextLink from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -342,15 +343,31 @@ export default function DashboardClient() {
               </NativeSelect.Root>
             )}
           </HStack>
-          <Button
-            variant="subtle"
-            size="sm"
-            paddingInline={4}
-            onClick={handleNewInterview}
-            disabled={isCreatingSession}
-          >
-            {isCreatingSession ? "Création..." : "Nouvel entretien"}
-          </Button>
+          <Tooltip.Root openDelay={150}>
+            <Tooltip.Trigger asChild>
+              <IconButton
+                aria-label="Commencer un nouvel entretien"
+                size="sm"
+                variant="outline"
+                rounded="full"
+                colorPalette="blue"
+                backgroundColor="blue.400"
+                color="white"
+                borderColor="blue.400"
+                _hover={{ backgroundColor: "blue.500" }}
+                onClick={handleNewInterview}
+                loading={isCreatingSession}
+                disabled={isCreatingSession}
+              >
+                <CirclePlus size={18} />
+              </IconButton>
+            </Tooltip.Trigger>
+            <Tooltip.Positioner>
+              <Tooltip.Content px={3} py={2}>
+                Commencer un nouvel entretien
+              </Tooltip.Content>
+            </Tooltip.Positioner>
+          </Tooltip.Root>
         </HStack>
 
         {error && (

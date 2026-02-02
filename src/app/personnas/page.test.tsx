@@ -79,7 +79,7 @@ describe("PersonnasPage", () => {
     expect(screen.getByText("Oriane")).toBeInTheDocument();
     expect(screen.getByText("Theo")).toBeInTheDocument();
     expect(screen.getByText("Jade")).toBeInTheDocument();
-    const interviewButtons = screen.getAllByRole("button", { name: /Nouvel entretien/i });
+    const interviewButtons = screen.getAllByLabelText(/Commencer un nouvel entretien/i);
     expect(interviewButtons).toHaveLength(2);
     expect(interviewButtons.some((button) => button.hasAttribute("disabled"))).toBe(false);
   });
@@ -155,7 +155,7 @@ describe("PersonnasPage", () => {
       expect(screen.queryByText("Chargement des personnas...")).not.toBeInTheDocument();
     });
 
-    await user.click(screen.getAllByRole("button", { name: /Nouvel entretien/i })[0]);
+    await user.click(screen.getAllByLabelText(/Commencer un nouvel entretien/i)[0]);
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(

@@ -15,6 +15,7 @@ import {
   Tooltip,
 } from "@chakra-ui/react";
 import { LuEye, LuEyeClosed, LuFileCog } from "react-icons/lu";
+import { CirclePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
@@ -310,15 +311,31 @@ export default function PersonnasPage() {
                       <HStack gap={3} flexWrap="wrap" justifyContent="center">
                         {agent.active && (
                           <VStack gap={1} alignItems="center">
-                            <Button
-                              onClick={() => handleSelectAgent(agent.id)}
-                              variant="subtle"
-                              size="xs"
-                              paddingInline={2}
-                              disabled={isCreatingSession || agent.has_published_prompt === false}
-                            >
-                              {isCreatingSession ? "Création..." : "Nouvel entretien"}
-                            </Button>
+                            <Tooltip.Root openDelay={150}>
+                              <Tooltip.Trigger asChild>
+                                <IconButton
+                                  aria-label="Commencer un nouvel entretien"
+                                  size="sm"
+                                  variant="outline"
+                                  rounded="full"
+                                  colorPalette="blue"
+                                  backgroundColor="blue.400"
+                                  color="white"
+                                  borderColor="blue.400"
+                                  _hover={{ backgroundColor: "blue.500" }}
+                                  onClick={() => handleSelectAgent(agent.id)}
+                                  loading={isCreatingSession}
+                                  disabled={isCreatingSession || agent.has_published_prompt === false}
+                                >
+                                  <CirclePlus size={18} />
+                                </IconButton>
+                              </Tooltip.Trigger>
+                              <Tooltip.Positioner>
+                                <Tooltip.Content px={3} py={2}>
+                                  Commencer un nouvel entretien
+                                </Tooltip.Content>
+                              </Tooltip.Positioner>
+                            </Tooltip.Root>
                             {agent.has_published_prompt === false && (
                               <Text fontSize="xs" color="fg.muted">
                               (N&apos;a pas de prompt publié)
@@ -411,15 +428,31 @@ export default function PersonnasPage() {
                       <HStack gap={3} flexWrap="wrap" justifyContent="center">
                         {agent.active && (
                           <VStack gap={1} alignItems="center">
-                            <Button
-                              onClick={() => handleSelectAgent(agent.id)}
-                              variant="subtle"
-                              size="xs"
-                              paddingInline={2}
-                              disabled={isCreatingSession || agent.has_published_prompt === false}
-                            >
-                              {isCreatingSession ? "Création..." : "Nouvel entretien"}
-                            </Button>
+                            <Tooltip.Root openDelay={150}>
+                              <Tooltip.Trigger asChild>
+                                <IconButton
+                                  aria-label="Commencer un nouvel entretien"
+                                  size="sm"
+                                  variant="outline"
+                                  rounded="full"
+                                  colorPalette="blue"
+                                  backgroundColor="blue.400"
+                                  color="white"
+                                  borderColor="blue.400"
+                                  _hover={{ backgroundColor: "blue.500" }}
+                                  onClick={() => handleSelectAgent(agent.id)}
+                                  loading={isCreatingSession}
+                                  disabled={isCreatingSession || agent.has_published_prompt === false}
+                                >
+                                  <CirclePlus size={18} />
+                                </IconButton>
+                              </Tooltip.Trigger>
+                              <Tooltip.Positioner>
+                                <Tooltip.Content px={3} py={2}>
+                                  Commencer un nouvel entretien
+                                </Tooltip.Content>
+                              </Tooltip.Positioner>
+                            </Tooltip.Root>
                             {agent.has_published_prompt === false && (
                               <Text fontSize="xs" color="fg.muted">
                               (N&apos;a pas de prompt publié)

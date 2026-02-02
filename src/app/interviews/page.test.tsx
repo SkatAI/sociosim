@@ -113,7 +113,7 @@ describe("DashboardPage", () => {
       expect(screen.queryByText("Chargement de vos entretiens...")).not.toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: /Nouvel entretien/i }));
+    await user.click(screen.getByLabelText(/Commencer un nouvel entretien/i));
     expect(mockRouter.push).toHaveBeenCalledWith("/personnas");
   });
 
@@ -145,7 +145,7 @@ describe("DashboardPage", () => {
 
     const select = screen.getByLabelText("Filtrer par agent");
     await user.selectOptions(select, "agent-oriane");
-    await user.click(screen.getByRole("button", { name: /Nouvel entretien/i }));
+    await user.click(screen.getByLabelText(/Commencer un nouvel entretien/i));
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
