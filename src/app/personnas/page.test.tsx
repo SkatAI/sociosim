@@ -82,6 +82,7 @@ describe("PersonnasPage", () => {
     const interviewButtons = screen.getAllByLabelText(/Commencer un nouvel entretien/i);
     expect(interviewButtons).toHaveLength(2);
     expect(interviewButtons.some((button) => button.hasAttribute("disabled"))).toBe(false);
+    expect(screen.getAllByRole("button", { name: /Activer|Désactiver/i })).toHaveLength(2);
   });
 
   it("shows Historique only for agents with previous interviews", async () => {

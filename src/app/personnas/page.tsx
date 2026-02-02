@@ -14,7 +14,6 @@ import {
   IconButton,
   Tooltip,
 } from "@chakra-ui/react";
-import { LuEye, LuEyeClosed, LuFileCog } from "react-icons/lu";
 import { CirclePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -255,62 +254,7 @@ export default function PersonnasPage() {
                           <Text fontWeight="semibold" fontSize="md">
                             {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
                           </Text>
-                          <HStack gap={2}>
-                            <Tooltip.Root openDelay={150}>
-                              <Tooltip.Trigger asChild>
-                                <IconButton
-                                  aria-label="Modifier le prompt"
-                                  variant="subtle"
-                                  size="xs"
-                                  onClick={() => router.push(`/personnas/${agent.id}/edit`)}
-                                  disabled={!agent.active}
-                                >
-                                  <LuFileCog />
-                                </IconButton>
-                              </Tooltip.Trigger>
-                              <Tooltip.Positioner>
-                                <Tooltip.Content px={3} py={2}>
-                                  Modifier le prompt
-                                </Tooltip.Content>
-                              </Tooltip.Positioner>
-                            </Tooltip.Root>
-                            {user_admin && (
-                              <Tooltip.Root openDelay={150}>
-                                <Tooltip.Trigger asChild>
-                                  <IconButton
-                                    aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
-                                    variant={agent.active ? "outline" : "subtle"}
-                                    colorPalette={agent.active ? "red" : undefined}
-                                    size="xs"
-                                    onClick={() => handleToggleAgent(agent)}
-                                    loading={togglingAgentId === agent.id}
-                                    disabled={togglingAgentId === agent.id}
-                                  >
-                                    {agent.active ? <LuEye /> : <LuEyeClosed />}
-                                  </IconButton>
-                                </Tooltip.Trigger>
-                                <Tooltip.Positioner>
-                                  <Tooltip.Content px={3} py={2}>
-                                    {agent.active ? "Désactiver l'agent" : "Activer l'agent"}
-                                  </Tooltip.Content>
-                                </Tooltip.Positioner>
-                              </Tooltip.Root>
-                            )}
-                          </HStack>
-                        </HStack>
-                        <Text
-                          fontSize="sm"
-                          color="fg.muted"
-                          textAlign="left"
-                          lineHeight="1.4"
-                          whiteSpace="pre-line"
-                        >
-                          {(agent.description || "").replace(/\\n/g, "\n")}
-                        </Text>
-                      </VStack>
-                      <HStack gap={3} flexWrap="wrap" justifyContent="center">
-                        {agent.active && (
-                          <VStack gap={1} alignItems="center">
+                          {agent.active && (
                             <Tooltip.Root openDelay={150}>
                               <Tooltip.Trigger asChild>
                                 <IconButton
@@ -336,12 +280,23 @@ export default function PersonnasPage() {
                                 </Tooltip.Content>
                               </Tooltip.Positioner>
                             </Tooltip.Root>
-                            {agent.has_published_prompt === false && (
-                              <Text fontSize="xs" color="fg.muted">
-                              (N&apos;a pas de prompt publié)
-                              </Text>
-                            )}
-                          </VStack>
+                          )}
+                        </HStack>
+                        <Text
+                          fontSize="sm"
+                          color="fg.muted"
+                          textAlign="left"
+                          lineHeight="1.4"
+                          whiteSpace="pre-line"
+                        >
+                          {(agent.description || "").replace(/\\n/g, "\n")}
+                        </Text>
+                      </VStack>
+                      <HStack gap={3} flexWrap="wrap" justifyContent="flex-start">
+                        {agent.active && agent.has_published_prompt === false && (
+                          <Text fontSize="xs" color="fg.muted">
+                            (N&apos;a pas de prompt publié)
+                          </Text>
                         )}
                         {agent.active && interactedAgents.includes(agent.id) && (
                           <Button
@@ -351,6 +306,28 @@ export default function PersonnasPage() {
                             paddingInline={2}
                           >
                             Historique
+                          </Button>
+                        )}
+                        <Button
+                          variant="subtle"
+                          size="xs"
+                          paddingInline={2}
+                          onClick={() => router.push(`/personnas/${agent.id}/edit`)}
+                          disabled={!agent.active}
+                        >
+                          Prompt
+                        </Button>
+                        {user_admin && (
+                          <Button
+                            variant={agent.active ? "outline" : "subtle"}
+                            colorPalette={agent.active ? "red" : undefined}
+                            size="xs"
+                            paddingInline={2}
+                            onClick={() => handleToggleAgent(agent)}
+                            loading={togglingAgentId === agent.id}
+                            disabled={togglingAgentId === agent.id}
+                          >
+                            {agent.active ? "Désactiver" : "Activer"}
                           </Button>
                         )}
                       </HStack>
@@ -372,62 +349,7 @@ export default function PersonnasPage() {
                           <Text fontWeight="semibold" fontSize="md">
                             {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
                           </Text>
-                          <HStack gap={2}>
-                            <Tooltip.Root openDelay={150}>
-                              <Tooltip.Trigger asChild>
-                                <IconButton
-                                  aria-label="Modifier le prompt"
-                                  variant="subtle"
-                                  size="xs"
-                                  onClick={() => router.push(`/personnas/${agent.id}/edit`)}
-                                  disabled={!agent.active}
-                                >
-                                  <LuFileCog />
-                                </IconButton>
-                              </Tooltip.Trigger>
-                              <Tooltip.Positioner>
-                                <Tooltip.Content px={3} py={2}>
-                                  Modifier le prompt
-                                </Tooltip.Content>
-                              </Tooltip.Positioner>
-                            </Tooltip.Root>
-                            {user_admin && (
-                              <Tooltip.Root openDelay={150}>
-                                <Tooltip.Trigger asChild>
-                                  <IconButton
-                                    aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
-                                    variant={agent.active ? "outline" : "subtle"}
-                                    colorPalette={agent.active ? "red" : undefined}
-                                    size="xs"
-                                    onClick={() => handleToggleAgent(agent)}
-                                    loading={togglingAgentId === agent.id}
-                                    disabled={togglingAgentId === agent.id}
-                                  >
-                                    {agent.active ? <LuEye /> : <LuEyeClosed />}
-                                  </IconButton>
-                                </Tooltip.Trigger>
-                                <Tooltip.Positioner>
-                                  <Tooltip.Content px={3} py={2}>
-                                    {agent.active ? "Désactiver l'agent" : "Activer l'agent"}
-                                  </Tooltip.Content>
-                                </Tooltip.Positioner>
-                              </Tooltip.Root>
-                            )}
-                          </HStack>
-                        </HStack>
-                        <Text
-                          fontSize="sm"
-                          color="fg.muted"
-                          textAlign="left"
-                          lineHeight="1.4"
-                          whiteSpace="pre-line"
-                        >
-                          {(agent.description || "").replace(/\\n/g, "\n")}
-                        </Text>
-                      </VStack>
-                      <HStack gap={3} flexWrap="wrap" justifyContent="center">
-                        {agent.active && (
-                          <VStack gap={1} alignItems="center">
+                          {agent.active && (
                             <Tooltip.Root openDelay={150}>
                               <Tooltip.Trigger asChild>
                                 <IconButton
@@ -453,12 +375,23 @@ export default function PersonnasPage() {
                                 </Tooltip.Content>
                               </Tooltip.Positioner>
                             </Tooltip.Root>
-                            {agent.has_published_prompt === false && (
-                              <Text fontSize="xs" color="fg.muted">
-                              (N&apos;a pas de prompt publié)
-                              </Text>
-                            )}
-                          </VStack>
+                          )}
+                        </HStack>
+                        <Text
+                          fontSize="sm"
+                          color="fg.muted"
+                          textAlign="left"
+                          lineHeight="1.4"
+                          whiteSpace="pre-line"
+                        >
+                          {(agent.description || "").replace(/\\n/g, "\n")}
+                        </Text>
+                      </VStack>
+                      <HStack gap={3} flexWrap="wrap" justifyContent="flex-start">
+                        {agent.active && agent.has_published_prompt === false && (
+                          <Text fontSize="xs" color="fg.muted">
+                            (N&apos;a pas de prompt publié)
+                          </Text>
                         )}
                         {agent.active && interactedAgents.includes(agent.id) && (
                           <Button
@@ -468,6 +401,28 @@ export default function PersonnasPage() {
                             paddingInline={2}
                           >
                             Historique
+                          </Button>
+                        )}
+                        <Button
+                          variant="subtle"
+                          size="xs"
+                          paddingInline={2}
+                          onClick={() => router.push(`/personnas/${agent.id}/edit`)}
+                          disabled={!agent.active}
+                        >
+                          Prompt
+                        </Button>
+                        {user_admin && (
+                          <Button
+                            variant={agent.active ? "outline" : "subtle"}
+                            colorPalette={agent.active ? "red" : undefined}
+                            size="xs"
+                            paddingInline={2}
+                            onClick={() => handleToggleAgent(agent)}
+                            loading={togglingAgentId === agent.id}
+                            disabled={togglingAgentId === agent.id}
+                          >
+                            {agent.active ? "Désactiver" : "Activer"}
                           </Button>
                         )}
                       </HStack>
