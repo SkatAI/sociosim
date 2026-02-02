@@ -299,7 +299,7 @@ describe("ResumeInterviewPage - Chat Interaction", () => {
 
     await screen.findByRole("heading", { name: /Oriane/i });
 
-    const input = screen.getByPlaceholderText(/Tapez votre message/i);
+    const input = screen.getByPlaceholderText(/Posez votre question/i);
     const sendButton = screen.getByRole("button", { name: /Envoyer/i });
 
     await user.type(input, "Test message");

@@ -151,7 +151,7 @@ export function InterviewLayout({
             <MessageInput
               onSendMessage={onSendMessage}
               isLoading={isStreaming}
-              placeholder="Tapez votre message..."
+              placeholder="Posez votre question..."
               containerProps={messageInputContainerProps}
             />
           ) : null}

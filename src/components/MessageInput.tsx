@@ -19,7 +19,7 @@ interface MessageInputProps {
 export function MessageInput({
   onSendMessage,
   isLoading = false,
-  placeholder = "Tapez votre message...",
+  placeholder = "Posez votre question...",
   containerProps = {},
 }: MessageInputProps) {
   const [message, setMessage] = useState("");

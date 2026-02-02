@@ -255,7 +255,7 @@ describe("InterviewPage - Chat Interaction", () => {
     const user = userEvent.setup();
     await renderInterviewPage();
 
-    const input = screen.getByPlaceholderText(/Tapez votre message/);
+    const input = screen.getByPlaceholderText(/Posez votre question/);
     await user.type(input, "Test message");
 
     expect(input).toHaveValue("Test message");
@@ -268,7 +268,7 @@ describe("InterviewPage - Chat Interaction", () => {
 
     await renderInterviewPage();
 
-    const input = screen.getByPlaceholderText(/Tapez votre message/);
+    const input = screen.getByPlaceholderText(/Posez votre question/);
     const sendButton = screen.getByRole("button", { name: /Envoyer/i });
 
     await user.type(input, "Test message");
@@ -288,7 +288,7 @@ describe("InterviewPage - Chat Interaction", () => {
 
     await renderInterviewPage();
 
-    const input = screen.getByPlaceholderText(/Tapez votre message/);
+    const input = screen.getByPlaceholderText(/Posez votre question/);
     const sendButton = screen.getByRole("button", { name: /Envoyer/i });
 
     await user.type(input, "Test");
@@ -312,7 +312,7 @@ describe("InterviewPage - Chat Interaction", () => {
 
     await renderInterviewPage();
 
-    const input = screen.getByPlaceholderText(/Tapez votre message/);
+    const input = screen.getByPlaceholderText(/Posez votre question/);
     const sendButton = screen.getByRole("button", { name: /Envoyer/i });
 
     await user.type(input, "Bonjour");
@@ -376,7 +376,7 @@ describe("InterviewPage - UI States", () => {
   it("has messageInput component for sending messages", async () => {
     await renderInterviewPage();
 
-    const input = screen.getByPlaceholderText(/Tapez votre message/);
+    const input = screen.getByPlaceholderText(/Posez votre question/);
     expect(input).toBeInTheDocument();
   });
 
@@ -387,7 +387,7 @@ describe("InterviewPage - UI States", () => {
 
     await renderInterviewPage();
 
-    const input = screen.getByPlaceholderText(/Tapez votre message/);
+    const input = screen.getByPlaceholderText(/Posez votre question/);
     const sendButton = screen.getByRole("button", { name: /Envoyer/i });
 
     expect(input).toBeInTheDocument();
