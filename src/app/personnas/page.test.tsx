@@ -70,6 +70,11 @@ describe("PersonnasPage", () => {
   });
 
   it("renders agent cards and action buttons", async () => {
+    vi.mocked(useAuthUser).mockReturnValue({
+      ...mockUseAuthUser,
+      user_admin: true,
+    });
+
     renderWithChakra(<PersonnasPage />);
 
     await waitFor(() => {
@@ -82,7 +87,7 @@ describe("PersonnasPage", () => {
     const interviewButtons = screen.getAllByLabelText(/Commencer un nouvel entretien/i);
     expect(interviewButtons).toHaveLength(2);
     expect(interviewButtons.some((button) => button.hasAttribute("disabled"))).toBe(false);
-    expect(screen.getAllByRole("button", { name: /Activer|Désactiver/i })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: /Activer|Désactiver/i })).toHaveLength(3);
   });
 
   it("shows Historique only for agents with previous interviews", async () => {
