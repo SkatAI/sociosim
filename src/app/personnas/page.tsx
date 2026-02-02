@@ -12,6 +12,7 @@ import {
   Grid,
   Card,
   IconButton,
+  Tooltip,
 } from "@chakra-ui/react";
 import { LuEye, LuEyeClosed, LuFileCog } from "react-icons/lu";
 import { useRouter } from "next/navigation";
@@ -254,27 +255,45 @@ export default function PersonnasPage() {
                             {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
                           </Text>
                           <HStack gap={2}>
-                            <IconButton
-                              aria-label="Modifier le prompt"
-                              variant="subtle"
-                              size="xs"
-                              onClick={() => router.push(`/personnas/${agent.id}/edit`)}
-                              disabled={!agent.active}
-                            >
-                              <LuFileCog />
-                            </IconButton>
+                            <Tooltip.Root openDelay={150}>
+                              <Tooltip.Trigger asChild>
+                                <IconButton
+                                  aria-label="Modifier le prompt"
+                                  variant="subtle"
+                                  size="xs"
+                                  onClick={() => router.push(`/personnas/${agent.id}/edit`)}
+                                  disabled={!agent.active}
+                                >
+                                  <LuFileCog />
+                                </IconButton>
+                              </Tooltip.Trigger>
+                              <Tooltip.Positioner>
+                                <Tooltip.Content px={3} py={2}>
+                                  Modifier le prompt
+                                </Tooltip.Content>
+                              </Tooltip.Positioner>
+                            </Tooltip.Root>
                             {user_admin && (
-                              <IconButton
-                                aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
-                                variant={agent.active ? "outline" : "subtle"}
-                                colorPalette={agent.active ? "red" : undefined}
-                                size="xs"
-                                onClick={() => handleToggleAgent(agent)}
-                                loading={togglingAgentId === agent.id}
-                                disabled={togglingAgentId === agent.id}
-                              >
-                                {agent.active ? <LuEye /> : <LuEyeClosed />}
-                              </IconButton>
+                              <Tooltip.Root openDelay={150}>
+                                <Tooltip.Trigger asChild>
+                                  <IconButton
+                                    aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
+                                    variant={agent.active ? "outline" : "subtle"}
+                                    colorPalette={agent.active ? "red" : undefined}
+                                    size="xs"
+                                    onClick={() => handleToggleAgent(agent)}
+                                    loading={togglingAgentId === agent.id}
+                                    disabled={togglingAgentId === agent.id}
+                                  >
+                                    {agent.active ? <LuEye /> : <LuEyeClosed />}
+                                  </IconButton>
+                                </Tooltip.Trigger>
+                                <Tooltip.Positioner>
+                                  <Tooltip.Content px={3} py={2}>
+                                    {agent.active ? "Désactiver l'agent" : "Activer l'agent"}
+                                  </Tooltip.Content>
+                                </Tooltip.Positioner>
+                              </Tooltip.Root>
                             )}
                           </HStack>
                         </HStack>
@@ -337,27 +356,45 @@ export default function PersonnasPage() {
                             {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
                           </Text>
                           <HStack gap={2}>
-                            <IconButton
-                              aria-label="Modifier le prompt"
-                              variant="subtle"
-                              size="xs"
-                              onClick={() => router.push(`/personnas/${agent.id}/edit`)}
-                              disabled={!agent.active}
-                            >
-                              <LuFileCog />
-                            </IconButton>
+                            <Tooltip.Root openDelay={150}>
+                              <Tooltip.Trigger asChild>
+                                <IconButton
+                                  aria-label="Modifier le prompt"
+                                  variant="subtle"
+                                  size="xs"
+                                  onClick={() => router.push(`/personnas/${agent.id}/edit`)}
+                                  disabled={!agent.active}
+                                >
+                                  <LuFileCog />
+                                </IconButton>
+                              </Tooltip.Trigger>
+                              <Tooltip.Positioner>
+                                <Tooltip.Content px={3} py={2}>
+                                  Modifier le prompt
+                                </Tooltip.Content>
+                              </Tooltip.Positioner>
+                            </Tooltip.Root>
                             {user_admin && (
-                              <IconButton
-                                aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
-                                variant={agent.active ? "outline" : "subtle"}
-                                colorPalette={agent.active ? "red" : undefined}
-                                size="xs"
-                                onClick={() => handleToggleAgent(agent)}
-                                loading={togglingAgentId === agent.id}
-                                disabled={togglingAgentId === agent.id}
-                              >
-                                {agent.active ? <LuEye /> : <LuEyeClosed />}
-                              </IconButton>
+                              <Tooltip.Root openDelay={150}>
+                                <Tooltip.Trigger asChild>
+                                  <IconButton
+                                    aria-label={agent.active ? "Désactiver l'agent" : "Activer l'agent"}
+                                    variant={agent.active ? "outline" : "subtle"}
+                                    colorPalette={agent.active ? "red" : undefined}
+                                    size="xs"
+                                    onClick={() => handleToggleAgent(agent)}
+                                    loading={togglingAgentId === agent.id}
+                                    disabled={togglingAgentId === agent.id}
+                                  >
+                                    {agent.active ? <LuEye /> : <LuEyeClosed />}
+                                  </IconButton>
+                                </Tooltip.Trigger>
+                                <Tooltip.Positioner>
+                                  <Tooltip.Content px={3} py={2}>
+                                    {agent.active ? "Désactiver l'agent" : "Activer l'agent"}
+                                  </Tooltip.Content>
+                                </Tooltip.Positioner>
+                              </Tooltip.Root>
                             )}
                           </HStack>
                         </HStack>

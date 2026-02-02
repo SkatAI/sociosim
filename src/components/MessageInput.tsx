@@ -1,4 +1,4 @@
-import { Box, IconButton, Textarea, BoxProps } from "@chakra-ui/react";
+import { Box, IconButton, Textarea, BoxProps, Tooltip } from "@chakra-ui/react";
 import { ArrowRight } from "lucide-react";
 import { useRef, useState } from "react";
 
@@ -86,22 +86,31 @@ export function MessageInput({
             paddingRight="2.75rem"
             _placeholder={{ color: "fg.subtle" }}
           />
-          <IconButton
-            aria-label="Envoyer"
-            onClick={handleSendMessage}
-            disabled={isLoading || !message.trim()}
-            colorPalette="blue"
-            position="absolute"
-            right={1}
-            top="50%"
-            transform="translateY(calc(-50% - 4px))"
-            borderRadius="full"
-            width={8}
-            height={8}
-            minWidth={8}
-          >
-            <ArrowRight size={16} />
-          </IconButton>
+          <Tooltip.Root openDelay={150}>
+            <Tooltip.Trigger asChild>
+              <IconButton
+                aria-label="Envoyer"
+                onClick={handleSendMessage}
+                disabled={isLoading || !message.trim()}
+                colorPalette="blue"
+                position="absolute"
+                right={1}
+                top="50%"
+                transform="translateY(calc(-50% - 4px))"
+                borderRadius="full"
+                width={8}
+                height={8}
+                minWidth={8}
+              >
+                <ArrowRight size={16} />
+              </IconButton>
+            </Tooltip.Trigger>
+            <Tooltip.Positioner>
+              <Tooltip.Content px={3} py={2}>
+                Envoyer
+              </Tooltip.Content>
+            </Tooltip.Positioner>
+          </Tooltip.Root>
         </Box>
       </Box>
     </Box>

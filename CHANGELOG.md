@@ -42,6 +42,7 @@ All notable changes to this project will be documented in this file.
 - **Interview Sidebar:** Refresh the header layout with icon-only actions and agent details in the sidebar.
 - **Interview History:** Use agent IDs for history filters and links across personnas and interviews.
 - **Interview Tokens:** Rely exclusively on ADK `usageMetadata` (`promptTokenCount`/`candidatesTokenCount`) for token usage storage.
+- **Icon Buttons:** Add tooltips across icon-only actions for clearer affordances.
 ### Fixed
 - **Chakra Buttons:** Replace invalid `variant="link"` usage with Chakra v3-compatible variants.
 - **Next Config:** Move `outputFileTracingIncludes` to the top-level Next.js config.

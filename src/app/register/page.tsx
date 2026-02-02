@@ -11,6 +11,7 @@ import {
   Link,
   Stack,
   Text,
+  Tooltip,
   chakra,
 } from "@chakra-ui/react";
 import { Eye, EyeOff } from "lucide-react";
@@ -195,14 +196,23 @@ export default function RegisterPage() {
             <Field.Label>Mot de passe</Field.Label>
             <InputGroup
               endElement={
-                <IconButton
-                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                  onClick={() => setShowPassword(!showPassword)}
-                  variant="ghost"
-                  size="sm"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </IconButton>
+                <Tooltip.Root openDelay={150}>
+                  <Tooltip.Trigger asChild>
+                    <IconButton
+                      aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      onClick={() => setShowPassword(!showPassword)}
+                      variant="ghost"
+                      size="sm"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </IconButton>
+                  </Tooltip.Trigger>
+                  <Tooltip.Positioner>
+                    <Tooltip.Content px={3} py={2}>
+                      {showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    </Tooltip.Content>
+                  </Tooltip.Positioner>
+                </Tooltip.Root>
               }
             >
               <Input
@@ -222,14 +232,23 @@ export default function RegisterPage() {
             <Field.Label>Confirmez le mot de passe</Field.Label>
             <InputGroup
               endElement={
-                <IconButton
-                  aria-label={showConfirmation ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                  onClick={() => setShowConfirmation(!showConfirmation)}
-                  variant="ghost"
-                  size="sm"
-                >
-                  {showConfirmation ? <EyeOff size={20} /> : <Eye size={20} />}
-                </IconButton>
+                <Tooltip.Root openDelay={150}>
+                  <Tooltip.Trigger asChild>
+                    <IconButton
+                      aria-label={showConfirmation ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      onClick={() => setShowConfirmation(!showConfirmation)}
+                      variant="ghost"
+                      size="sm"
+                    >
+                      {showConfirmation ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </IconButton>
+                  </Tooltip.Trigger>
+                  <Tooltip.Positioner>
+                    <Tooltip.Content px={3} py={2}>
+                      {showConfirmation ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    </Tooltip.Content>
+                  </Tooltip.Positioner>
+                </Tooltip.Root>
               }
             >
               <Input

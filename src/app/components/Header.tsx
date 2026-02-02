@@ -1,6 +1,6 @@
 // app/components/Header.tsx
 "use client";
-import { Avatar, Box, Flex, HStack, IconButton, Link, Popover, Stack, Text } from "@chakra-ui/react";
+import { Avatar, Box, Flex, HStack, IconButton, Link, Popover, Stack, Text, Tooltip } from "@chakra-ui/react";
 import { LogOut } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
@@ -210,18 +210,26 @@ export default function Header() {
                             <Text fontSize="sm" color="fg.muted">
                               Texte
                             </Text>
-                            <IconButton
-                              aria-label={fontSizeLabel}
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleToggleFontSize}
-                              title={fontSizeLabel}
-                            >
-                              <HStack gap={0.5}>
-                                <Text fontSize="xs">A</Text>
-                                <Text fontSize="md">A</Text>
-                              </HStack>
-                            </IconButton>
+                            <Tooltip.Root openDelay={150}>
+                              <Tooltip.Trigger asChild>
+                                <IconButton
+                                  aria-label={fontSizeLabel}
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleToggleFontSize}
+                                >
+                                  <HStack gap={0.5}>
+                                    <Text fontSize="xs">A</Text>
+                                    <Text fontSize="md">A</Text>
+                                  </HStack>
+                                </IconButton>
+                              </Tooltip.Trigger>
+                              <Tooltip.Positioner>
+                                <Tooltip.Content px={3} py={2}>
+                                  {fontSizeLabel}
+                                </Tooltip.Content>
+                              </Tooltip.Positioner>
+                            </Tooltip.Root>
                           </HStack>
                           <HStack justify="space-between">
                             <Text fontSize="sm" color="fg.muted">
@@ -235,16 +243,24 @@ export default function Header() {
                   </Popover.Positioner>
                 </Popover.Root>
 
-                <IconButton
-                  aria-label="Déconnexion"
-                  onClick={handleLogout}
-                  variant="ghost"
-                  size="sm"
-                  title="Se déconnecter"
-                  type="button"
-                >
-                  <LogOut size={20} />
-                </IconButton>
+                <Tooltip.Root openDelay={150}>
+                  <Tooltip.Trigger asChild>
+                    <IconButton
+                      aria-label="Déconnexion"
+                      onClick={handleLogout}
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                    >
+                      <LogOut size={20} />
+                    </IconButton>
+                  </Tooltip.Trigger>
+                  <Tooltip.Positioner>
+                    <Tooltip.Content px={3} py={2}>
+                      Déconnexion
+                    </Tooltip.Content>
+                  </Tooltip.Positioner>
+                </Tooltip.Root>
               </HStack>
             </HStack>
           ) : (

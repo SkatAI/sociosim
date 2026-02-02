@@ -16,6 +16,7 @@ import {
   Pagination,
   IconButton,
   Icon,
+  Tooltip,
 } from "@chakra-ui/react";
 import { LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp } from "react-icons/lu";
 import NextLink from "next/link";
@@ -531,28 +532,55 @@ export default function DashboardClient() {
               onPageChange={(details) => setCurrentPage(details.page)}
             >
               <ButtonGroup variant="subtle" size="sm">
-                <Pagination.PrevTrigger asChild>
-                  <IconButton aria-label="Page précédente">
-                    <LuChevronLeft />
-                  </IconButton>
-                </Pagination.PrevTrigger>
+                <Tooltip.Root openDelay={150}>
+                  <Tooltip.Trigger asChild>
+                    <Pagination.PrevTrigger asChild>
+                      <IconButton aria-label="Page précédente">
+                        <LuChevronLeft />
+                      </IconButton>
+                    </Pagination.PrevTrigger>
+                  </Tooltip.Trigger>
+                  <Tooltip.Positioner>
+                    <Tooltip.Content px={3} py={2}>
+                      Page précédente
+                    </Tooltip.Content>
+                  </Tooltip.Positioner>
+                </Tooltip.Root>
 
                 <Pagination.Items
                   render={(page) => (
-                    <IconButton
-                      aria-label={`Page ${page.value}`}
-                      variant={{ base: "subtle", _selected: "solid" }}
-                    >
-                      {page.value}
-                    </IconButton>
+                    <Tooltip.Root openDelay={150}>
+                      <Tooltip.Trigger asChild>
+                        <IconButton
+                          aria-label={`Page ${page.value}`}
+                          variant={{ base: "subtle", _selected: "solid" }}
+                        >
+                          {page.value}
+                        </IconButton>
+                      </Tooltip.Trigger>
+                      <Tooltip.Positioner>
+                        <Tooltip.Content px={3} py={2}>
+                          Page {page.value}
+                        </Tooltip.Content>
+                      </Tooltip.Positioner>
+                    </Tooltip.Root>
                   )}
                 />
 
-                <Pagination.NextTrigger asChild>
-                  <IconButton aria-label="Page suivante">
-                    <LuChevronRight />
-                  </IconButton>
-                </Pagination.NextTrigger>
+                <Tooltip.Root openDelay={150}>
+                  <Tooltip.Trigger asChild>
+                    <Pagination.NextTrigger asChild>
+                      <IconButton aria-label="Page suivante">
+                        <LuChevronRight />
+                      </IconButton>
+                    </Pagination.NextTrigger>
+                  </Tooltip.Trigger>
+                  <Tooltip.Positioner>
+                    <Tooltip.Content px={3} py={2}>
+                      Page suivante
+                    </Tooltip.Content>
+                  </Tooltip.Positioner>
+                </Tooltip.Root>
               </ButtonGroup>
             </Pagination.Root>
           </HStack>

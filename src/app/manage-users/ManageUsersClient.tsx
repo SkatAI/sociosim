@@ -11,6 +11,7 @@ import {
   Spinner,
   Table,
   Text,
+  Tooltip,
   VStack,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
@@ -354,16 +355,25 @@ export default function ManageUsersClient() {
                       </Checkbox.Root>
                     </Table.Cell>
                     <Table.Cell paddingInlineStart={4} textAlign="center">
-                      <IconButton
-                        type="submit"
-                        size="sm"
-                        aria-label="Inviter un utilisateur"
-                        colorPalette="blue"
-                        loading={isInviting}
-                        paddingInline={4}
-                      >
-                        Inviter
-                      </IconButton>
+                      <Tooltip.Root openDelay={150}>
+                        <Tooltip.Trigger asChild>
+                          <IconButton
+                            type="submit"
+                            size="sm"
+                            aria-label="Inviter un utilisateur"
+                            colorPalette="blue"
+                            loading={isInviting}
+                            paddingInline={4}
+                          >
+                            Inviter
+                          </IconButton>
+                        </Tooltip.Trigger>
+                        <Tooltip.Positioner>
+                          <Tooltip.Content px={3} py={2}>
+                            Inviter un utilisateur
+                          </Tooltip.Content>
+                        </Tooltip.Positioner>
+                      </Tooltip.Root>
                     </Table.Cell>
                   </Table.Row>
                 </Table.Body>

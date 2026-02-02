@@ -266,20 +266,29 @@ export function InterviewSidebar({
   return (
     <>
       {isCompact && isCollapsed ? (
-        <IconButton
-          aria-label="Ouvrir le panneau"
-          size="sm"
-          variant="ghost"
-          onClick={() => setIsCollapsed(false)}
-          position="fixed"
-          top="5rem"
-          left={4}
-          borderRadius="full"
-          zIndex={30}
-          backgroundColor="bg.subtle"
-        >
-          <Menu size={16} />
-        </IconButton>
+        <Tooltip.Root openDelay={150}>
+          <Tooltip.Trigger asChild>
+            <IconButton
+              aria-label="Ouvrir le panneau"
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsCollapsed(false)}
+              position="fixed"
+              top="5rem"
+              left={4}
+              borderRadius="full"
+              zIndex={30}
+              backgroundColor="bg.subtle"
+            >
+              <Menu size={16} />
+            </IconButton>
+          </Tooltip.Trigger>
+          <Tooltip.Positioner>
+            <Tooltip.Content px={3} py={2}>
+              Ouvrir le panneau
+            </Tooltip.Content>
+          </Tooltip.Positioner>
+        </Tooltip.Root>
       ) : null}
       {isCompact && !isCollapsed ? (
         <Box
@@ -327,18 +336,27 @@ export function InterviewSidebar({
       }
     >
       {!isCompact && isCollapsed ? (
-        <IconButton
-          aria-label="Ouvrir le panneau"
-          size="sm"
-          variant="ghost"
-          onClick={() => setIsCollapsed(false)}
-          position="absolute"
-          top={2}
-          right={2}
-          borderRadius="full"
-        >
-          <Menu size={16} />
-        </IconButton>
+        <Tooltip.Root openDelay={150}>
+          <Tooltip.Trigger asChild>
+            <IconButton
+              aria-label="Ouvrir le panneau"
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsCollapsed(false)}
+              position="absolute"
+              top={2}
+              right={2}
+              borderRadius="full"
+            >
+              <Menu size={16} />
+            </IconButton>
+          </Tooltip.Trigger>
+          <Tooltip.Positioner>
+            <Tooltip.Content px={3} py={2}>
+              Ouvrir le panneau
+            </Tooltip.Content>
+          </Tooltip.Positioner>
+        </Tooltip.Root>
       ) : null}
       {error ? (
         <Heading as="h1" size="lg" color="red.600">
@@ -438,15 +456,24 @@ export function InterviewSidebar({
                   ) : null}
                 </ButtonGroup>
               </HStack>
-              <IconButton
-                aria-label="Réduire le panneau"
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsCollapsed(true)}
-                borderRadius="full"
-              >
-                <ChevronsLeft size={16} />
-              </IconButton>
+              <Tooltip.Root openDelay={150}>
+                <Tooltip.Trigger asChild>
+                  <IconButton
+                    aria-label="Réduire le panneau"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsCollapsed(true)}
+                    borderRadius="full"
+                  >
+                    <ChevronsLeft size={16} />
+                  </IconButton>
+                </Tooltip.Trigger>
+                <Tooltip.Positioner>
+                  <Tooltip.Content px={3} py={2}>
+                    Réduire le panneau
+                  </Tooltip.Content>
+                </Tooltip.Positioner>
+              </Tooltip.Root>
             </HStack>
             <Heading as="h2" size="lg" color={{ base: "blue.700", _dark: "blue.200" }}>
               {agentDisplayName ?? "Chargement de l'entretien..."}
@@ -490,15 +517,24 @@ export function InterviewSidebar({
               <Heading as="h3" size="sm">
                 Historique
               </Heading>
-              <IconButton
-                aria-label="Voir plus"
-                size="xs"
-                variant="ghost"
-                onClick={() => router.push(`/interviews${historyAgentId ? `?agent=${historyAgentId}` : ""}`)}
-                borderRadius="full"
-              >
-                <ArrowRight size={14} />
-              </IconButton>
+              <Tooltip.Root openDelay={150}>
+                <Tooltip.Trigger asChild>
+                  <IconButton
+                    aria-label="Voir plus"
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => router.push(`/interviews${historyAgentId ? `?agent=${historyAgentId}` : ""}`)}
+                    borderRadius="full"
+                  >
+                    <ArrowRight size={14} />
+                  </IconButton>
+                </Tooltip.Trigger>
+                <Tooltip.Positioner>
+                  <Tooltip.Content px={3} py={2}>
+                    Voir plus
+                  </Tooltip.Content>
+                </Tooltip.Positioner>
+              </Tooltip.Root>
             </HStack>
             {historyError ? (
               <Text fontSize="sm" color="red.600">
@@ -573,15 +609,24 @@ export function InterviewSidebar({
           <Heading as="h3" size="md">
             Guide d&apos;entretien
           </Heading>
-          <IconButton
-            aria-label="Fermer"
-            size="sm"
-            variant="ghost"
-            onClick={() => setIsHelpOpen(false)}
-            borderRadius="full"
-          >
-            <X size={16} />
-          </IconButton>
+          <Tooltip.Root openDelay={150}>
+            <Tooltip.Trigger asChild>
+              <IconButton
+                aria-label="Fermer"
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsHelpOpen(false)}
+                borderRadius="full"
+              >
+                <X size={16} />
+              </IconButton>
+            </Tooltip.Trigger>
+            <Tooltip.Positioner>
+              <Tooltip.Content px={3} py={2}>
+                Fermer
+              </Tooltip.Content>
+            </Tooltip.Positioner>
+          </Tooltip.Root>
         </HStack>
         <VStack align="stretch" gap={3}>
           {introPreview ? <Text fontWeight="600">{introPreview}</Text> : null}

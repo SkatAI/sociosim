@@ -1,6 +1,6 @@
 "use client";
 
-import { IconButton, type IconButtonProps } from "@chakra-ui/react";
+import { IconButton, Tooltip, type IconButtonProps } from "@chakra-ui/react";
 import { Moon, Sun } from "lucide-react";
 import { ThemeProvider, useTheme } from "next-themes";
 import { useMemo } from "react";
@@ -43,15 +43,23 @@ export function ColorModeButton(props: Omit<IconButtonProps, "aria-label">) {
   const isClient = typeof window !== "undefined";
 
   return (
-    <IconButton
-      aria-label="Basculer le theme"
-      variant="ghost"
-      size="sm"
-      onClick={toggleColorMode}
-      title="Basculer le theme"
-      {...props}
-    >
-      {isClient && colorMode === "light" ? <Moon size={18} /> : <Sun size={18} />}
-    </IconButton>
+    <Tooltip.Root openDelay={150}>
+      <Tooltip.Trigger asChild>
+        <IconButton
+          aria-label="Basculer le theme"
+          variant="ghost"
+          size="sm"
+          onClick={toggleColorMode}
+          {...props}
+        >
+          {isClient && colorMode === "light" ? <Moon size={18} /> : <Sun size={18} />}
+        </IconButton>
+      </Tooltip.Trigger>
+      <Tooltip.Positioner>
+        <Tooltip.Content px={3} py={2}>
+          Basculer le theme
+        </Tooltip.Content>
+      </Tooltip.Positioner>
+    </Tooltip.Root>
   );
 }
