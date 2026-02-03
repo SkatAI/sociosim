@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Container,
-  Heading,
   HStack,
   Menu,
   Spinner,
@@ -24,7 +23,7 @@ import Paragraph from "@tiptap/extension-paragraph";
 import TextExtension from "@tiptap/extension-text";
 import { ChevronDown } from "lucide-react";
 import { toaster } from "@/components/ui/toaster";
-import { RichTextEditor, Control } from "@/components/ui/rich-text-editor";
+import PersonnaForm from "@/app/personnas/components/PersonnaForm";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { withTimeout } from "@/lib/withTimeout";
 
@@ -48,11 +47,13 @@ export default function EditAgentPromptPage() {
   const agentId = typeof params.id === "string" ? params.id : "";
   const { user, isLoading: isAuthLoading } = useAuthUser();
   const [agentName, setAgentName] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
   const [selectedPromptId, setSelectedPromptId] = useState<string>("");
   const [isPublishing, setIsPublishing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const basePromptRef = useRef("");
+  const baseAgentRef = useRef({ agentName: "", description: "" });
   const [promptState, setPromptState] = useState<AgentPromptState>({
     systemPrompt: "",
     version: 0,
@@ -153,10 +154,14 @@ export default function EditAgentPromptPage() {
         }
 
         const payload = (await response.json().catch(() => null)) as
-          | { agent?: { agent_name?: string }; prompts?: PromptOption[] }
+          | { agent?: { agent_name?: string; description?: string | null }; prompts?: PromptOption[] }
           | null;
         const prompts = (payload?.prompts || []) as PromptOption[];
-        setAgentName(payload?.agent?.agent_name ?? "");
+        const nextAgentName = payload?.agent?.agent_name ?? "";
+        const nextDescription = payload?.agent?.description ?? "";
+        setAgentName(nextAgentName);
+        setDescription(nextDescription);
+        baseAgentRef.current = { agentName: nextAgentName, description: nextDescription };
         applyPromptList(prompts);
       } catch (loadError) {
         console.error("Error loading agent prompt:", loadError);
@@ -246,8 +251,16 @@ export default function EditAgentPromptPage() {
       return;
     }
 
-    if (!promptState.systemPrompt.trim()) {
-      setError("Le prompt ne peut pas être vide.");
+    const trimmedName = agentName.trim();
+    const trimmedDescription = description.trim();
+
+    if (!trimmedName) {
+      setError("Le nom du personna est requis.");
+      return;
+    }
+
+    if (!trimmedDescription) {
+      setError("La description est requise.");
       return;
     }
 
@@ -255,48 +268,95 @@ export default function EditAgentPromptPage() {
       setIsSaving(true);
       setError(null);
 
-      const saveResponse = await withTimeout(
-        "savePrompt",
-        fetch(`/api/agents/${agentId}/prompts`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            system_prompt: promptState.systemPrompt,
-            edited_by: user.id,
+      const isAgentDirty =
+        trimmedName !== baseAgentRef.current.agentName ||
+        trimmedDescription !== baseAgentRef.current.description;
+      const trimmedPrompt = promptState.systemPrompt.trim();
+      if (isDirty && !trimmedPrompt) {
+        setError("Le prompt ne peut pas être vide.");
+        return;
+      }
+      let didSavePrompt = false;
+      let didSaveAgent = false;
+
+      if (isAgentDirty) {
+        const updateResponse = await withTimeout(
+          "updateAgent",
+          fetch(`/api/agents/${agentId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              agent_name: trimmedName,
+              description: trimmedDescription,
+            }),
           }),
-        }),
-        15000
-      );
+          15000
+        );
 
-      if (!saveResponse.ok) {
-        const payload = await saveResponse.json().catch(() => null);
-        console.error("Error saving agent prompt:", payload);
-        setError("Impossible d'enregistrer le prompt pour le moment.");
-        return;
+        if (!updateResponse.ok) {
+          const payload = await updateResponse.json().catch(() => null);
+          console.error("Error updating agent:", payload);
+          setError("Impossible de mettre à jour le personna.");
+          return;
+        }
+        baseAgentRef.current = { agentName: trimmedName, description: trimmedDescription };
+        didSaveAgent = true;
       }
 
-      const refreshResponse = await withTimeout(
-        "refreshPrompts",
-        fetch(`/api/agents/${agentId}/prompts`),
-        15000
-      );
+      if (isDirty) {
+        const saveResponse = await withTimeout(
+          "savePrompt",
+          fetch(`/api/agents/${agentId}/prompts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              system_prompt: trimmedPrompt,
+              edited_by: user.id,
+            }),
+          }),
+          15000
+        );
 
-      if (!refreshResponse.ok) {
-        const payload = await refreshResponse.json().catch(() => null);
-        console.error("Error refreshing prompts:", payload);
-        setError("Le prompt est enregistré mais la liste ne peut pas être mise à jour.");
-        return;
+        if (!saveResponse.ok) {
+          const payload = await saveResponse.json().catch(() => null);
+          console.error("Error saving agent prompt:", payload);
+          setError("Impossible d'enregistrer le prompt pour le moment.");
+          return;
+        }
+
+        const refreshResponse = await withTimeout(
+          "refreshPrompts",
+          fetch(`/api/agents/${agentId}/prompts`),
+          15000
+        );
+
+        if (!refreshResponse.ok) {
+          const payload = await refreshResponse.json().catch(() => null);
+          console.error("Error refreshing prompts:", payload);
+          setError("Le prompt est enregistré mais la liste ne peut pas être mise à jour.");
+          return;
+        }
+
+        const refreshedPayload = (await refreshResponse.json().catch(() => null)) as
+          | { prompts?: PromptOption[] }
+          | null;
+        applyPromptList((refreshedPayload?.prompts || []) as PromptOption[]);
+        didSavePrompt = true;
       }
 
-      const refreshedPayload = (await refreshResponse.json().catch(() => null)) as
-        | { prompts?: PromptOption[] }
-        | null;
-      applyPromptList((refreshedPayload?.prompts || []) as PromptOption[]);
-      toaster.create({
-        title: "Prompt enregistré",
-        description: "Vos modifications ont été sauvegardées.",
-        type: "success",
-      });
+      if (didSavePrompt) {
+        toaster.create({
+          title: "Prompt enregistré",
+          description: "Vos modifications ont été sauvegardées.",
+          type: "success",
+        });
+      } else if (didSaveAgent) {
+        toaster.create({
+          title: "Personna mis à jour",
+          description: "Les informations du personna ont été enregistrées.",
+          type: "success",
+        });
+      }
     } catch (saveError) {
       console.error("Error saving agent prompt:", saveError);
       setError("Une erreur est survenue lors de l'enregistrement.");
@@ -322,154 +382,134 @@ export default function EditAgentPromptPage() {
 
   const selectedPrompt = promptOptions.find((prompt) => prompt.id === selectedPromptId);
   const isSelectedPublished = selectedPrompt?.published ?? false;
+  const isAgentDirty =
+    agentName.trim() !== baseAgentRef.current.agentName ||
+    description.trim() !== baseAgentRef.current.description;
+  const canSave = (isDirty || isAgentDirty) && !isSaving;
 
   return (
     <Container maxWidth="5xl" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
-      <VStack gap={6} alignItems="stretch">
-        <HStack align="flex-start" justify="space-between" gap={6} flexWrap="wrap">
-          <Box>
-            <Heading size="lg">Modifier le prompt</Heading>
-            <Text color="fg.muted">{agentName || "Agent"}</Text>
-          </Box>
-          <VStack gap={1} alignItems="flex-end">
-            <Menu.Root positioning={{ placement: "bottom-end" }}>
-              <Menu.Trigger asChild>
-                <Button
-                  variant="subtle"
-                  size="sm"
-                  minWidth={{ base: "full", sm: "320px" }}
-                  justifyContent="space-between"
-                  gap={3}
-                  disabled={promptOptions.length === 0}
-                >
-                  <Text
-                    fontSize="sm"
-                    color={selectedPrompt ? "fg.default" : "fg.muted"}
-                    truncate
-                  >
-                    {selectedPrompt ? formatPromptLabel(selectedPrompt) : "Aucun prompt disponible"}
-                  </Text>
-                  <ChevronDown size={16} />
-                </Button>
-              </Menu.Trigger>
-              <Menu.Positioner>
-                <Menu.Content minWidth={{ base: "full", sm: "320px" }} maxHeight="320px" overflowY="auto">
-                  {promptOptions.map((prompt) => (
-                    <Menu.Item
-                      key={prompt.id}
-                      value={prompt.id}
-                      onClick={() => handlePromptSelection(prompt.id)}
-                      fontWeight={prompt.id === selectedPromptId ? "semibold" : "normal"}
-                      color={
-                        prompt.published
-                          ? { base: "red.600", _dark: "red.300" }
-                          : "fg.default"
-                      }
-                    >
-                      {formatPromptLabel(prompt)}
-                    </Menu.Item>
-                  ))}
-                </Menu.Content>
-              </Menu.Positioner>
-            </Menu.Root>
-          </VStack>
-        </HStack>
-
-        {error && (
-          <Box
-            backgroundColor={{ base: "red.50", _dark: "red.900" }}
-            borderRadius="md"
-            padding={4}
-            borderLeft="4px solid"
-            borderLeftColor="red.500"
-          >
-            <Text color={{ base: "red.700", _dark: "red.200" }}>{error}</Text>
-          </Box>
-        )}
-
-        <VStack gap={3} alignItems="stretch">
-          <RichTextEditor.Root
+      <VStack gap={6} alignItems="center">
+        <Box width="full" maxWidth="3xl">
+          <PersonnaForm
+            title="Modifier le prompt"
+            subtitle={agentName || "Agent"}
+            error={error}
+            agentName={agentName}
+            onAgentNameChange={setAgentName}
+            description={description}
+            onDescriptionChange={setDescription}
             editor={editor}
-            fontSize="sm"
-            borderColor={{ base: "gray.200", _dark: "gray.700" }}
-            _focusWithin={{ borderColor: "blue.500", boxShadow: "0 0 0 1px var(--chakra-colors-blue-500)" }}
-            css={{ "--content-min-height": "520px" }}
-          >
-            <HStack
-              gap={2}
-              align="center"
-              flexWrap="wrap"
-              width="full"
-              paddingX={4}
-              paddingTop={3}
-              paddingBottom={2}
-            >
-              <HStack gap={2} flexWrap="wrap" flex="1">
-                <RichTextEditor.ControlGroup>
-                  <Control.H2 />
-                  <Control.Bold />
-                  <Control.BulletList />
-                </RichTextEditor.ControlGroup>
-              </HStack>
-              <Text
-                fontSize="sm"
-                color={
-                  isSelectedPublished
-                    ? "fg.default"
-                    : "fg.muted"
-                }
-                fontWeight={
-                  isSelectedPublished
-                    ? "semibold"
-                    : "normal"
-                }
-              >
-                {isSelectedPublished ? "Publié" : "Brouillon"}
-              </Text>
-              <HStack gap={2} flex="1" justify="flex-end" flexWrap="wrap">
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleSave();
+            }}
+            submitLabel="Enregistrer"
+            isSubmitting={isSaving}
+            showSubmitButton={false}
+            headerActions={(
+              <VStack gap={1} alignItems="flex-end">
+                <Menu.Root positioning={{ placement: "bottom-end" }}>
+                  <Menu.Trigger asChild>
+                    <Button
+                      variant="subtle"
+                      size="sm"
+                      minWidth={{ base: "full", sm: "320px" }}
+                      justifyContent="space-between"
+                      gap={3}
+                      disabled={promptOptions.length === 0}
+                    >
+                      <Text
+                        fontSize="sm"
+                        color={selectedPrompt ? "fg.default" : "fg.muted"}
+                        truncate
+                      >
+                        {selectedPrompt ? formatPromptLabel(selectedPrompt) : "Aucun prompt disponible"}
+                      </Text>
+                      <ChevronDown size={16} />
+                    </Button>
+                  </Menu.Trigger>
+                  <Menu.Positioner>
+                    <Menu.Content minWidth={{ base: "full", sm: "320px" }} maxHeight="320px" overflowY="auto">
+                      {promptOptions.map((prompt) => (
+                        <Menu.Item
+                          key={prompt.id}
+                          value={prompt.id}
+                          onClick={() => handlePromptSelection(prompt.id)}
+                          fontWeight={prompt.id === selectedPromptId ? "semibold" : "normal"}
+                          color={
+                            prompt.published
+                              ? { base: "red.600", _dark: "red.300" }
+                              : "fg.default"
+                          }
+                        >
+                          {formatPromptLabel(prompt)}
+                        </Menu.Item>
+                      ))}
+                    </Menu.Content>
+                  </Menu.Positioner>
+                </Menu.Root>
+              </VStack>
+            )}
+            editorToolbarRight={(
+              <>
+                <Text
+                  fontSize="sm"
+                  color={
+                    isSelectedPublished
+                      ? "fg.default"
+                      : "fg.muted"
+                  }
+                  fontWeight={
+                    isSelectedPublished
+                      ? "semibold"
+                      : "normal"
+                  }
+                >
+                  {isSelectedPublished ? "Publié" : "Brouillon"}
+                </Text>
+                <HStack gap={2} flex="1" justify="flex-end" flexWrap="wrap">
+                  <Button
+                    size="sm"
+                    variant="subtle"
+                    onClick={handleSave}
+                    loading={isSaving}
+                    disabled={!canSave}
+                    paddingInline={5}
+                  >
+                    Enregistrer
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="subtle"
+                    onClick={handlePublish}
+                    loading={isPublishing}
+                    disabled={!selectedPromptId || isSelectedPublished}
+                    paddingInline={5}
+                  >
+                    Publier
+                  </Button>
+                </HStack>
+              </>
+            )}
+            footer={(
+              <HStack justifyContent="flex-end" gap={3}>
+                <Button variant="subtle" onClick={handleDiscard} disabled={isSaving} paddingInline={5}>
+                  Annuler
+                </Button>
                 <Button
-                  size="sm"
                   variant="subtle"
                   onClick={handleSave}
                   loading={isSaving}
-                  disabled={!isDirty || isSaving}
+                  disabled={!canSave}
                   paddingInline={5}
                 >
                   Enregistrer
                 </Button>
-                <Button
-                  size="sm"
-                  variant="subtle"
-                  onClick={handlePublish}
-                  loading={isPublishing}
-                  disabled={!selectedPromptId || isSelectedPublished}
-                  paddingInline={5}
-                >
-                  Publier
-                </Button>
               </HStack>
-            </HStack>
-            <RichTextEditor.Content />
-          </RichTextEditor.Root>
-          <Text color="fg.muted" fontSize="sm">
-            Utilisez les icônes pour ajouter des sections, du gras et des listes sans saisir la syntaxe Markdown.
-          </Text>
-        </VStack>
-
-        <HStack justifyContent="flex-end" gap={3}>
-          <Button variant="subtle" onClick={handleDiscard} disabled={isSaving} paddingInline={5}>
-            Annuler
-          </Button>
-          <Button
-            variant="subtle"
-            onClick={handleSave}
-            loading={isSaving}
-            disabled={!isDirty || isSaving}
-            paddingInline={5}
-          >
-            Enregistrer
-          </Button>
-        </HStack>
+            )}
+          />
+        </Box>
       </VStack>
     </Container>
   );

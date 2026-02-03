@@ -1,22 +1,19 @@
 "use client";
 
-import {
-  Box,
-  Button,
-  Container,
-  Dialog,
-  Field,
-  Heading,
-  HStack,
-  Input,
-  Portal,
-  Text,
-  Textarea,
-  VStack,
-} from "@chakra-ui/react";
+import { Box, Container, VStack } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
+import { useEditor } from "@tiptap/react";
+import { Markdown } from "@tiptap/markdown";
+import Bold from "@tiptap/extension-bold";
+import BulletList from "@tiptap/extension-bullet-list";
+import Document from "@tiptap/extension-document";
+import HeadingExtension from "@tiptap/extension-heading";
+import ListItem from "@tiptap/extension-list-item";
+import Paragraph from "@tiptap/extension-paragraph";
+import TextExtension from "@tiptap/extension-text";
 import { toaster } from "@/components/ui/toaster";
+import PersonnaForm from "@/app/personnas/components/PersonnaForm";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { withTimeout } from "@/lib/withTimeout";
 
@@ -32,6 +29,30 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
   const [systemPrompt, setSystemPrompt] = useState(templatePrompt);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const editor = useEditor({
+    extensions: [
+      Document,
+      Paragraph,
+      TextExtension,
+      HeadingExtension.configure({ levels: [2] }),
+      Bold,
+      BulletList,
+      ListItem,
+      Markdown,
+    ],
+    content: "",
+    contentType: "markdown",
+    immediatelyRender: false,
+    onUpdate: ({ editor: currentEditor }) => {
+      const nextMarkdown = currentEditor.getMarkdown();
+      setSystemPrompt((current) => (current === nextMarkdown ? current : nextMarkdown));
+    },
+    editorProps: {
+      attributes: {
+        class: "tiptap-editor",
+      },
+    },
+  });
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -39,6 +60,14 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
       router.push("/login");
     }
   }, [isAuthLoading, router, user]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const currentMarkdown = editor.getMarkdown();
+    if (currentMarkdown !== systemPrompt) {
+      editor.commands.setContent(systemPrompt, { contentType: "markdown" });
+    }
+  }, [editor, systemPrompt]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -114,150 +143,23 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
   };
 
   return (
-    <Container maxWidth="4xl" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
-      <VStack gap={6} alignItems="stretch">
-        <Box>
-          <Heading size="lg">Créer un nouveau personna</Heading>
-          <Text color="fg.muted">
-            Renseignez un nom, une description et le prompt système de l&apos;agent.
-          </Text>
+    <Container maxWidth="5xl" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
+      <VStack gap={6} alignItems="center">
+        <Box width="full" maxWidth="3xl">
+          <PersonnaForm
+            title="Créer un nouveau personna"
+            subtitle="Renseignez un nom, une description et le prompt système de l'agent."
+            error={error}
+            agentName={agentName}
+            onAgentNameChange={setAgentName}
+            description={description}
+            onDescriptionChange={setDescription}
+            editor={editor}
+            onSubmit={handleSubmit}
+            submitLabel="Enregistrer"
+            isSubmitting={isSaving}
+          />
         </Box>
-
-        {error && (
-          <Box
-            backgroundColor={{ base: "red.50", _dark: "red.900" }}
-            borderRadius="md"
-            padding={4}
-            borderLeft="4px solid"
-            borderLeftColor="red.500"
-          >
-            <Text color={{ base: "red.700", _dark: "red.200" }}>{error}</Text>
-          </Box>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <VStack gap={4} alignItems="stretch">
-            <Field.Root>
-              <Field.Label fontSize="lg">Nom du personna</Field.Label>
-              <Input
-                value={agentName}
-                onChange={(event) => setAgentName(event.target.value)}
-                placeholder="Nom de l'agent"
-              />
-            </Field.Root>
-
-            <Field.Root>
-              <Field.Label fontSize="lg">Description</Field.Label>
-              <Input
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="Courte description de l'agent"
-              />
-            </Field.Root>
-
-            <Field.Root>
-              <Field.Label fontSize="lg">Prompt système</Field.Label>
-              <HStack gap={2} align="center" flexWrap="wrap">
-                <Text color="fg.muted" fontSize="md">
-                  Ecrire le system prompt du nouveau personna.
-                </Text>
-                <Dialog.Root>
-                  <Dialog.Trigger asChild>
-                    <Button
-                      variant="plain"
-                      size="sm"
-                      colorPalette="blue"
-                      textDecoration="underline"
-                    >
-                      Comment générer un system prompt à partir d&apos;un entretien ?
-                    </Button>
-                  </Dialog.Trigger>
-                  <Portal>
-                    <Dialog.Backdrop />
-                    <Dialog.Positioner>
-                      <Dialog.Content padding={8}>
-                        <Dialog.Header>
-                          <Dialog.Title>Aide</Dialog.Title>
-                        </Dialog.Header>
-                        <Dialog.Body>
-                          <Text>
-                            Le plus simple est de fournir à un chatbot (Claude, chatGPT, etc):
-                            <br />- un pdf de l&apos;interview
-                            <br />- un fichier de
-                            <Button
-                              asChild
-                              variant="plain"
-                              size="sm"
-                              colorPalette="blue"
-                              textDecoration="underline"
-                            >
-                              <a
-                                href="/docs/template_agent_system_prompt.md"
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                template au format markdown
-                              </a>
-                            </Button>
-                            <br /> <br />
-                            Le prompt suivant donne de bons résultats avec Claude.
-                            <Box
-      as="span"
-      display="block"
-      marginTop={2}
-      paddingLeft={8}
-      fontFamily="mono"
-      fontSize="sm"
-      color="fg.muted"
-    >Nous allons construire un system prompt pour une personna à partir d&apos;une interview sociologique de la personne réélle sur son usage de l&apos;IA.
-    <br />Voir fichier pdf de l&apos;interview
-    <br />Le but est de générer un fichier markdown suivant le template fourni.
-    <br />Il faut renseigner tous les élèments entre acolades {"{"}{"}"}.
-    <br />Ce fichier markdown servira de system prompt pour une personna dans une application de simulation d&apos;entretien en sociologie
-    <br />Les élèments doivent être assez précis
-    <br />Faisons un premier essai
-    </Box>
-    <br />Vous pouvez ensuite copier coller le resultat généré par l&apos;IA dans le champ ci-dessous.
-    <br />Le template en markdown est disponible
-                            <Button
-                              asChild
-                              variant="plain"
-                              size="sm"
-                              colorPalette="blue"
-                              textDecoration="underline"
-                            >
-                              <a
-                                href="/docs/template_agent_system_prompt.md"
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                ici
-                              </a>
-                            </Button>
-                          </Text>
-                        </Dialog.Body>
-                        <Dialog.Footer>
-                          <Dialog.ActionTrigger asChild>
-                            <Button variant="outline">Fermer</Button>
-                          </Dialog.ActionTrigger>
-                        </Dialog.Footer>
-                      </Dialog.Content>
-                    </Dialog.Positioner>
-                  </Portal>
-                </Dialog.Root>
-              </HStack>
-              <Textarea
-                value={systemPrompt}
-                onChange={(event) => setSystemPrompt(event.target.value)}
-                minH="360px"
-              />
-            </Field.Root>
-
-            <Button type="submit" variant="subtle" loading={isSaving} alignSelf="flex-end" paddingInline={6}>
-              Enregistrer
-            </Button>
-          </VStack>
-        </form>
       </VStack>
     </Container>
   );

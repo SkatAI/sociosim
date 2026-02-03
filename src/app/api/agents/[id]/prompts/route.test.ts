@@ -31,7 +31,7 @@ describe("GET /api/agents/:id/prompts", () => {
           select: () => ({
             eq: () => ({
               single: vi.fn().mockResolvedValue({
-                data: { id: "agent-1", agent_name: "Eliot" },
+                data: { id: "agent-1", agent_name: "Eliot", description: "Desc" },
                 error: null,
               }),
             }),
@@ -73,7 +73,7 @@ describe("GET /api/agents/:id/prompts", () => {
 
     expect(response.status).toBe(200);
     expect(body).toMatchObject({
-      agent: { id: "agent-1", agent_name: "Eliot" },
+      agent: { id: "agent-1", agent_name: "Eliot", description: "Desc" },
       prompts: [{ id: "prompt-1", version: 1 }],
     });
   });
