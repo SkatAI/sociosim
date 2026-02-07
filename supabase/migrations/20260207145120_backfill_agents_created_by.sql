@@ -1,3 +1,8 @@
 UPDATE public.agents
-SET created_by = '57a89aeb-90f6-4e11-8db8-234c51f87023'
+SET created_by = (
+  SELECT id
+  FROM public.users
+  WHERE email = 'alexis.perrier@gmail.com'
+  LIMIT 1
+)
 WHERE created_by IS NULL;
