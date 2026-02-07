@@ -16,7 +16,10 @@ export default function PersonnaLayout({ left, center, right }: PersonnaLayoutPr
       height="100%"
       backgroundColor="bg.surface"
       overflow="hidden"
-      css={{ "--personna-left-width": "280px" }}
+      css={{
+        "--personna-left-width": "280px",
+        "--personna-right-width": "320px",
+      }}
     >
       {left}
       <Box
@@ -24,6 +27,7 @@ export default function PersonnaLayout({ left, center, right }: PersonnaLayoutPr
         flexDirection={{ base: "column", lg: "row" }}
         height="100%"
         paddingLeft={{ base: 0, lg: "var(--personna-left-width)" }}
+        paddingRight={{ base: 0, lg: "var(--personna-right-width)" }}
       >
         <Box flex="1" minHeight={0} overflow="hidden">
           {center}
