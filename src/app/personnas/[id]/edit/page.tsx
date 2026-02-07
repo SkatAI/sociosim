@@ -678,7 +678,9 @@ export default function EditAgentPromptPage() {
           center={(
             <Box
               height="100%"
-              padding={0}
+              maxWidth="960px"
+              marginX="auto"
+              paddingX={{ base: 4, lg: 6 }}
               paddingTop={{ base: 4, lg: 5 }}
               overflow="hidden"
               minHeight={0}
