@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Field, HStack, Text, VStack } from "@chakra-ui/react";
+import { Box, Field, Heading, HStack, Text, VStack } from "@chakra-ui/react";
 import type { ReactNode } from "react";
 import type { Editor } from "@tiptap/react";
 import { RichTextEditor, Control } from "@/components/ui/rich-text-editor";
@@ -30,7 +30,7 @@ export default function PersonnaPromptEditor({
         </Box>
       ) : null}
       <Field.Root display="flex" flexDirection="column" flex="1" minHeight={0} height="100%">
-        <Field.Label fontSize="lg">Prompt du personna</Field.Label>
+        <Heading size="md">Prompt du personna</Heading>
         <RichTextEditor.Root
           editor={editor}
           fontSize="sm"

@@ -680,6 +680,7 @@ export default function EditAgentPromptPage() {
               flex="1"
               height="calc(100dvh - var(--app-header-height))"
               padding={0}
+              paddingTop={{ base: 4, lg: 5 }}
               overflow="hidden"
               minHeight={0}
               display="flex"
