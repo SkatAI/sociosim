@@ -111,7 +111,8 @@ CREATE TABLE public.agents (
     description text NOT NULL,
     created_at timestamp with time zone DEFAULT timezone('CET'::text, now()) NOT NULL,
     updated_at timestamp with time zone DEFAULT timezone('CET'::text, now()) NOT NULL,
-    active boolean DEFAULT true NOT NULL
+    active boolean DEFAULT true NOT NULL,
+    is_public boolean DEFAULT false
 );
 
 
@@ -453,4 +454,3 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 --
 
 \unrestrict u4t7Y9F2aDVkhcDWg5JcXlBqovqQ5pTy0J2zohJZhhuoz7oQWccraAkvVbH3BJe
-

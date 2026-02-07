@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - **Dashboard Filters:** Only show interviews for active agents.
 - **Auth Admin Flag:** Expose `user_admin` in auth context and gate the manage users link + redirect non-admins.
 - **Footer:** Add Université Gustave Eiffel footer with logo and legal/contact links.
+- **Agents:** Add `is_public` flag to `public.agents`.
 ### Changed
 - **Interviews Route:** Rename `/dashboard` to `/interviews`.
 - **Admin Interviews:** Admins can view all interviews without resuming someone else’s session.
