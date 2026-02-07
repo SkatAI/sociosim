@@ -30,12 +30,7 @@ export default function PersonnaPromptEditor({
         </Box>
       ) : null}
       <Field.Root display="flex" flexDirection="column" flex="1" minHeight={0}>
-        <Field.Label fontSize="lg">Prompt système</Field.Label>
-        <HStack gap={2} align="center" flexWrap="wrap">
-          <Text color="fg.muted" fontSize="md">
-            Ecrire le system prompt du personna.
-          </Text>
-        </HStack>
+        <Field.Label fontSize="lg">Prompt du personna</Field.Label>
         <VStack gap={3} alignItems="stretch" flex="1" minHeight={0}>
           <RichTextEditor.Root
             editor={editor}
