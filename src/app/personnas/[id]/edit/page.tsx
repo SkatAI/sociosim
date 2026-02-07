@@ -199,6 +199,13 @@ export default function EditAgentPromptPage() {
     }
   }, [editor, promptState.systemPrompt]);
 
+  useEffect(() => {
+    document.body.classList.add("personna-layout");
+    return () => {
+      document.body.classList.remove("personna-layout");
+    };
+  }, []);
+
   const handlePromptSelection = (value: string) => {
     setSelectedPromptId(value);
     const selectedPrompt = promptOptions.find((prompt) => prompt.id === value);
@@ -485,7 +492,7 @@ export default function EditAgentPromptPage() {
   const canSave = (isDirty || isAgentDirty) && !isSaving;
 
   return (
-    <Box width="full" height="100vh">
+    <Box width="full" height="100%">
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -670,9 +677,14 @@ export default function EditAgentPromptPage() {
           )}
           center={(
             <Box
-              height="100%"
+              flex="1"
+              height="calc(100dvh - var(--app-header-height))"
               padding={0}
-              overflow="hidden"
+              overflowY="auto"
+              minHeight={0}
+              display="flex"
+              flexDirection="column"
+              data-scroll-container
             >
               <PersonnaPromptEditor
                 editor={editor}

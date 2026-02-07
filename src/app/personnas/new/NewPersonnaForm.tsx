@@ -85,6 +85,13 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
   }, [isAuthLoading, router, user]);
 
   useEffect(() => {
+    document.body.classList.add("personna-layout");
+    return () => {
+      document.body.classList.remove("personna-layout");
+    };
+  }, []);
+
+  useEffect(() => {
     if (!editor) return;
     const currentMarkdown = editor.getMarkdown();
     if (currentMarkdown !== systemPrompt) {
@@ -217,7 +224,7 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
   };
 
   return (
-    <Box width="full" height="100vh">
+    <Box width="full" height="100%">
       <form onSubmit={handleSubmit} style={{ height: "100%" }}>
         <PersonnaLayout
           left={(
@@ -348,7 +355,16 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
             </PersonnaLeftSidebar>
           )}
           center={(
-            <Box height="100%" padding={0} overflow="hidden">
+            <Box
+              flex="1"
+              height="calc(100dvh - var(--app-header-height))"
+              padding={0}
+              overflowY="auto"
+              minHeight={0}
+              display="flex"
+              flexDirection="column"
+              data-scroll-container
+            >
               <PersonnaPromptEditor
                 editor={editor}
                 error={error}

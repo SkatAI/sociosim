@@ -17,10 +17,10 @@ export default function PersonnaLayout({ left, center, right }: PersonnaLayoutPr
       backgroundColor="bg.surface"
       overflow="hidden"
       css={{
-        "--personna-left-sidebar-width": "280px",
-        "--personna-right-sidebar-width": "320px",
-        "--personna-left-offset": "180px",
-        "--personna-right-offset": "180px",
+        "--personna-left-sidebar-width": "250px",
+        "--personna-right-sidebar-width": "250px",
+        "--personna-left-offset": "280px",
+        "--personna-right-offset": "280px",
       }}
     >
       {left}
@@ -28,6 +28,7 @@ export default function PersonnaLayout({ left, center, right }: PersonnaLayoutPr
         display="flex"
         flexDirection={{ base: "column", lg: "row" }}
         height="100%"
+        minHeight={0}
         paddingLeft={{ base: 0, lg: "var(--personna-left-offset)" }}
         paddingRight={{ base: 0, lg: "var(--personna-right-offset)" }}
       >

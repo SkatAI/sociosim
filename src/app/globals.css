@@ -76,6 +76,25 @@ body {
 .interview-layout footer {
   margin-top: 0 !important;
 }
+.personna-layout,
+.personna-layout body {
+  height: 100dvh;
+  overflow: hidden;
+}
+.personna-layout .app-root {
+  height: 100dvh;
+  overflow: hidden;
+}
+.personna-layout .app-shell {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  max-width: 100%;
+  padding: 0;
+}
+.personna-layout footer {
+  margin-top: 0 !important;
+}
 .interview-layout [data-scroll-container] {
   scrollbar-width: none;
 }

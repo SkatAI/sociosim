@@ -49,11 +49,14 @@ export default function PersonnaPromptEditor({
             flexDirection="column"
             flex="1"
             minHeight={0}
+            height="100%"
             css={{
               "--content-min-height": "0px",
               "& .ProseMirror": {
                 flex: "1",
                 minHeight: "0",
+                height: "100%",
+                maxHeight: "100%",
                 overflowY: "auto",
               },
             }}
