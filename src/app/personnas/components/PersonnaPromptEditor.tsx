@@ -40,7 +40,7 @@ export default function PersonnaPromptEditor({
             boxShadow: "0 0 0 1px var(--chakra-colors-blue-500)",
           }}
           display="grid"
-          gridTemplateRows="auto 1fr auto"
+          gridTemplateRows="auto 1fr"
           flex="1"
           minHeight={0}
           height="100%"
@@ -48,9 +48,8 @@ export default function PersonnaPromptEditor({
           css={{
             "--content-min-height": "0px",
             "& .ProseMirror": {
-              minHeight: "0",
-              height: "100%",
-              maxHeight: "calc(100dvh - var(--app-header-height) - 80px)",
+              flex: 1,
+              minHeight: 0,
               overflowY: "auto",
               overflowX: "hidden",
             },
@@ -80,7 +79,14 @@ export default function PersonnaPromptEditor({
             </HStack>
             {editorToolbarRight}
           </HStack>
-          <RichTextEditor.Content />
+          <RichTextEditor.Content
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+              overflow: "hidden",
+            }}
+          />
         </RichTextEditor.Root>
       </Field.Root>
     </VStack>

@@ -356,15 +356,13 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
           )}
           center={(
             <Box
-              flex="1"
-              height="calc(100dvh - var(--app-header-height))"
+              height="100%"
               padding={0}
               paddingTop={{ base: 4, lg: 5 }}
               overflow="hidden"
               minHeight={0}
               display="flex"
               flexDirection="column"
-              data-scroll-container
             >
               <Box flex="1" minHeight={0} display="flex">
                 <PersonnaPromptEditor
