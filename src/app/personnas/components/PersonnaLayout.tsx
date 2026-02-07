@@ -21,8 +21,6 @@ export default function PersonnaLayout({ left, center, right }: PersonnaLayoutPr
         "--personna-right-sidebar-width": "320px",
         "--personna-left-offset": "180px",
         "--personna-right-offset": "180px",
-        outline: "2px dashed rgba(0, 128, 255, 0.5)",
-        outlineOffset: "-2px",
       }}
     >
       {left}

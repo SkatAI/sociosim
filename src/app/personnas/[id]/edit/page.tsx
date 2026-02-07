@@ -673,8 +673,6 @@ export default function EditAgentPromptPage() {
               height="100%"
               padding={0}
               overflow="hidden"
-              outline="2px dashed rgba(255, 165, 0, 0.7)"
-              outlineOffset="-2px"
             >
               <PersonnaPromptEditor
                 editor={editor}

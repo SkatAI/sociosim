@@ -44,8 +44,6 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  outline: 2px dashed rgba(255, 0, 0, 0.5);
-  outline-offset: -2px;
 }
 .interview-layout .app-shell {
   padding-bottom: 0;
