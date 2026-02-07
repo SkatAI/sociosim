@@ -359,27 +359,29 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
               flex="1"
               height="calc(100dvh - var(--app-header-height))"
               padding={0}
-              overflowY="auto"
+              overflow="hidden"
               minHeight={0}
               display="flex"
               flexDirection="column"
               data-scroll-container
             >
-              <PersonnaPromptEditor
-                editor={editor}
-                error={error}
-                editorToolbarRight={(
-                  <Button
-                    type="submit"
-                    size="sm"
-                    variant="subtle"
-                    loading={isSaving}
-                    paddingInline={5}
-                  >
-                    Enregistrer
-                  </Button>
-                )}
-              />
+              <Box flex="1" minHeight={0} display="flex">
+                <PersonnaPromptEditor
+                  editor={editor}
+                  error={error}
+                  editorToolbarRight={(
+                    <Button
+                      type="submit"
+                      size="sm"
+                      variant="subtle"
+                      loading={isSaving}
+                      paddingInline={5}
+                    >
+                      Enregistrer
+                    </Button>
+                  )}
+                />
+              </Box>
             </Box>
           )}
           right={(

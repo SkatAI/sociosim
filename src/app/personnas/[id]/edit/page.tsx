@@ -680,54 +680,56 @@ export default function EditAgentPromptPage() {
               flex="1"
               height="calc(100dvh - var(--app-header-height))"
               padding={0}
-              overflowY="auto"
+              overflow="hidden"
               minHeight={0}
               display="flex"
               flexDirection="column"
               data-scroll-container
             >
-              <PersonnaPromptEditor
-                editor={editor}
-                error={error}
-                editorToolbarRight={(
-                  <>
-                    <Text
-                      fontSize="sm"
-                      color={isSelectedPublished ? "fg.default" : "fg.muted"}
-                      fontWeight={isSelectedPublished ? "semibold" : "normal"}
-                    >
-                      {isSelectedPublished ? "Publié" : "Brouillon"}
-                    </Text>
-                    <HStack gap={2} flex="1" justify="flex-end" flexWrap="wrap">
-                      <Button
-                        size="sm"
-                        variant="subtle"
-                        onClick={handleSave}
-                        loading={isSaving}
-                        disabled={!canSave}
-                        paddingInline={5}
+              <Box flex="1" minHeight={0} display="flex">
+                <PersonnaPromptEditor
+                  editor={editor}
+                  error={error}
+                  editorToolbarRight={(
+                    <>
+                      <Text
+                        fontSize="sm"
+                        color={isSelectedPublished ? "fg.default" : "fg.muted"}
+                        fontWeight={isSelectedPublished ? "semibold" : "normal"}
                       >
-                        Enregistrer
-                      </Button>
-                      <Button
-                        size="sm"
-                        colorPalette="blue"
-                        onClick={handlePublish}
-                        loading={isPublishing}
-                        disabled={
-                          !selectedPromptId ||
-                          isSelectedPublished ||
-                          isReviewing ||
-                          review?.status === "invalid"
-                        }
-                        paddingInline={5}
-                      >
-                        Publier
-                      </Button>
-                    </HStack>
-                  </>
-                )}
-              />
+                        {isSelectedPublished ? "Publié" : "Brouillon"}
+                      </Text>
+                      <HStack gap={2} flex="1" justify="flex-end" flexWrap="wrap">
+                        <Button
+                          size="sm"
+                          variant="subtle"
+                          onClick={handleSave}
+                          loading={isSaving}
+                          disabled={!canSave}
+                          paddingInline={5}
+                        >
+                          Enregistrer
+                        </Button>
+                        <Button
+                          size="sm"
+                          colorPalette="blue"
+                          onClick={handlePublish}
+                          loading={isPublishing}
+                          disabled={
+                            !selectedPromptId ||
+                            isSelectedPublished ||
+                            isReviewing ||
+                            review?.status === "invalid"
+                          }
+                          paddingInline={5}
+                        >
+                          Publier
+                        </Button>
+                      </HStack>
+                    </>
+                  )}
+                />
+              </Box>
             </Box>
           )}
           right={(

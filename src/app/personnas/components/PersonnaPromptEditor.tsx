@@ -17,7 +17,7 @@ export default function PersonnaPromptEditor({
   error,
 }: PersonnaPromptEditorProps) {
   return (
-    <VStack align="stretch" gap={4} height="100%" minHeight={0}>
+    <VStack align="stretch" gap={4} height="100%" minHeight={0} flex="1">
       {error ? (
         <Box
           backgroundColor={{ base: "red.50", _dark: "red.900" }}
@@ -29,57 +29,59 @@ export default function PersonnaPromptEditor({
           <Text color={{ base: "red.700", _dark: "red.200" }}>{error}</Text>
         </Box>
       ) : null}
-      <Field.Root display="flex" flexDirection="column" flex="1" minHeight={0}>
+      <Field.Root display="flex" flexDirection="column" flex="1" minHeight={0} height="100%">
         <Field.Label fontSize="lg">Prompt du personna</Field.Label>
-        <VStack gap={3} alignItems="stretch" flex="1" minHeight={0}>
-          <RichTextEditor.Root
-            editor={editor}
-            fontSize="sm"
-            borderColor={{ base: "gray.200", _dark: "gray.700" }}
-            _focusWithin={{
-              borderColor: "blue.500",
-              boxShadow: "0 0 0 1px var(--chakra-colors-blue-500)",
-            }}
-            display="flex"
-            flexDirection="column"
-            flex="1"
-            minHeight={0}
-            height="100%"
-            css={{
-              "--content-min-height": "0px",
-              "& .ProseMirror": {
-                flex: "1",
-                minHeight: "0",
-                height: "100%",
-                maxHeight: "100%",
-                overflowY: "auto",
-              },
-            }}
+        <RichTextEditor.Root
+          editor={editor}
+          fontSize="sm"
+          borderColor={{ base: "gray.200", _dark: "gray.700" }}
+          _focusWithin={{
+            borderColor: "blue.500",
+            boxShadow: "0 0 0 1px var(--chakra-colors-blue-500)",
+          }}
+          display="grid"
+          gridTemplateRows="auto 1fr auto"
+          flex="1"
+          minHeight={0}
+          height="100%"
+          overflow="hidden"
+          css={{
+            "--content-min-height": "0px",
+            "& .ProseMirror": {
+              minHeight: "0",
+              height: "100%",
+              maxHeight: "calc(100dvh - var(--app-header-height) - 80px)",
+              overflowY: "auto",
+              overflowX: "hidden",
+            },
+          }}
+        >
+          <HStack
+            gap={2}
+            align="center"
+            flexWrap="wrap"
+            width="full"
+            paddingX={4}
+            paddingTop={3}
+            paddingBottom={2}
+            position="sticky"
+            top={0}
+            zIndex={1}
+            backgroundColor="bg.surface"
+            borderBottomWidth="1px"
+            borderBottomColor="border.muted"
           >
-            <HStack
-              gap={2}
-              align="center"
-              flexWrap="wrap"
-              width="full"
-              paddingX={4}
-              paddingTop={3}
-              paddingBottom={2}
-            >
-              <HStack gap={2} flexWrap="wrap" flex="1">
-                <RichTextEditor.ControlGroup>
-                  <Control.H2 />
-                  <Control.Bold />
-                  <Control.BulletList />
-                </RichTextEditor.ControlGroup>
-              </HStack>
-              {editorToolbarRight}
+            <HStack gap={2} flexWrap="wrap" flex="1">
+              <RichTextEditor.ControlGroup>
+                <Control.H2 />
+                <Control.Bold />
+                <Control.BulletList />
+              </RichTextEditor.ControlGroup>
             </HStack>
-            <RichTextEditor.Content />
-          </RichTextEditor.Root>
-          <Text color="fg.muted" fontSize="sm">
-            Utilisez les icônes pour ajouter des sections, du gras et des listes sans saisir la syntaxe Markdown.
-          </Text>
-        </VStack>
+            {editorToolbarRight}
+          </HStack>
+          <RichTextEditor.Content />
+        </RichTextEditor.Root>
       </Field.Root>
     </VStack>
   );

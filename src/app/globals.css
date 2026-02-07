@@ -93,7 +93,7 @@ body {
   padding: 0;
 }
 .personna-layout footer {
-  margin-top: 0 !important;
+  display: none !important;
 }
 .interview-layout [data-scroll-container] {
   scrollbar-width: none;
