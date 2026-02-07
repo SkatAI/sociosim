@@ -14,6 +14,9 @@ import Paragraph from "@tiptap/extension-paragraph";
 import TextExtension from "@tiptap/extension-text";
 import { toaster } from "@/components/ui/toaster";
 import PersonnaForm from "@/app/personnas/components/PersonnaForm";
+import PromptReviewSidebar, {
+  type CauldronReview,
+} from "@/app/personnas/components/PromptReviewSidebar";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { withTimeout } from "@/lib/withTimeout";
 
@@ -29,6 +32,10 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
   const [systemPrompt, setSystemPrompt] = useState(templatePrompt);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [review, setReview] = useState<CauldronReview | null>(null);
+  const [reviewedContent, setReviewedContent] = useState("");
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [isReviewing, setIsReviewing] = useState(false);
   const editor = useEditor({
     extensions: [
       Document,
@@ -54,6 +61,10 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
     },
   });
 
+  const isReviewCurrent = Boolean(
+    review && reviewedContent.trim() === systemPrompt.trim()
+  );
+
   useEffect(() => {
     if (isAuthLoading) return;
     if (!user) {
@@ -68,6 +79,47 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
       editor.commands.setContent(systemPrompt, { contentType: "markdown" });
     }
   }, [editor, systemPrompt]);
+
+  const reviewPrompt = async (content: string) => {
+    try {
+      setIsReviewing(true);
+      setReviewError(null);
+
+      const response = await withTimeout(
+        "reviewPrompt",
+        fetch("/api/cauldron/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        }),
+        30000
+      );
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        console.error("Error validating prompt:", payload);
+        setReviewError("Impossible de valider le prompt pour le moment.");
+        return null;
+      }
+
+      const payload = (await response.json().catch(() => null)) as CauldronReview | null;
+      if (!payload?.status) {
+        console.error("Invalid cauldron response:", payload);
+        setReviewError("La réponse de validation est invalide.");
+        return null;
+      }
+
+      setReview(payload);
+      setReviewedContent(content);
+      return payload;
+    } catch (reviewFailure) {
+      console.error("Error validating prompt:", reviewFailure);
+      setReviewError("Une erreur est survenue lors de la validation.");
+      return null;
+    } finally {
+      setIsReviewing(false);
+    }
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -97,6 +149,16 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
     }
 
     try {
+      const reviewResult = await reviewPrompt(trimmedPrompt);
+      if (!reviewResult) {
+        setError("Impossible de valider le prompt.");
+        return;
+      }
+      if (reviewResult.status === "invalid") {
+        setError("Le prompt a été refusé par la validation.");
+        return;
+      }
+
       setIsSaving(true);
       setError(null);
 
@@ -143,9 +205,9 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
   };
 
   return (
-    <Container maxWidth="5xl" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
+    <Container maxWidth="6xl" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
       <VStack gap={6} alignItems="center">
-        <Box width="full" maxWidth="3xl">
+        <Box width="full">
           <PersonnaForm
             title="Créer un nouveau personna"
             subtitle="Renseignez un nom, une description et le prompt système de l'agent."
@@ -158,6 +220,14 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
             onSubmit={handleSubmit}
             submitLabel="Enregistrer"
             isSubmitting={isSaving}
+            sidebar={(
+              <PromptReviewSidebar
+                review={review}
+                reviewError={reviewError}
+                isReviewing={isReviewing}
+                isCurrent={Boolean(isReviewCurrent)}
+              />
+            )}
           />
         </Box>
       </VStack>

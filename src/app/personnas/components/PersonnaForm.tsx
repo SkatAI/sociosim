@@ -32,6 +32,7 @@ type PersonnaFormProps = {
   headerActions?: ReactNode;
   editorToolbarRight?: ReactNode;
   footer?: ReactNode;
+  sidebar?: ReactNode;
 };
 
 export default function PersonnaForm({
@@ -50,8 +51,9 @@ export default function PersonnaForm({
   headerActions,
   editorToolbarRight,
   footer,
+  sidebar,
 }: PersonnaFormProps) {
-  return (
+  const mainContent = (
     <VStack gap={6} alignItems="stretch">
       <HStack align="flex-start" justify="space-between" gap={6} flexWrap="wrap">
         <Box>
@@ -245,5 +247,24 @@ export default function PersonnaForm({
         </VStack>
       </form>
     </VStack>
+  );
+
+  if (!sidebar) {
+    return mainContent;
+  }
+
+  return (
+    <HStack
+      align="flex-start"
+      gap={{ base: 6, lg: 10 }}
+      flexDirection={{ base: "column", lg: "row" }}
+    >
+      <Box flex="1" minWidth={0}>
+        {mainContent}
+      </Box>
+      <Box width={{ base: "full", lg: "320px" }}>
+        {sidebar}
+      </Box>
+    </HStack>
   );
 }

@@ -24,6 +24,9 @@ import TextExtension from "@tiptap/extension-text";
 import { ChevronDown } from "lucide-react";
 import { toaster } from "@/components/ui/toaster";
 import PersonnaForm from "@/app/personnas/components/PersonnaForm";
+import PromptReviewSidebar, {
+  type CauldronReview,
+} from "@/app/personnas/components/PromptReviewSidebar";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { withTimeout } from "@/lib/withTimeout";
 
@@ -61,6 +64,10 @@ export default function EditAgentPromptPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [review, setReview] = useState<CauldronReview | null>(null);
+  const [reviewedContent, setReviewedContent] = useState("");
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [isReviewing, setIsReviewing] = useState(false);
   const editor = useEditor({
     extensions: [
       Document,
@@ -88,6 +95,10 @@ export default function EditAgentPromptPage() {
       },
     },
   });
+
+  const isReviewCurrent = Boolean(
+    review && reviewedContent.trim() === promptState.systemPrompt.trim()
+  );
 
   const formatPromptLabel = (prompt: PromptOption) => {
     const date = new Date(prompt.last_edited);
@@ -186,12 +197,63 @@ export default function EditAgentPromptPage() {
     setSelectedPromptId(value);
     const selectedPrompt = promptOptions.find((prompt) => prompt.id === value);
     if (!selectedPrompt) return;
+    setReview(null);
+    setReviewedContent("");
+    setReviewError(null);
     basePromptRef.current = selectedPrompt.system_prompt;
     setIsDirty(false);
     setPromptState({
       systemPrompt: selectedPrompt.system_prompt,
       version: selectedPrompt.version,
     });
+  };
+
+  const reviewPrompt = async (content: string) => {
+    try {
+      setIsReviewing(true);
+      setReviewError(null);
+
+      const response = await withTimeout(
+        "reviewPrompt",
+        fetch("/api/cauldron/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        }),
+        30000
+      );
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        console.error("Error validating prompt:", payload);
+        setReviewError("Impossible de valider le prompt pour le moment.");
+        return null;
+      }
+
+      const payload = (await response.json().catch(() => null)) as CauldronReview | null;
+      if (!payload?.status) {
+        console.error("Invalid cauldron response:", payload);
+        setReviewError("La réponse de validation est invalide.");
+        return null;
+      }
+
+      setReview(payload);
+      setReviewedContent(content);
+      return payload;
+    } catch (reviewFailure) {
+      console.error("Error validating prompt:", reviewFailure);
+      setReviewError("Une erreur est survenue lors de la validation.");
+      return null;
+    } finally {
+      setIsReviewing(false);
+    }
+  };
+
+  const ensurePromptReview = async (content: string) => {
+    if (review && isReviewCurrent) {
+      return review;
+    }
+    return await reviewPrompt(content);
   };
 
   const handlePublish = async () => {
@@ -208,6 +270,22 @@ export default function EditAgentPromptPage() {
     try {
       setIsPublishing(true);
       setError(null);
+
+      const trimmedPrompt = promptState.systemPrompt.trim();
+      if (!trimmedPrompt) {
+        setError("Le prompt ne peut pas être vide.");
+        return;
+      }
+
+      const reviewResult = await ensurePromptReview(trimmedPrompt);
+      if (!reviewResult) {
+        setError("Impossible de valider le prompt.");
+        return;
+      }
+      if (reviewResult.status === "invalid") {
+        setError("Le prompt a été refusé par la validation.");
+        return;
+      }
 
       const response = await withTimeout(
         "publishPrompt",
@@ -265,17 +343,30 @@ export default function EditAgentPromptPage() {
     }
 
     try {
+      const trimmedPrompt = promptState.systemPrompt.trim();
+      if (isDirty && !trimmedPrompt) {
+        setError("Le prompt ne peut pas être vide.");
+        return;
+      }
+
+      if (isDirty) {
+        const reviewResult = await reviewPrompt(trimmedPrompt);
+        if (!reviewResult) {
+          setError("Impossible de valider le prompt.");
+          return;
+        }
+        if (reviewResult.status === "invalid") {
+          setError("Le prompt a été refusé par la validation.");
+          return;
+        }
+      }
+
       setIsSaving(true);
       setError(null);
 
       const isAgentDirty =
         trimmedName !== baseAgentRef.current.agentName ||
         trimmedDescription !== baseAgentRef.current.description;
-      const trimmedPrompt = promptState.systemPrompt.trim();
-      if (isDirty && !trimmedPrompt) {
-        setError("Le prompt ne peut pas être vide.");
-        return;
-      }
       let didSavePrompt = false;
       let didSaveAgent = false;
 
@@ -388,9 +479,9 @@ export default function EditAgentPromptPage() {
   const canSave = (isDirty || isAgentDirty) && !isSaving;
 
   return (
-    <Container maxWidth="5xl" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
+    <Container maxWidth="6xl" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
       <VStack gap={6} alignItems="center">
-        <Box width="full" maxWidth="3xl">
+        <Box width="full">
           <PersonnaForm
             title="Modifier le prompt"
             subtitle={agentName || "Agent"}
@@ -407,6 +498,14 @@ export default function EditAgentPromptPage() {
             submitLabel="Enregistrer"
             isSubmitting={isSaving}
             showSubmitButton={false}
+            sidebar={(
+              <PromptReviewSidebar
+                review={review}
+                reviewError={reviewError}
+                isReviewing={isReviewing}
+                isCurrent={Boolean(isReviewCurrent)}
+              />
+            )}
             headerActions={(
               <VStack gap={1} alignItems="flex-end">
                 <Menu.Root positioning={{ placement: "bottom-end" }}>
@@ -484,7 +583,12 @@ export default function EditAgentPromptPage() {
                     variant="subtle"
                     onClick={handlePublish}
                     loading={isPublishing}
-                    disabled={!selectedPromptId || isSelectedPublished}
+                    disabled={
+                      !selectedPromptId ||
+                      isSelectedPublished ||
+                      isReviewing ||
+                      review?.status === "invalid"
+                    }
                     paddingInline={5}
                   >
                     Publier
