@@ -665,14 +665,6 @@ export default function EditAgentPromptPage() {
                   </Portal>
                 </Dialog.Root>
 
-                <Button
-                  variant="subtle"
-                  onClick={handleDiscard}
-                  disabled={isSaving}
-                  paddingInline={5}
-                >
-                  Annuler
-                </Button>
               </VStack>
             </PersonnaLeftSidebar>
           )}
