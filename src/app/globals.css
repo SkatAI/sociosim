@@ -33,6 +33,7 @@ body {
 
 :root {
   --max-content-width: 1152px;
+  --app-header-height: 72px;
 }
 
 .app-shell {

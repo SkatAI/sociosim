@@ -103,7 +103,13 @@ export default function Header() {
       : "Taille de texte très grande";
 
   return (
-    <Box as="header" bg="bg.surface" borderBottomWidth="1px" borderBottomColor="border.muted">
+    <Box
+      as="header"
+      bg="bg.surface"
+      borderBottomWidth="1px"
+      borderBottomColor="border.muted"
+      height="var(--app-header-height)"
+    >
       <Flex
         maxW="6xl"
         mx="auto"
@@ -111,6 +117,7 @@ export default function Header() {
         py={4}
         align="center"
         justify="space-between"
+        height="100%"
       >
         <HStack gap={6}>
           <Link
