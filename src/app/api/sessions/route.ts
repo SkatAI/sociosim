@@ -12,11 +12,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
 import { interviews, sessions } from "@/lib/data";
 import { getAgentById, getInterviewWithAgent } from "@/lib/data/agents";
+import { getAuthenticatedUser } from "@/lib/supabaseAuthServer";
+import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
 
 const adkClient = new AdkClient();
+const isAdminLike = (role?: string | null) => role === "admin" || role === "teacher";
 
 export async function POST(req: NextRequest) {
   try {
+    const { user } = await getAuthenticatedUser(req);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const userId = typeof body.userId === "string" ? body.userId : null;
     const interviewId =
@@ -36,10 +44,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (userId !== user.id) {
+      return NextResponse.json(
+        { error: "Forbidden: user mismatch" },
+        { status: 403 }
+      );
+    }
+
     let finalInterviewId = interviewId;
     let isResume = false;
     let validAgentName: string;
     let agentId: string;
+    let allowHiddenAgents = false;
+
+    const supabase = createServiceSupabaseClient();
+    const { data: userRecord, error: userError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (userError) {
+      const message = userError.message ?? "Failed to load user role";
+      console.error("[/api/sessions POST] Role error:", message);
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+
+    allowHiddenAgents = isAdminLike(userRecord?.role);
 
     // Check if this is a resume request (interviewId provided) or new interview
     if (interviewId) {
@@ -94,6 +125,14 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
+
+      if (!allowHiddenAgents && !agentRecord.is_public && agentRecord.created_by !== user.id) {
+        return NextResponse.json(
+          { error: "Agent not accessible" },
+          { status: 403 }
+        );
+      }
+
       agentId = agentRecord.id;
       validAgentName = agentRecord.agent_name;
       console.log("--- api session routes agentId:", agentId);

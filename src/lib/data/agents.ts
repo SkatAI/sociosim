@@ -12,6 +12,8 @@ export interface AgentRecord {
   description: string | null;
   active: boolean;
   is_template: boolean;
+  is_public: boolean;
+  created_by: string | null;
 }
 
 export interface AgentRecordWithPromptStatus extends AgentRecord {
@@ -26,7 +28,7 @@ export async function getAgents(): Promise<AgentRecord[]> {
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id, agent_name, description, active, is_template")
+    .select("id, agent_name, description, active, is_template, is_public, created_by")
     .order("agent_name");
 
   throwIfError(error, "Failed to load agents");
@@ -44,7 +46,9 @@ export async function getAgentsWithPromptStatus(
 
   let query = supabase
     .from("agents")
-    .select("id, agent_name, description, active, is_template, agent_prompts(published)")
+    .select(
+      "id, agent_name, description, active, is_template, is_public, created_by, agent_prompts(published)"
+    )
     .order("agent_name");
 
   if (templateFilter === "only") {
@@ -67,6 +71,8 @@ export async function getAgentsWithPromptStatus(
     description: agent.description,
     active: agent.active,
     is_template: agent.is_template,
+    is_public: agent.is_public,
+    created_by: agent.created_by,
     has_published_prompt: (agent.agent_prompts || []).some((prompt) => prompt.published),
   }));
 }
@@ -81,7 +87,9 @@ export async function getPublishedAgents(
 
   let query = supabase
     .from("agents")
-    .select("id, agent_name, description, active, is_template, agent_prompts!inner(published)")
+    .select(
+      "id, agent_name, description, active, is_template, is_public, created_by, agent_prompts!inner(published)"
+    )
     .eq("agent_prompts.published", true)
     .order("agent_name");
 
@@ -106,7 +114,7 @@ export async function getAgentByName(name: string): Promise<AgentRecord | null> 
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id, agent_name, description, active, is_template")
+    .select("id, agent_name, description, active, is_template, is_public, created_by")
     .eq("agent_name", name)
     .maybeSingle();
 
@@ -123,7 +131,7 @@ export async function getAgentById(agentId: string): Promise<AgentRecord | null>
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id, agent_name, description, active, is_template")
+    .select("id, agent_name, description, active, is_template, is_public, created_by")
     .eq("id", agentId)
     .maybeSingle();
 

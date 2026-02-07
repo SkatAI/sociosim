@@ -469,10 +469,6 @@ export default function EditAgentPromptPage() {
     }
   };
 
-  const handleDiscard = () => {
-    router.push("/personnas");
-  };
-
   if (isLoading) {
     return (
       <Box maxWidth="4xl" height="100vh" display="flex" alignItems="center" justifyContent="center">

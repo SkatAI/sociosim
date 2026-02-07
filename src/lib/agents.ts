@@ -11,4 +11,6 @@ export interface Agent {
   active: boolean;
   is_template?: boolean;
   has_published_prompt?: boolean;
+  is_public?: boolean;
+  created_by?: string | null;
 }

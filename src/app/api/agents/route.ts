@@ -1,18 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAgentsWithPromptStatus, getPublishedAgents } from "@/lib/data/agents";
 import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
+import { getAuthenticatedUser } from "@/lib/supabaseAuthServer";
+
+const isAdminLike = (role?: string | null) => role === "admin" || role === "teacher";
 
 /**
  * GET /api/agents?published=true&template=false
  * Returns all agents, optionally filtered to published-only and/or template filtering.
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    const { user } = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const publishedOnly = searchParams.get("published") === "true";
     const templateParam = searchParams.get("template");
     const templateFilter =
       templateParam === "true" ? "only" : templateParam === "false" ? "exclude" : undefined;
+
+    const supabase = createServiceSupabaseClient();
+    const { data: userRecord, error: userError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (userError) {
+      const message = userError.message ?? "Failed to load user role";
+      console.error("[/api/agents GET] Role error:", message);
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+
+    const showAllAgents = isAdminLike(userRecord?.role);
 
     const agents = publishedOnly
       ? (await getPublishedAgents(templateFilter)).map((agent) => ({
@@ -21,7 +44,11 @@ export async function GET(request: Request) {
         }))
       : await getAgentsWithPromptStatus(templateFilter);
 
-    return NextResponse.json({ success: true, agents }, { status: 200 });
+    const visibleAgents = showAllAgents
+      ? agents
+      : agents.filter((agent) => agent.is_public || agent.created_by === user.id);
+
+    return NextResponse.json({ success: true, agents: visibleAgents }, { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[/api/agents GET] Error:", message);
@@ -39,13 +66,17 @@ export async function GET(request: Request) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const { user } = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json().catch(() => null);
     const agentName = body?.agent_name?.trim();
     const description = body?.description?.trim();
     const systemPrompt = body?.system_prompt?.trim();
-    const editedBy = body?.edited_by;
 
-    if (!agentName || !description || !systemPrompt || !editedBy) {
+    if (!agentName || !description || !systemPrompt) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -58,6 +89,7 @@ export async function POST(request: NextRequest) {
       .insert({
         agent_name: agentName,
         description,
+        created_by: user.id,
       })
       .select("id")
       .single();
@@ -76,7 +108,7 @@ export async function POST(request: NextRequest) {
       .insert({
         agent_id: agentData.id,
         system_prompt: systemPrompt,
-        edited_by: editedBy,
+        edited_by: user.id,
         version: 1,
         published: false,
       });
