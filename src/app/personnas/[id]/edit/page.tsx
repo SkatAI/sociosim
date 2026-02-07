@@ -3,9 +3,12 @@
 import {
   Box,
   Button,
-  Container,
+  Dialog,
+  Field,
   HStack,
+  Input,
   Menu,
+  Portal,
   Spinner,
   Text,
   VStack,
@@ -23,7 +26,10 @@ import Paragraph from "@tiptap/extension-paragraph";
 import TextExtension from "@tiptap/extension-text";
 import { ChevronDown } from "lucide-react";
 import { toaster } from "@/components/ui/toaster";
-import PersonnaForm from "@/app/personnas/components/PersonnaForm";
+import PersonnaLayout from "@/app/personnas/components/PersonnaLayout";
+import PersonnaLeftSidebar from "@/app/personnas/components/PersonnaLeftSidebar";
+import PersonnaPromptEditor from "@/app/personnas/components/PersonnaPromptEditor";
+import PersonnaRightSidebar from "@/app/personnas/components/PersonnaRightSidebar";
 import PromptReviewSidebar, {
   type CauldronReview,
 } from "@/app/personnas/components/PromptReviewSidebar";
@@ -462,12 +468,12 @@ export default function EditAgentPromptPage() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="4xl" height="100vh" display="flex" alignItems="center" justifyContent="center">
+      <Box maxWidth="4xl" height="100vh" display="flex" alignItems="center" justifyContent="center">
         <VStack gap={4}>
           <Spinner size="lg" color="blue.500" />
           <Text color="fg.muted">Chargement du prompt...</Text>
         </VStack>
-      </Container>
+      </Box>
     );
   }
 
@@ -479,142 +485,255 @@ export default function EditAgentPromptPage() {
   const canSave = (isDirty || isAgentDirty) && !isSaving;
 
   return (
-    <Container maxWidth="6xl" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
-      <VStack gap={6} alignItems="center">
-        <Box width="full">
-          <PersonnaForm
-            title="Modifier le prompt"
-            subtitle={agentName || "Agent"}
-            error={error}
-            agentName={agentName}
-            onAgentNameChange={setAgentName}
-            description={description}
-            onDescriptionChange={setDescription}
-            editor={editor}
-            onSubmit={(event) => {
-              event.preventDefault();
-              handleSave();
-            }}
-            submitLabel="Enregistrer"
-            isSubmitting={isSaving}
-            showSubmitButton={false}
-            sidebar={(
+    <Box width="full" height="100vh">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleSave();
+        }}
+        style={{ height: "100%" }}
+      >
+        <PersonnaLayout
+          left={(
+            <PersonnaLeftSidebar
+              title="Modifier le prompt"
+              subtitle={agentName || "Agent"}
+            >
+              <VStack align="stretch" gap={4}>
+                <VStack alignItems="flex-start" gap={2}>
+                  <Text fontSize="sm" fontWeight="semibold" color="fg.muted">
+                    Version
+                  </Text>
+                  <Menu.Root positioning={{ placement: "bottom-start" }}>
+                    <Menu.Trigger asChild>
+                      <Button
+                        variant="subtle"
+                        size="sm"
+                        width="full"
+                        justifyContent="space-between"
+                        gap={3}
+                        disabled={promptOptions.length === 0}
+                      >
+                        <Text
+                          fontSize="sm"
+                          color={selectedPrompt ? "fg.default" : "fg.muted"}
+                          truncate
+                        >
+                          {selectedPrompt ? formatPromptLabel(selectedPrompt) : "Aucun prompt disponible"}
+                        </Text>
+                        <ChevronDown size={16} />
+                      </Button>
+                    </Menu.Trigger>
+                    <Menu.Positioner>
+                      <Menu.Content minWidth="full" maxHeight="320px" overflowY="auto">
+                        {promptOptions.map((prompt) => (
+                          <Menu.Item
+                            key={prompt.id}
+                            value={prompt.id}
+                            onClick={() => handlePromptSelection(prompt.id)}
+                            fontWeight={prompt.id === selectedPromptId ? "semibold" : "normal"}
+                            color={
+                              prompt.published
+                                ? { base: "red.600", _dark: "red.300" }
+                                : "fg.default"
+                            }
+                          >
+                            {formatPromptLabel(prompt)}
+                          </Menu.Item>
+                        ))}
+                      </Menu.Content>
+                    </Menu.Positioner>
+                  </Menu.Root>
+                </VStack>
+
+                <Field.Root>
+                  <Field.Label fontSize="lg">Prénom</Field.Label>
+                  <Input
+                    value={agentName}
+                    onChange={(event) => setAgentName(event.target.value)}
+                    placeholder="Camille, Karim, Zoé, Alexis, Bilel, ..."
+                    fontSize="sm"
+                    paddingInlineStart={4}
+                  />
+                </Field.Root>
+
+                <Field.Root>
+                  <Field.Label fontSize="lg">Description</Field.Label>
+                  <Input
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="Étudiant curieux, négociateur expérimenté..."
+                    fontSize="sm"
+                    paddingInlineStart={4}
+                  />
+                </Field.Root>
+
+                <Dialog.Root>
+                  <Dialog.Trigger asChild>
+                    <Button
+                      variant="plain"
+                      size="sm"
+                      colorPalette="blue"
+                      textDecoration="underline"
+                      alignSelf="flex-start"
+                    >
+                      Comment générer un system prompt à partir d&apos;un entretien ?
+                    </Button>
+                  </Dialog.Trigger>
+                  <Portal>
+                    <Dialog.Backdrop />
+                    <Dialog.Positioner>
+                      <Dialog.Content padding={8}>
+                        <Dialog.Header>
+                          <Dialog.Title>Aide</Dialog.Title>
+                        </Dialog.Header>
+                        <Dialog.Body>
+                          <Text>
+                            Le plus simple est de fournir à un chatbot (Claude, chatGPT, etc):
+                            <br />- un pdf de l&apos;interview
+                            <br />- un fichier de
+                            <Button
+                              asChild
+                              variant="plain"
+                              size="sm"
+                              colorPalette="blue"
+                              textDecoration="underline"
+                            >
+                              <a
+                                href="/docs/template_agent_system_prompt.md"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                template au format markdown
+                              </a>
+                            </Button>
+                            <br /> <br />
+                            Le prompt suivant donne de bons résultats avec Claude.
+                            <Box
+                              as="span"
+                              display="block"
+                              marginTop={2}
+                              paddingLeft={8}
+                              fontFamily="mono"
+                              fontSize="sm"
+                              color="fg.muted"
+                            >
+                              Nous allons construire un system prompt pour une personna à partir d&apos;une interview
+                              sociologique de la personne réélle sur son usage de l&apos;IA.
+                              <br />
+                              Voir fichier pdf de l&apos;interview
+                              <br />
+                              Le but est de générer un fichier markdown suivant le template fourni.
+                              <br />
+                              Il faut renseigner tous les élèments entre acolades {"{"}{"}"}.
+                              <br />
+                              Ce fichier markdown servira de system prompt pour une personna dans une application de
+                              simulation d&apos;entretien en sociologie
+                              <br />
+                              Les élèments doivent être assez précis
+                              <br />
+                              Faisons un premier essai
+                            </Box>
+                            <br />
+                            Vous pouvez ensuite copier coller le resultat généré par l&apos;IA dans le champ ci-dessous.
+                            <br />
+                            Le template en markdown est disponible
+                            <Button
+                              asChild
+                              variant="plain"
+                              size="sm"
+                              colorPalette="blue"
+                              textDecoration="underline"
+                            >
+                              <a
+                                href="/docs/template_agent_system_prompt.md"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                ici
+                              </a>
+                            </Button>
+                          </Text>
+                        </Dialog.Body>
+                        <Dialog.Footer>
+                          <Dialog.ActionTrigger asChild>
+                            <Button variant="outline">Fermer</Button>
+                          </Dialog.ActionTrigger>
+                        </Dialog.Footer>
+                      </Dialog.Content>
+                    </Dialog.Positioner>
+                  </Portal>
+                </Dialog.Root>
+
+                <Button
+                  variant="subtle"
+                  onClick={handleDiscard}
+                  disabled={isSaving}
+                  paddingInline={5}
+                >
+                  Annuler
+                </Button>
+              </VStack>
+            </PersonnaLeftSidebar>
+          )}
+          center={(
+            <Box height="100%" padding={{ base: 4, md: 6 }} overflow="hidden">
+              <PersonnaPromptEditor
+                editor={editor}
+                error={error}
+                editorToolbarRight={(
+                  <>
+                    <Text
+                      fontSize="sm"
+                      color={isSelectedPublished ? "fg.default" : "fg.muted"}
+                      fontWeight={isSelectedPublished ? "semibold" : "normal"}
+                    >
+                      {isSelectedPublished ? "Publié" : "Brouillon"}
+                    </Text>
+                    <HStack gap={2} flex="1" justify="flex-end" flexWrap="wrap">
+                      <Button
+                        size="sm"
+                        variant="subtle"
+                        onClick={handleSave}
+                        loading={isSaving}
+                        disabled={!canSave}
+                        paddingInline={5}
+                      >
+                        Enregistrer
+                      </Button>
+                      <Button
+                        size="sm"
+                        colorPalette="blue"
+                        onClick={handlePublish}
+                        loading={isPublishing}
+                        disabled={
+                          !selectedPromptId ||
+                          isSelectedPublished ||
+                          isReviewing ||
+                          review?.status === "invalid"
+                        }
+                        paddingInline={5}
+                      >
+                        Publier
+                      </Button>
+                    </HStack>
+                  </>
+                )}
+              />
+            </Box>
+          )}
+          right={(
+            <PersonnaRightSidebar>
               <PromptReviewSidebar
                 review={review}
                 reviewError={reviewError}
                 isReviewing={isReviewing}
                 isCurrent={Boolean(isReviewCurrent)}
               />
-            )}
-            headerActions={(
-              <VStack gap={1} alignItems="flex-end">
-                <Menu.Root positioning={{ placement: "bottom-end" }}>
-                  <Menu.Trigger asChild>
-                    <Button
-                      variant="subtle"
-                      size="sm"
-                      minWidth={{ base: "full", sm: "320px" }}
-                      justifyContent="space-between"
-                      gap={3}
-                      disabled={promptOptions.length === 0}
-                    >
-                      <Text
-                        fontSize="sm"
-                        color={selectedPrompt ? "fg.default" : "fg.muted"}
-                        truncate
-                      >
-                        {selectedPrompt ? formatPromptLabel(selectedPrompt) : "Aucun prompt disponible"}
-                      </Text>
-                      <ChevronDown size={16} />
-                    </Button>
-                  </Menu.Trigger>
-                  <Menu.Positioner>
-                    <Menu.Content minWidth={{ base: "full", sm: "320px" }} maxHeight="320px" overflowY="auto">
-                      {promptOptions.map((prompt) => (
-                        <Menu.Item
-                          key={prompt.id}
-                          value={prompt.id}
-                          onClick={() => handlePromptSelection(prompt.id)}
-                          fontWeight={prompt.id === selectedPromptId ? "semibold" : "normal"}
-                          color={
-                            prompt.published
-                              ? { base: "red.600", _dark: "red.300" }
-                              : "fg.default"
-                          }
-                        >
-                          {formatPromptLabel(prompt)}
-                        </Menu.Item>
-                      ))}
-                    </Menu.Content>
-                  </Menu.Positioner>
-                </Menu.Root>
-              </VStack>
-            )}
-            editorToolbarRight={(
-              <>
-                <Text
-                  fontSize="sm"
-                  color={
-                    isSelectedPublished
-                      ? "fg.default"
-                      : "fg.muted"
-                  }
-                  fontWeight={
-                    isSelectedPublished
-                      ? "semibold"
-                      : "normal"
-                  }
-                >
-                  {isSelectedPublished ? "Publié" : "Brouillon"}
-                </Text>
-                <HStack gap={2} flex="1" justify="flex-end" flexWrap="wrap">
-                  <Button
-                    size="sm"
-                    variant="subtle"
-                    onClick={handleSave}
-                    loading={isSaving}
-                    disabled={!canSave}
-                    paddingInline={5}
-                  >
-                    Enregistrer
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="subtle"
-                    onClick={handlePublish}
-                    loading={isPublishing}
-                    disabled={
-                      !selectedPromptId ||
-                      isSelectedPublished ||
-                      isReviewing ||
-                      review?.status === "invalid"
-                    }
-                    paddingInline={5}
-                  >
-                    Publier
-                  </Button>
-                </HStack>
-              </>
-            )}
-            footer={(
-              <HStack justifyContent="flex-end" gap={3}>
-                <Button variant="subtle" onClick={handleDiscard} disabled={isSaving} paddingInline={5}>
-                  Annuler
-                </Button>
-                <Button
-                  variant="subtle"
-                  onClick={handleSave}
-                  loading={isSaving}
-                  disabled={!canSave}
-                  paddingInline={5}
-                >
-                  Enregistrer
-                </Button>
-              </HStack>
-            )}
-          />
-        </Box>
-      </VStack>
-    </Container>
+            </PersonnaRightSidebar>
+          )}
+        />
+      </form>
+    </Box>
   );
 }

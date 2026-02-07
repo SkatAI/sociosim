@@ -1,6 +1,15 @@
 "use client";
 
-import { Box, Container, VStack } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Dialog,
+  Field,
+  Input,
+  Portal,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
 import { useEditor } from "@tiptap/react";
@@ -13,7 +22,10 @@ import ListItem from "@tiptap/extension-list-item";
 import Paragraph from "@tiptap/extension-paragraph";
 import TextExtension from "@tiptap/extension-text";
 import { toaster } from "@/components/ui/toaster";
-import PersonnaForm from "@/app/personnas/components/PersonnaForm";
+import PersonnaLayout from "@/app/personnas/components/PersonnaLayout";
+import PersonnaLeftSidebar from "@/app/personnas/components/PersonnaLeftSidebar";
+import PersonnaRightSidebar from "@/app/personnas/components/PersonnaRightSidebar";
+import PersonnaPromptEditor from "@/app/personnas/components/PersonnaPromptEditor";
 import PromptReviewSidebar, {
   type CauldronReview,
 } from "@/app/personnas/components/PromptReviewSidebar";
@@ -205,32 +217,167 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
   };
 
   return (
-    <Container maxWidth="6xl" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
-      <VStack gap={6} alignItems="center">
-        <Box width="full">
-          <PersonnaForm
-            title="Créer un nouveau personna"
-            subtitle="Renseignez un nom, une description et le prompt système de l'agent."
-            error={error}
-            agentName={agentName}
-            onAgentNameChange={setAgentName}
-            description={description}
-            onDescriptionChange={setDescription}
-            editor={editor}
-            onSubmit={handleSubmit}
-            submitLabel="Enregistrer"
-            isSubmitting={isSaving}
-            sidebar={(
+    <Box width="full" height="100vh">
+      <form onSubmit={handleSubmit} style={{ height: "100%" }}>
+        <PersonnaLayout
+          left={(
+            <PersonnaLeftSidebar
+              title="Créer un nouveau personna"
+              subtitle="Renseignez un nom et une description."
+            >
+              <VStack align="stretch" gap={4}>
+                <Field.Root>
+                  <Field.Label fontSize="lg">Prénom</Field.Label>
+                  <Input
+                    value={agentName}
+                    onChange={(event) => setAgentName(event.target.value)}
+                    placeholder="Camille, Karim, Zoé, Alexis, Bilel, ..."
+                    fontSize="sm"
+                    paddingInlineStart={4}
+                  />
+                </Field.Root>
+
+                <Field.Root>
+                  <Field.Label fontSize="lg">Description</Field.Label>
+                  <Input
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    placeholder="Étudiant curieux, négociateur expérimenté..."
+                    fontSize="sm"
+                    paddingInlineStart={4}
+                  />
+                </Field.Root>
+
+                <Dialog.Root>
+                  <Dialog.Trigger asChild>
+                    <Button
+                      variant="plain"
+                      size="sm"
+                      colorPalette="blue"
+                      textDecoration="underline"
+                      alignSelf="flex-start"
+                    >
+                      Comment générer un system prompt à partir d&apos;un entretien ?
+                    </Button>
+                  </Dialog.Trigger>
+                  <Portal>
+                    <Dialog.Backdrop />
+                    <Dialog.Positioner>
+                      <Dialog.Content padding={8}>
+                        <Dialog.Header>
+                          <Dialog.Title>Aide</Dialog.Title>
+                        </Dialog.Header>
+                        <Dialog.Body>
+                          <Text>
+                            Le plus simple est de fournir à un chatbot (Claude, chatGPT, etc):
+                            <br />- un pdf de l&apos;interview
+                            <br />- un fichier de
+                            <Button
+                              asChild
+                              variant="plain"
+                              size="sm"
+                              colorPalette="blue"
+                              textDecoration="underline"
+                            >
+                              <a
+                                href="/docs/template_agent_system_prompt.md"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                template au format markdown
+                              </a>
+                            </Button>
+                            <br /> <br />
+                            Le prompt suivant donne de bons résultats avec Claude.
+                            <Box
+                              as="span"
+                              display="block"
+                              marginTop={2}
+                              paddingLeft={8}
+                              fontFamily="mono"
+                              fontSize="sm"
+                              color="fg.muted"
+                            >
+                              Nous allons construire un system prompt pour une personna à partir d&apos;une interview
+                              sociologique de la personne réélle sur son usage de l&apos;IA.
+                              <br />
+                              Voir fichier pdf de l&apos;interview
+                              <br />
+                              Le but est de générer un fichier markdown suivant le template fourni.
+                              <br />
+                              Il faut renseigner tous les élèments entre acolades {"{"}{"}"}.
+                              <br />
+                              Ce fichier markdown servira de system prompt pour une personna dans une application de
+                              simulation d&apos;entretien en sociologie
+                              <br />
+                              Les élèments doivent être assez précis
+                              <br />
+                              Faisons un premier essai
+                            </Box>
+                            <br />
+                            Vous pouvez ensuite copier coller le resultat généré par l&apos;IA dans le champ ci-dessous.
+                            <br />
+                            Le template en markdown est disponible
+                            <Button
+                              asChild
+                              variant="plain"
+                              size="sm"
+                              colorPalette="blue"
+                              textDecoration="underline"
+                            >
+                              <a
+                                href="/docs/template_agent_system_prompt.md"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                ici
+                              </a>
+                            </Button>
+                          </Text>
+                        </Dialog.Body>
+                        <Dialog.Footer>
+                          <Dialog.ActionTrigger asChild>
+                            <Button variant="outline">Fermer</Button>
+                          </Dialog.ActionTrigger>
+                        </Dialog.Footer>
+                      </Dialog.Content>
+                    </Dialog.Positioner>
+                  </Portal>
+                </Dialog.Root>
+              </VStack>
+            </PersonnaLeftSidebar>
+          )}
+          center={(
+            <Box height="100%" padding={{ base: 4, md: 6 }} overflow="hidden">
+              <PersonnaPromptEditor
+                editor={editor}
+                error={error}
+                editorToolbarRight={(
+                  <Button
+                    type="submit"
+                    size="sm"
+                    variant="subtle"
+                    loading={isSaving}
+                    paddingInline={5}
+                  >
+                    Enregistrer
+                  </Button>
+                )}
+              />
+            </Box>
+          )}
+          right={(
+            <PersonnaRightSidebar>
               <PromptReviewSidebar
                 review={review}
                 reviewError={reviewError}
                 isReviewing={isReviewing}
                 isCurrent={Boolean(isReviewCurrent)}
               />
-            )}
-          />
-        </Box>
-      </VStack>
-    </Container>
+            </PersonnaRightSidebar>
+          )}
+        />
+      </form>
+    </Box>
   );
 }
