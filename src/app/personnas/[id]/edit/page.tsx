@@ -469,9 +469,6 @@ export default function EditAgentPromptPage() {
     }
   };
 
-  const handleDiscard = () => {
-    router.push("/personnas");
-  };
 
   if (isLoading) {
     return (
