@@ -1,6 +1,6 @@
 "use client";
 
-import { Box } from "@chakra-ui/react";
+import { Box, Heading, VStack } from "@chakra-ui/react";
 import type { ReactNode } from "react";
 
 type PersonnaRightSidebarProps = {
@@ -25,7 +25,12 @@ export default function PersonnaRightSidebar({ children }: PersonnaRightSidebarP
       alignSelf={{ base: "stretch", lg: "flex-start" }}
       zIndex={10}
     >
-      {children}
+      <VStack align="stretch" gap={4}>
+        <VStack align="stretch" gap={1}>
+          <Heading size="md">Validation du prompt</Heading>
+        </VStack>
+        {children}
+      </VStack>
     </Box>
   );
 }

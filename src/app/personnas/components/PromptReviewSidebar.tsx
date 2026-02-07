@@ -49,15 +49,7 @@ export default function PromptReviewSidebar({
   const status = statusCopy(review, isReviewing);
 
   return (
-    <Box
-      borderWidth="1px"
-      borderColor={{ base: "gray.200", _dark: "gray.700" }}
-      borderRadius="lg"
-      padding={5}
-      backgroundColor={{ base: "white", _dark: "gray.900" }}
-    >
       <VStack alignItems="stretch" gap={4}>
-        <Heading size="sm">Validation du prompt</Heading>
 
         <Box borderRadius="md" padding={3} backgroundColor={status.bg}>
           <Text fontSize="sm" fontWeight="semibold" color={status.color}>
@@ -173,6 +165,5 @@ export default function PromptReviewSidebar({
           </VStack>
         )}
       </VStack>
-    </Box>
   );
 }
