@@ -16,8 +16,8 @@ export default function PersonnaLeftSidebar({
 }: PersonnaLeftSidebarProps) {
   return (
     <Box
-      width={{ base: "full", lg: "var(--personna-left-width)" }}
-      minWidth={{ base: "full", lg: "var(--personna-left-width)" }}
+      width={{ base: "full", lg: "var(--personna-left-sidebar-width)" }}
+      minWidth={{ base: "full", lg: "var(--personna-left-sidebar-width)" }}
       borderBottom={{ base: "1px solid", lg: "none" }}
       borderRight={{ base: "none", lg: "1px solid" }}
       borderRightColor={{ base: "transparent", lg: "rgba(15, 23, 42, 0.08)" }}

@@ -10,8 +10,8 @@ type PersonnaRightSidebarProps = {
 export default function PersonnaRightSidebar({ children }: PersonnaRightSidebarProps) {
   return (
     <Box
-      width={{ base: "full", lg: "var(--personna-right-width)" }}
-      minWidth={{ base: "full", lg: "var(--personna-right-width)" }}
+      width={{ base: "full", lg: "var(--personna-right-sidebar-width)" }}
+      minWidth={{ base: "full", lg: "var(--personna-right-sidebar-width)" }}
       borderTop={{ base: "1px solid", lg: "none" }}
       borderLeft={{ base: "none", lg: "1px solid" }}
       borderLeftColor={{ base: "transparent", lg: "rgba(15, 23, 42, 0.08)" }}

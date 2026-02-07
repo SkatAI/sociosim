@@ -348,7 +348,7 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
             </PersonnaLeftSidebar>
           )}
           center={(
-            <Box height="100%" padding={{ base: 4, md: 6 }} overflow="hidden">
+            <Box height="100%" padding={0} overflow="hidden">
               <PersonnaPromptEditor
                 editor={editor}
                 error={error}

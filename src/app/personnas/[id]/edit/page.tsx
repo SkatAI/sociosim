@@ -669,7 +669,13 @@ export default function EditAgentPromptPage() {
             </PersonnaLeftSidebar>
           )}
           center={(
-            <Box height="100%" padding={{ base: 4, md: 6 }} overflow="hidden">
+            <Box
+              height="100%"
+              padding={0}
+              overflow="hidden"
+              outline="2px dashed rgba(255, 165, 0, 0.7)"
+              outlineOffset="-2px"
+            >
               <PersonnaPromptEditor
                 editor={editor}
                 error={error}
