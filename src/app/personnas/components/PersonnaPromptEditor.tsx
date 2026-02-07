@@ -17,7 +17,7 @@ export default function PersonnaPromptEditor({
   error,
 }: PersonnaPromptEditorProps) {
   return (
-    <VStack align="stretch" gap={4} height="100%" minHeight={0} flex="1">
+    <VStack align="stretch" gap={4} height="100%" minHeight={0} flex="1" paddingBottom={4}>
       {error ? (
         <Box
           backgroundColor={{ base: "red.50", _dark: "red.900" }}
@@ -29,7 +29,7 @@ export default function PersonnaPromptEditor({
           <Text color={{ base: "red.700", _dark: "red.200" }}>{error}</Text>
         </Box>
       ) : null}
-      <Field.Root display="flex" flexDirection="column" flex="1" minHeight={0} height="100%">
+      <Field.Root display="flex" flexDirection="column" flex="1" minHeight={0}>
         <Heading size="md">Prompt du personna</Heading>
         <RichTextEditor.Root
           editor={editor}
@@ -43,7 +43,6 @@ export default function PersonnaPromptEditor({
           gridTemplateRows="auto 1fr"
           flex="1"
           minHeight={0}
-          height="100%"
           overflow="hidden"
           css={{
             "--content-min-height": "0px",
