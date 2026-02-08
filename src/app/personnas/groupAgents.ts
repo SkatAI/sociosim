@@ -37,7 +37,7 @@ export function groupAgentsByCreator(agents: Agent[]): AgentGroup[] {
   if (staffAgents.length > 0) {
     groups.push({
       key: "staff",
-      label: "Personnages",
+      label: "Personnas publiques",
       isStaff: true,
       activeAgents: staffAgents.filter((a) => a.active),
       inactiveAgents: staffAgents.filter((a) => !a.active),

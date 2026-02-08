@@ -36,13 +36,20 @@ export function AgentCard({
   onNavigatePrompt,
 }: AgentCardProps) {
   return (
-    <Card.Root>
+    <Card.Root backgroundColor={agent.active ? undefined : "bg.muted"}>
       <Card.Body display="flex" flexDirection="column" alignItems="stretch" gap={2} py={2} px={4}>
         <VStack gap={2} alignItems="flex-start">
           <HStack width="100%" justifyContent="space-between" alignItems="flex-start">
-            <Text fontWeight="semibold" fontSize="md">
-              {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
-            </Text>
+            <VStack gap={0} alignItems="flex-start">
+              <Text fontWeight="semibold" fontSize="md" color={agent.active ? "blue.600" : "fg.subtle"}>
+                {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
+              </Text>
+              {agent.creator_name && (
+                <Text fontSize="xs" color="fg.subtle">
+                  {agent.creator_name}
+                </Text>
+              )}
+            </VStack>
             {agent.active && (
               <Tooltip.Root openDelay={150}>
                 <Tooltip.Trigger asChild>

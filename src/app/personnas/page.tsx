@@ -235,6 +235,16 @@ export default function PersonnasPage() {
 
   // Admin view: group by creator
   const groups = useMemo(() => groupAgentsByCreator(agents), [agents]);
+  const staffGroup = useMemo(() => groups.find((g) => g.isStaff), [groups]);
+  const studentGroups = useMemo(() => groups.filter((g) => !g.isStaff), [groups]);
+  const allStudentActive = useMemo(
+    () => studentGroups.flatMap((g) => g.activeAgents),
+    [studentGroups]
+  );
+  const allStudentInactive = useMemo(
+    () => studentGroups.flatMap((g) => g.inactiveAgents),
+    [studentGroups]
+  );
 
   // Student view: staff public active + own agents
   const staffPublicActive = useMemo(
@@ -275,9 +285,9 @@ export default function PersonnasPage() {
       <VStack gap={8} alignItems="stretch">
         <HStack justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={3}>
           <Heading size="lg" marginBottom={0}>
-            Choisissez un personnage
+            Personnas publiques
           </Heading>
-          <Button variant="subtle" size="sm" onClick={() => router.push("/personnas/new")} paddingInline={5}>
+          <Button variant="solid" colorPalette="blue" size="sm" onClick={() => router.push("/personnas/new")} paddingInline={5}>
             Créer une nouvelle personna
           </Button>
         </HStack>
@@ -316,17 +326,23 @@ export default function PersonnasPage() {
         {/* Admin/Teacher view: grouped by creator */}
         {agents.length > 0 && user_admin && (
           <VStack gap={8} alignItems="stretch">
-            {groups.map((group) => (
-              <VStack key={group.key} gap={4} alignItems="stretch">
-                <Heading size={group.isStaff ? "md" : "sm"}>
-                  {group.label}
-                </Heading>
-                <AgentGrid agents={group.activeAgents} {...gridProps} />
-                {group.inactiveAgents.length > 0 && (
-                  <AgentGrid agents={group.inactiveAgents} {...gridProps} />
+            {staffGroup && (
+              <VStack gap={4} alignItems="stretch">
+                <AgentGrid agents={staffGroup.activeAgents} {...gridProps} />
+                {staffGroup.inactiveAgents.length > 0 && (
+                  <AgentGrid agents={staffGroup.inactiveAgents} {...gridProps} />
                 )}
               </VStack>
-            ))}
+            )}
+            {(allStudentActive.length > 0 || allStudentInactive.length > 0) && (
+              <VStack gap={4} alignItems="stretch">
+                <Heading size="md">Personnas des étudiants</Heading>
+                <AgentGrid agents={allStudentActive} {...gridProps} />
+                {allStudentInactive.length > 0 && (
+                  <AgentGrid agents={allStudentInactive} {...gridProps} />
+                )}
+              </VStack>
+            )}
           </VStack>
         )}
 
@@ -334,10 +350,7 @@ export default function PersonnasPage() {
         {agents.length > 0 && !user_admin && (
           <VStack gap={8} alignItems="stretch">
             {staffPublicActive.length > 0 && (
-              <VStack gap={4} alignItems="stretch">
-                <Heading size="md">Personnages</Heading>
-                <AgentGrid agents={staffPublicActive} {...gridProps} />
-              </VStack>
+              <AgentGrid agents={staffPublicActive} {...gridProps} />
             )}
             {myAgents.length > 0 && (
               <VStack gap={4} alignItems="stretch">
