@@ -16,12 +16,16 @@ export async function POST(request: NextRequest) {
     }
 
     const baseUrl = (process.env.CAULDRON_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, "");
+    const sharedSecret = process.env.BFF_SHARED_SECRET?.trim() || "";
 
     const response = await withTimeout(
       "cauldronValidate",
       fetch(`${baseUrl}/v1/validate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(sharedSecret ? { "X-BFF-Secret": sharedSecret } : {}),
+        },
         body: JSON.stringify({ content }),
       }),
       30000

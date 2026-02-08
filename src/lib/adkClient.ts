@@ -20,6 +20,7 @@ import {
 
 export class AdkClient {
   private baseUrl: string;
+  private sharedSecret: string;
 
   constructor(baseUrl?: string) {
     this.baseUrl = (
@@ -27,6 +28,18 @@ export class AdkClient {
       process.env.NEXT_PUBLIC_ADK_BASE_URL ||
       "http://localhost:8000"
     ).replace(/\/+$/, "");
+    this.sharedSecret = process.env.BFF_SHARED_SECRET?.trim() || "";
+  }
+
+  private authHeaders(): HeadersInit {
+    return this.sharedSecret ? { "X-BFF-Secret": this.sharedSecret } : {};
+  }
+
+  private jsonHeaders(): HeadersInit {
+    return {
+      "Content-Type": "application/json",
+      ...this.authHeaders(),
+    };
   }
 
   /**
@@ -49,7 +62,7 @@ export class AdkClient {
       `${this.baseUrl}/apps/${appName}/users/${userId}/sessions`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: this.jsonHeaders(),
         body: JSON.stringify({
           ...(sessionId && { session_id: sessionId }),
           state: {
@@ -96,7 +109,7 @@ export class AdkClient {
   ): Promise<void> {
     const response = await fetch(
       `${this.baseUrl}/apps/${appName}/users/${userId}/sessions/${sessionId}`,
-      { method: "DELETE" }
+      { method: "DELETE", headers: this.authHeaders() }
     );
 
     if (!response.ok) {
@@ -117,9 +130,7 @@ export class AdkClient {
   async *streamMessage(request: AdkRequest): AsyncGenerator<Record<string, unknown>> {
     const response = await fetch(`${this.baseUrl}/run_sse`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: this.jsonHeaders(),
       body: JSON.stringify(request),
     });
 
@@ -193,9 +204,7 @@ export class AdkClient {
   ): Promise<Array<AdkEvent | AdkFinalResponse>> {
     const response = await fetch(`${this.baseUrl}/run`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: this.jsonHeaders(),
       body: JSON.stringify(request),
     });
 
