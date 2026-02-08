@@ -336,7 +336,7 @@ export default function PersonnasPage() {
                 ))}
               </Grid>
             )}
-            {inactiveAgents.length > 0 && (
+            {user_admin && inactiveAgents.length > 0 && (
               <Grid
                 gridTemplateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
                 gap={6}

@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     const visibleAgents = showAllAgents
       ? agents
-      : agents.filter((agent) => agent.is_public || agent.created_by === user.id);
+      : agents.filter((agent) => agent.active && (agent.is_public || agent.created_by === user.id));
 
     return NextResponse.json({ success: true, agents: visibleAgents }, { status: 200 });
   } catch (error) {
