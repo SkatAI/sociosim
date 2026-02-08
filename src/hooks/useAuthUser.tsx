@@ -185,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("[refreshUser] Completed");
   }, [loadSession]);
 
-  const user_admin = role === "admin";
+  const user_admin = role === "admin" || role === "teacher";
   const value = useMemo(
     () => ({
       user,

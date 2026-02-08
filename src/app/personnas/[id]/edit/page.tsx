@@ -469,7 +469,6 @@ export default function EditAgentPromptPage() {
     }
   };
 
-
   if (isLoading) {
     return (
       <Box maxWidth="4xl" height="100vh" display="flex" alignItems="center" justifyContent="center">

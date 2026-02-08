@@ -1,26 +1,59 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
 import { GET } from "./route";
 import { getAgentsWithPromptStatus, getPublishedAgents } from "@/lib/data/agents";
+import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
+import { getAuthenticatedUser } from "@/lib/supabaseAuthServer";
+import { mockUser } from "@/test/mocks/useAuthUser";
 
 vi.mock("@/lib/data/agents", () => ({
   getAgentsWithPromptStatus: vi.fn(),
   getPublishedAgents: vi.fn(),
 }));
+vi.mock("@/lib/supabaseServiceClient", () => ({
+  createServiceSupabaseClient: vi.fn(),
+}));
+vi.mock("@/lib/supabaseAuthServer", () => ({
+  getAuthenticatedUser: vi.fn(),
+}));
 
 const mockGetAgents = vi.mocked(getAgentsWithPromptStatus);
 const mockGetPublishedAgents = vi.mocked(getPublishedAgents);
+const mockCreateServiceSupabaseClient = vi.mocked(createServiceSupabaseClient);
+const mockGetAuthenticatedUser = vi.mocked(getAuthenticatedUser);
 
 describe("GET /api/agents", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAuthenticatedUser.mockResolvedValue({
+      user: { ...mockUser, id: "user-1" },
+      error: null,
+    });
+    mockCreateServiceSupabaseClient.mockReturnValue({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { role: "student" }, error: null }),
+          }),
+        }),
+      }),
+    } as unknown as ReturnType<typeof createServiceSupabaseClient>);
   });
 
   it("returns published agents when published=true", async () => {
     mockGetPublishedAgents.mockResolvedValue([
-      { id: "agent-1", agent_name: "oriane", description: "desc", active: true, is_template: false },
+      {
+        id: "agent-1",
+        agent_name: "oriane",
+        description: "desc",
+        active: true,
+        is_template: false,
+        is_public: true,
+        created_by: null,
+      },
     ]);
 
-    const response = await GET(new Request("http://localhost/api/agents?published=true"));
+    const response = await GET(new NextRequest("http://localhost/api/agents?published=true"));
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -47,10 +80,12 @@ describe("GET /api/agents", () => {
         has_published_prompt: false,
         active: true,
         is_template: false,
+        is_public: true,
+        created_by: null,
       },
     ]);
 
-    const response = await GET(new Request("http://localhost/api/agents"));
+    const response = await GET(new NextRequest("http://localhost/api/agents"));
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -77,10 +112,12 @@ describe("GET /api/agents", () => {
         has_published_prompt: false,
         active: true,
         is_template: false,
+        is_public: true,
+        created_by: null,
       },
     ]);
 
-    const response = await GET(new Request("http://localhost/api/agents?template=false"));
+    const response = await GET(new NextRequest("http://localhost/api/agents?template=false"));
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -96,5 +133,91 @@ describe("GET /api/agents", () => {
         },
       ],
     });
+  });
+
+  it("filters agents for students (public + own)", async () => {
+    mockGetAgents.mockResolvedValue([
+      {
+        id: "agent-public",
+        agent_name: "public",
+        description: "desc",
+        has_published_prompt: true,
+        active: true,
+        is_template: false,
+        is_public: true,
+        created_by: null,
+      },
+      {
+        id: "agent-owned",
+        agent_name: "owned",
+        description: "desc",
+        has_published_prompt: true,
+        active: true,
+        is_template: false,
+        is_public: false,
+        created_by: "user-1",
+      },
+      {
+        id: "agent-hidden",
+        agent_name: "hidden",
+        description: "desc",
+        has_published_prompt: true,
+        active: true,
+        is_template: false,
+        is_public: false,
+        created_by: "user-2",
+      },
+    ]);
+
+    const response = await GET(new NextRequest("http://localhost/api/agents"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.agents).toHaveLength(2);
+    expect(body.agents.map((agent: { id: string }) => agent.id)).toEqual([
+      "agent-public",
+      "agent-owned",
+    ]);
+  });
+
+  it("returns all agents for admin/teacher users", async () => {
+    mockCreateServiceSupabaseClient.mockReturnValueOnce({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { role: "admin" }, error: null }),
+          }),
+        }),
+      }),
+    } as unknown as ReturnType<typeof createServiceSupabaseClient>);
+
+    mockGetAgents.mockResolvedValue([
+      {
+        id: "agent-public",
+        agent_name: "public",
+        description: "desc",
+        has_published_prompt: true,
+        active: true,
+        is_template: false,
+        is_public: true,
+        created_by: null,
+      },
+      {
+        id: "agent-hidden",
+        agent_name: "hidden",
+        description: "desc",
+        has_published_prompt: true,
+        active: true,
+        is_template: false,
+        is_public: false,
+        created_by: "user-2",
+      },
+    ]);
+
+    const response = await GET(new NextRequest("http://localhost/api/agents"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.agents).toHaveLength(2);
   });
 });
