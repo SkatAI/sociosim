@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const baseUrl = process.env.CAULDRON_BASE_URL || DEFAULT_BASE_URL;
+    const baseUrl = (process.env.CAULDRON_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, "");
 
     const response = await withTimeout(
       "cauldronValidate",

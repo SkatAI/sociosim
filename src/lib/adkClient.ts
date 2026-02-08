@@ -22,7 +22,11 @@ export class AdkClient {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || process.env.NEXT_PUBLIC_ADK_BASE_URL || "http://localhost:8000";
+    this.baseUrl = (
+      baseUrl ||
+      process.env.NEXT_PUBLIC_ADK_BASE_URL ||
+      "http://localhost:8000"
+    ).replace(/\/+$/, "");
   }
 
   /**
