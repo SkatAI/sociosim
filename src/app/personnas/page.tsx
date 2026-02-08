@@ -10,16 +10,15 @@ import {
   HStack,
   Spinner,
   Grid,
-  Card,
-  IconButton,
-  Tooltip,
 } from "@chakra-ui/react";
-import { CirclePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { type Agent } from "@/lib/agents";
+import { isAdminLike } from "@/lib/agentPolicy";
 import { toaster } from "@/components/ui/toaster";
+import { AgentCard } from "./components/AgentCard";
+import { groupAgentsByCreator } from "./groupAgents";
 
 interface InterviewWithDetails {
   agent_id?: string;
@@ -32,6 +31,50 @@ interface InterviewWithDetails {
   }>;
 }
 
+const GRID_COLUMNS = { base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" };
+
+function AgentGrid({
+  agents,
+  isCreatingSession,
+  togglingAgentId,
+  interactedAgents,
+  userAdmin,
+  onSelectAgent,
+  onToggleAgent,
+  onNavigateHistory,
+  onNavigatePrompt,
+}: {
+  agents: Agent[];
+  isCreatingSession: boolean;
+  togglingAgentId: string | null;
+  interactedAgents: string[];
+  userAdmin: boolean;
+  onSelectAgent: (agentId: string) => void;
+  onToggleAgent: (agent: Agent) => void;
+  onNavigateHistory: (agentId: string) => void;
+  onNavigatePrompt: (agentId: string) => void;
+}) {
+  if (agents.length === 0) return null;
+  return (
+    <Grid gridTemplateColumns={GRID_COLUMNS} gap={6}>
+      {agents.map((agent) => (
+        <AgentCard
+          key={agent.id}
+          agent={agent}
+          isCreatingSession={isCreatingSession}
+          togglingAgentId={togglingAgentId}
+          hasInteracted={interactedAgents.includes(agent.id)}
+          userAdmin={userAdmin}
+          onSelectAgent={onSelectAgent}
+          onToggleAgent={onToggleAgent}
+          onNavigateHistory={onNavigateHistory}
+          onNavigatePrompt={onNavigatePrompt}
+        />
+      ))}
+    </Grid>
+  );
+}
+
 export default function PersonnasPage() {
   const router = useRouter();
   const { user, isLoading: isAuthLoading, user_admin } = useAuthUser();
@@ -41,8 +84,6 @@ export default function PersonnasPage() {
   const [error, setError] = useState<string | null>(null);
   const [interactedAgents, setInteractedAgents] = useState<string[]>([]);
   const [togglingAgentId, setTogglingAgentId] = useState<string | null>(null);
-  const activeAgents = agents.filter((agent) => agent.active);
-  const inactiveAgents = agents.filter((agent) => !agent.active);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -127,7 +168,7 @@ export default function PersonnasPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        const message = data.error || "Impossible de créer une nouvelle session";
+        const message = data.error || "Impossible de cr\u00e9er une nouvelle session";
         setError(message);
         console.error("Error creating session:", message);
         return;
@@ -140,7 +181,7 @@ export default function PersonnasPage() {
       );
     } catch (err) {
       console.error("Error selecting agent:", err);
-      setError("Une erreur est survenue lors de la création de la session");
+      setError("Une erreur est survenue lors de la cr\u00e9ation de la session");
     } finally {
       setIsCreatingSession(false);
     }
@@ -159,7 +200,7 @@ export default function PersonnasPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        const message = data.error || "Impossible de mettre à jour le personna";
+        const message = data.error || "Impossible de mettre \u00e0 jour le personna";
         console.error("Error updating agent status:", message);
         setError(message);
         return;
@@ -172,16 +213,50 @@ export default function PersonnasPage() {
       );
       toaster.create({
         type: "success",
-        description: nextActive ? "L'agent est activé" : "L'agent est désactivé",
+        description: nextActive ? "L'agent est activ\u00e9" : "L'agent est d\u00e9sactiv\u00e9",
         duration: 6000,
         closable: true,
       });
     } catch (err) {
       console.error("Error updating agent status:", err);
-      setError("Une erreur est survenue lors de la mise à jour du personna");
+      setError("Une erreur est survenue lors de la mise \u00e0 jour du personna");
     } finally {
       setTogglingAgentId(null);
     }
+  };
+
+  const handleNavigateHistory = (agentId: string) => {
+    router.push(`/interviews?agent=${encodeURIComponent(agentId)}`);
+  };
+
+  const handleNavigatePrompt = (agentId: string) => {
+    router.push(`/personnas/${agentId}/edit`);
+  };
+
+  // Admin view: group by creator
+  const groups = useMemo(() => groupAgentsByCreator(agents), [agents]);
+
+  // Student view: staff public active + own agents
+  const staffPublicActive = useMemo(
+    () => agents.filter((a) => isAdminLike(a.creator_role) && a.active && a.is_public),
+    [agents]
+  );
+  const myAgents = useMemo(
+    () => (user ? agents.filter((a) => a.created_by === user.id) : []),
+    [agents, user]
+  );
+  const myActiveAgents = useMemo(() => myAgents.filter((a) => a.active), [myAgents]);
+  const myInactiveAgents = useMemo(() => myAgents.filter((a) => !a.active), [myAgents]);
+
+  const gridProps = {
+    isCreatingSession,
+    togglingAgentId,
+    interactedAgents,
+    userAdmin: user_admin,
+    onSelectAgent: handleSelectAgent,
+    onToggleAgent: handleToggleAgent,
+    onNavigateHistory: handleNavigateHistory,
+    onNavigatePrompt: handleNavigatePrompt,
   };
 
   if (isLoading) {
@@ -233,203 +308,45 @@ export default function PersonnasPage() {
               Aucun personna disponible
             </Text>
             <Text color="fg.subtle" fontSize="sm">
-              Revenez plus tard pour démarrer une simulation.
+              Revenez plus tard pour d\u00e9marrer une simulation.
             </Text>
           </VStack>
         )}
 
-        {/* Agent Selection Cards */}
-        {agents.length > 0 && (
-          <VStack gap={6} alignItems="stretch">
-            {activeAgents.length > 0 && (
-              <Grid
-                gridTemplateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
-                gap={6}
-              >
-                {activeAgents.map((agent) => (
-                  <Card.Root key={agent.id}>
-                    <Card.Body display="flex" flexDirection="column" alignItems="stretch" gap={2} py={2} px={4}>
-                      <VStack gap={2} alignItems="flex-start">
-                        <HStack width="100%" justifyContent="space-between" alignItems="flex-start">
-                          <Text fontWeight="semibold" fontSize="md">
-                            {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
-                          </Text>
-                          {agent.active && (
-                            <Tooltip.Root openDelay={150}>
-                              <Tooltip.Trigger asChild>
-                                <IconButton
-                                  aria-label="Commencer un nouvel entretien"
-                                  size="sm"
-                                  variant="outline"
-                                  rounded="full"
-                                  colorPalette="blue"
-                                  backgroundColor="blue.400"
-                                  color="white"
-                                  borderColor="blue.400"
-                                  _hover={{ backgroundColor: "blue.500" }}
-                                  onClick={() => handleSelectAgent(agent.id)}
-                                  loading={isCreatingSession}
-                                  disabled={isCreatingSession || agent.has_published_prompt === false}
-                                >
-                                  <CirclePlus size={18} />
-                                </IconButton>
-                              </Tooltip.Trigger>
-                              <Tooltip.Positioner>
-                                <Tooltip.Content px={3} py={2}>
-                                  Commencer un nouvel entretien
-                                </Tooltip.Content>
-                              </Tooltip.Positioner>
-                            </Tooltip.Root>
-                          )}
-                        </HStack>
-                        <Text
-                          fontSize="sm"
-                          color="fg.muted"
-                          textAlign="left"
-                          lineHeight="1.4"
-                          whiteSpace="pre-line"
-                        >
-                          {(agent.description || "").replace(/\\n/g, "\n")}
-                        </Text>
-                      </VStack>
-                      <HStack gap={3} flexWrap="wrap" justifyContent="flex-start">
-                        {agent.active && agent.has_published_prompt === false && (
-                          <Text fontSize="xs" color="fg.muted">
-                            (N&apos;a pas de prompt publié)
-                          </Text>
-                        )}
-                        {agent.active && interactedAgents.includes(agent.id) && (
-                          <Button
-                            onClick={() => router.push(`/interviews?agent=${encodeURIComponent(agent.id)}`)}
-                            variant="subtle"
-                            size="xs"
-                            paddingInline={2}
-                          >
-                            Historique
-                          </Button>
-                        )}
-                        <Button
-                          variant="subtle"
-                          size="xs"
-                          paddingInline={2}
-                          onClick={() => router.push(`/personnas/${agent.id}/edit`)}
-                          disabled={!agent.active}
-                        >
-                          Prompt
-                        </Button>
-                        {user_admin && (
-                          <Button
-                            variant={agent.active ? "outline" : "subtle"}
-                            colorPalette={agent.active ? "red" : undefined}
-                            size="xs"
-                            paddingInline={2}
-                            onClick={() => handleToggleAgent(agent)}
-                            loading={togglingAgentId === agent.id}
-                            disabled={togglingAgentId === agent.id}
-                          >
-                            {agent.active ? "Désactiver" : "Activer"}
-                          </Button>
-                        )}
-                      </HStack>
-                    </Card.Body>
-                  </Card.Root>
-                ))}
-              </Grid>
+        {/* Admin/Teacher view: grouped by creator */}
+        {agents.length > 0 && user_admin && (
+          <VStack gap={8} alignItems="stretch">
+            {groups.map((group) => (
+              <VStack key={group.key} gap={4} alignItems="stretch">
+                <Heading size={group.isStaff ? "md" : "sm"}>
+                  {group.label}
+                </Heading>
+                <AgentGrid agents={group.activeAgents} {...gridProps} />
+                {group.inactiveAgents.length > 0 && (
+                  <AgentGrid agents={group.inactiveAgents} {...gridProps} />
+                )}
+              </VStack>
+            ))}
+          </VStack>
+        )}
+
+        {/* Student view: public staff agents + own agents */}
+        {agents.length > 0 && !user_admin && (
+          <VStack gap={8} alignItems="stretch">
+            {staffPublicActive.length > 0 && (
+              <VStack gap={4} alignItems="stretch">
+                <Heading size="md">Personnages</Heading>
+                <AgentGrid agents={staffPublicActive} {...gridProps} />
+              </VStack>
             )}
-            {user_admin && inactiveAgents.length > 0 && (
-              <Grid
-                gridTemplateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }}
-                gap={6}
-              >
-                {inactiveAgents.map((agent) => (
-                  <Card.Root key={agent.id}>
-                    <Card.Body display="flex" flexDirection="column" alignItems="stretch" gap={2} py={2} px={4}>
-                      <VStack gap={2} alignItems="flex-start">
-                        <HStack width="100%" justifyContent="space-between" alignItems="flex-start">
-                          <Text fontWeight="semibold" fontSize="md">
-                            {agent.agent_name.charAt(0).toUpperCase() + agent.agent_name.slice(1)}
-                          </Text>
-                          {agent.active && (
-                            <Tooltip.Root openDelay={150}>
-                              <Tooltip.Trigger asChild>
-                                <IconButton
-                                  aria-label="Commencer un nouvel entretien"
-                                  size="sm"
-                                  variant="outline"
-                                  rounded="full"
-                                  colorPalette="blue"
-                                  backgroundColor="blue.400"
-                                  color="white"
-                                  borderColor="blue.400"
-                                  _hover={{ backgroundColor: "blue.500" }}
-                                  onClick={() => handleSelectAgent(agent.id)}
-                                  loading={isCreatingSession}
-                                  disabled={isCreatingSession || agent.has_published_prompt === false}
-                                >
-                                  <CirclePlus size={18} />
-                                </IconButton>
-                              </Tooltip.Trigger>
-                              <Tooltip.Positioner>
-                                <Tooltip.Content px={3} py={2}>
-                                  Commencer un nouvel entretien
-                                </Tooltip.Content>
-                              </Tooltip.Positioner>
-                            </Tooltip.Root>
-                          )}
-                        </HStack>
-                        <Text
-                          fontSize="sm"
-                          color="fg.muted"
-                          textAlign="left"
-                          lineHeight="1.4"
-                          whiteSpace="pre-line"
-                        >
-                          {(agent.description || "").replace(/\\n/g, "\n")}
-                        </Text>
-                      </VStack>
-                      <HStack gap={3} flexWrap="wrap" justifyContent="flex-start">
-                        {agent.active && agent.has_published_prompt === false && (
-                          <Text fontSize="xs" color="fg.muted">
-                            (N&apos;a pas de prompt publié)
-                          </Text>
-                        )}
-                        {agent.active && interactedAgents.includes(agent.id) && (
-                          <Button
-                            onClick={() => router.push(`/interviews?agent=${encodeURIComponent(agent.id)}`)}
-                            variant="subtle"
-                            size="xs"
-                            paddingInline={2}
-                          >
-                            Historique
-                          </Button>
-                        )}
-                        <Button
-                          variant="subtle"
-                          size="xs"
-                          paddingInline={2}
-                          onClick={() => router.push(`/personnas/${agent.id}/edit`)}
-                          disabled={!agent.active}
-                        >
-                          Prompt
-                        </Button>
-                        {user_admin && (
-                          <Button
-                            variant={agent.active ? "outline" : "subtle"}
-                            colorPalette={agent.active ? "red" : undefined}
-                            size="xs"
-                            paddingInline={2}
-                            onClick={() => handleToggleAgent(agent)}
-                            loading={togglingAgentId === agent.id}
-                            disabled={togglingAgentId === agent.id}
-                          >
-                            {agent.active ? "Désactiver" : "Activer"}
-                          </Button>
-                        )}
-                      </HStack>
-                    </Card.Body>
-                  </Card.Root>
-                ))}
-              </Grid>
+            {myAgents.length > 0 && (
+              <VStack gap={4} alignItems="stretch">
+                <Heading size="md">Mes personnages</Heading>
+                <AgentGrid agents={myActiveAgents} {...gridProps} />
+                {myInactiveAgents.length > 0 && (
+                  <AgentGrid agents={myInactiveAgents} {...gridProps} />
+                )}
+              </VStack>
             )}
           </VStack>
         )}

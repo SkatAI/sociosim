@@ -21,6 +21,10 @@ const mockAgents = [
     description: "Master 1 EOS\\nUtilisatrice pragmatique de l'IA",
     has_published_prompt: true,
     active: true,
+    is_public: true,
+    created_by: "admin-1",
+    creator_name: "Admin",
+    creator_role: "admin",
   },
   {
     id: "agent-theo",
@@ -28,6 +32,10 @@ const mockAgents = [
     description: "M2 Math. App. et Socio Quantitative\\nPassionné de technologie",
     has_published_prompt: true,
     active: true,
+    is_public: true,
+    created_by: "admin-1",
+    creator_name: "Admin",
+    creator_role: "admin",
   },
   {
     id: "agent-jade",
@@ -35,6 +43,10 @@ const mockAgents = [
     description: "M2 Sociologie et études de genre\\nTechno sceptique",
     has_published_prompt: false,
     active: false,
+    is_public: true,
+    created_by: "admin-1",
+    creator_name: "Admin",
+    creator_role: "admin",
   },
 ];
 

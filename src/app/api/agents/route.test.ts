@@ -50,6 +50,8 @@ describe("GET /api/agents", () => {
         is_template: false,
         is_public: true,
         created_by: null,
+        creator_name: null,
+        creator_role: null,
       },
     ]);
 
@@ -82,6 +84,8 @@ describe("GET /api/agents", () => {
         is_template: false,
         is_public: true,
         created_by: null,
+        creator_name: null,
+        creator_role: null,
       },
     ]);
 
@@ -114,6 +118,8 @@ describe("GET /api/agents", () => {
         is_template: false,
         is_public: true,
         created_by: null,
+        creator_name: null,
+        creator_role: null,
       },
     ]);
 
@@ -146,6 +152,8 @@ describe("GET /api/agents", () => {
         is_template: false,
         is_public: true,
         created_by: null,
+        creator_name: null,
+        creator_role: null,
       },
       {
         id: "agent-owned",
@@ -156,6 +164,8 @@ describe("GET /api/agents", () => {
         is_template: false,
         is_public: false,
         created_by: "user-1",
+        creator_name: null,
+        creator_role: null,
       },
       {
         id: "agent-hidden",
@@ -166,6 +176,8 @@ describe("GET /api/agents", () => {
         is_template: false,
         is_public: false,
         created_by: "user-2",
+        creator_name: null,
+        creator_role: null,
       },
     ]);
 
@@ -201,6 +213,8 @@ describe("GET /api/agents", () => {
         is_template: false,
         is_public: true,
         created_by: null,
+        creator_name: null,
+        creator_role: null,
       },
       {
         id: "agent-hidden",
@@ -211,6 +225,8 @@ describe("GET /api/agents", () => {
         is_template: false,
         is_public: false,
         created_by: "user-2",
+        creator_name: null,
+        creator_role: null,
       },
     ]);
 

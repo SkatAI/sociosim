@@ -23,6 +23,8 @@ All notable changes to this project will be documented in this file.
 - **Auth Admin Flag:** Expose `user_admin` in auth context and gate the manage users link + redirect non-admins.
 - **Footer:** Add Université Gustave Eiffel footer with logo and legal/contact links.
 - **Agents:** Add `is_public` flag to `public.agents`.
+- **Agent Policy Module:** Centralize all agent visibility, toggle, and interview-start rules in `src/lib/agentPolicy.ts`, replacing duplicated `isAdminLike()` checks across 3 API routes.
+
 ### Changed
 - **Interviews Route:** Rename `/dashboard` to `/interviews`.
 - **Admin Interviews:** Admins can view all interviews without resuming someone else’s session.

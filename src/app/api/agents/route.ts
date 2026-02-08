@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAgentsWithPromptStatus, getPublishedAgents } from "@/lib/data/agents";
 import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
 import { getAuthenticatedUser } from "@/lib/supabaseAuthServer";
-
-const isAdminLike = (role?: string | null) => role === "admin" || role === "teacher";
+import { canViewAgent } from "@/lib/agentPolicy";
 
 /**
  * GET /api/agents?published=true&template=false
@@ -35,7 +34,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: message }, { status: 500 });
     }
 
-    const showAllAgents = isAdminLike(userRecord?.role);
+    const role = userRecord?.role ?? null;
 
     const agents = publishedOnly
       ? (await getPublishedAgents(templateFilter)).map((agent) => ({
@@ -44,9 +43,7 @@ export async function GET(request: NextRequest) {
         }))
       : await getAgentsWithPromptStatus(templateFilter);
 
-    const visibleAgents = showAllAgents
-      ? agents
-      : agents.filter((agent) => agent.active && (agent.is_public || agent.created_by === user.id));
+    const visibleAgents = agents.filter((agent) => canViewAgent(role, user.id, agent));
 
     return NextResponse.json({ success: true, agents: visibleAgents }, { status: 200 });
   } catch (error) {

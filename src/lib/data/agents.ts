@@ -14,6 +14,8 @@ export interface AgentRecord {
   is_template: boolean;
   is_public: boolean;
   created_by: string | null;
+  creator_name: string | null;
+  creator_role: string | null;
 }
 
 export interface AgentRecordWithPromptStatus extends AgentRecord {
@@ -28,12 +30,28 @@ export async function getAgents(): Promise<AgentRecord[]> {
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id, agent_name, description, active, is_template, is_public, created_by")
+    .select("id, agent_name, description, active, is_template, is_public, created_by, users!agents_created_by_fkey(name, role)")
     .order("agent_name");
 
   throwIfError(error, "Failed to load agents");
 
-  return (data || []) as AgentRecord[];
+  const agents = (data || []) as Array<
+    Omit<AgentRecord, "creator_name" | "creator_role"> & {
+      users?: { name?: string; role?: string } | null;
+    }
+  >;
+
+  return agents.map((agent) => ({
+    id: agent.id,
+    agent_name: agent.agent_name,
+    description: agent.description,
+    active: agent.active,
+    is_template: agent.is_template,
+    is_public: agent.is_public,
+    created_by: agent.created_by,
+    creator_name: agent.users?.name ?? null,
+    creator_role: agent.users?.role ?? null,
+  }));
 }
 
 /**
@@ -47,7 +65,7 @@ export async function getAgentsWithPromptStatus(
   let query = supabase
     .from("agents")
     .select(
-      "id, agent_name, description, active, is_template, is_public, created_by, agent_prompts(published)"
+      "id, agent_name, description, active, is_template, is_public, created_by, agent_prompts(published), users!agents_created_by_fkey(name, role)"
     )
     .order("agent_name");
 
@@ -62,7 +80,10 @@ export async function getAgentsWithPromptStatus(
   throwIfError(error, "Failed to load agents with prompt status");
 
   const agents = (data || []) as Array<
-    AgentRecord & { agent_prompts?: Array<{ published?: boolean | null }> | null }
+    Omit<AgentRecord, "creator_name" | "creator_role"> & {
+      agent_prompts?: Array<{ published?: boolean | null }> | null;
+      users?: { name?: string; role?: string } | null;
+    }
   >;
 
   return agents.map((agent) => ({
@@ -73,6 +94,8 @@ export async function getAgentsWithPromptStatus(
     is_template: agent.is_template,
     is_public: agent.is_public,
     created_by: agent.created_by,
+    creator_name: agent.users?.name ?? null,
+    creator_role: agent.users?.role ?? null,
     has_published_prompt: (agent.agent_prompts || []).some((prompt) => prompt.published),
   }));
 }
@@ -88,7 +111,7 @@ export async function getPublishedAgents(
   let query = supabase
     .from("agents")
     .select(
-      "id, agent_name, description, active, is_template, is_public, created_by, agent_prompts!inner(published)"
+      "id, agent_name, description, active, is_template, is_public, created_by, agent_prompts!inner(published), users!agents_created_by_fkey(name, role)"
     )
     .eq("agent_prompts.published", true)
     .order("agent_name");
@@ -103,7 +126,23 @@ export async function getPublishedAgents(
 
   throwIfError(error, "Failed to load published agents");
 
-  return (data || []) as AgentRecord[];
+  const agents = (data || []) as Array<
+    Omit<AgentRecord, "creator_name" | "creator_role"> & {
+      users?: { name?: string; role?: string } | null;
+    }
+  >;
+
+  return agents.map((agent) => ({
+    id: agent.id,
+    agent_name: agent.agent_name,
+    description: agent.description,
+    active: agent.active,
+    is_template: agent.is_template,
+    is_public: agent.is_public,
+    created_by: agent.created_by,
+    creator_name: agent.users?.name ?? null,
+    creator_role: agent.users?.role ?? null,
+  }));
 }
 
 /**
@@ -114,13 +153,26 @@ export async function getAgentByName(name: string): Promise<AgentRecord | null> 
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id, agent_name, description, active, is_template, is_public, created_by")
+    .select("id, agent_name, description, active, is_template, is_public, created_by, users!agents_created_by_fkey(name, role)")
     .eq("agent_name", name)
     .maybeSingle();
 
   throwIfError(error, `Failed to load agent with name: ${name}`);
 
-  return data as AgentRecord | null;
+  if (!data) return null;
+
+  const row = data as typeof data & { users?: { name?: string; role?: string } | null };
+  return {
+    id: row.id,
+    agent_name: row.agent_name,
+    description: row.description,
+    active: row.active,
+    is_template: row.is_template,
+    is_public: row.is_public,
+    created_by: row.created_by,
+    creator_name: row.users?.name ?? null,
+    creator_role: row.users?.role ?? null,
+  };
 }
 
 /**
@@ -131,13 +183,26 @@ export async function getAgentById(agentId: string): Promise<AgentRecord | null>
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id, agent_name, description, active, is_template, is_public, created_by")
+    .select("id, agent_name, description, active, is_template, is_public, created_by, users!agents_created_by_fkey(name, role)")
     .eq("id", agentId)
     .maybeSingle();
 
   throwIfError(error, `Failed to load agent with id: ${agentId}`);
 
-  return data as AgentRecord | null;
+  if (!data) return null;
+
+  const row = data as typeof data & { users?: { name?: string; role?: string } | null };
+  return {
+    id: row.id,
+    agent_name: row.agent_name,
+    description: row.description,
+    active: row.active,
+    is_template: row.is_template,
+    is_public: row.is_public,
+    created_by: row.created_by,
+    creator_name: row.users?.name ?? null,
+    creator_role: row.users?.role ?? null,
+  };
 }
 
 /**

@@ -99,6 +99,8 @@ describe("POST /api/sessions", () => {
       is_template: false,
       is_public: false,
       created_by: "user-2",
+      creator_name: null,
+      creator_role: null,
     });
 
     const request = new NextRequest("http://localhost/api/sessions", {
@@ -124,6 +126,8 @@ describe("POST /api/sessions", () => {
       is_template: false,
       is_public: true,
       created_by: "user-2",
+      creator_name: null,
+      creator_role: null,
     });
 
     const request = new NextRequest("http://localhost/api/sessions", {
@@ -169,6 +173,8 @@ describe("POST /api/sessions", () => {
       is_template: false,
       is_public: false,
       created_by: "user-2",
+      creator_name: null,
+      creator_role: null,
     });
 
     const request = new NextRequest("http://localhost/api/sessions", {

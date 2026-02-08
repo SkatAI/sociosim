@@ -14,9 +14,9 @@ import { interviews, sessions } from "@/lib/data";
 import { getAgentById, getInterviewWithAgent } from "@/lib/data/agents";
 import { getAuthenticatedUser } from "@/lib/supabaseAuthServer";
 import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
+import { canStartInterview } from "@/lib/agentPolicy";
 
 const adkClient = new AdkClient();
-const isAdminLike = (role?: string | null) => role === "admin" || role === "teacher";
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,7 +55,6 @@ export async function POST(req: NextRequest) {
     let isResume = false;
     let validAgentName: string;
     let agentId: string;
-    let allowHiddenAgents = false;
 
     const supabase = createServiceSupabaseClient();
     const { data: userRecord, error: userError } = await supabase
@@ -70,7 +69,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message }, { status: 500 });
     }
 
-    allowHiddenAgents = isAdminLike(userRecord?.role);
+    const role = userRecord?.role ?? null;
 
     // Check if this is a resume request (interviewId provided) or new interview
     if (interviewId) {
@@ -126,9 +125,9 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (!allowHiddenAgents && !agentRecord.is_public && agentRecord.created_by !== user.id) {
+      if (!canStartInterview(role, user.id, agentRecord)) {
         return NextResponse.json(
-          { error: "Agent not accessible" },
+          { error: agentRecord.active ? "Agent not accessible" : "Agent is inactive" },
           { status: 403 }
         );
       }

@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
+import { getAuthenticatedUser } from "@/lib/supabaseAuthServer";
+import { canToggleActive } from "@/lib/agentPolicy";
 
 /**
  * PATCH /api/agents/:id/active
- * Toggle agent active status.
+ * Toggle agent active status. Admin/teacher only.
  */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { user } = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = (await request.json().catch(() => null)) as { active?: boolean } | null;
 
@@ -19,6 +26,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const supabase = createServiceSupabaseClient();
+
+    const { data: userRecord, error: userError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (userError) {
+      const message = userError.message ?? "Failed to load user role";
+      console.error("[/api/agents/:id/active PATCH] Role error:", message);
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+
+    if (!canToggleActive(userRecord?.role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const { data, error } = await supabase
       .from("agents")
       .update({ active: body.active })
