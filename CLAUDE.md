@@ -58,6 +58,8 @@ Migrations: write `<migration>.sql` files in `supabase/migrations` when needed. 
 - Default branch: `main`. Commit messages: short, lowercase, imperative (`"add interview lobby screen"`).
 - PRs should include: summary, screenshots for UI changes, linked issues, and notes on manual/automated tests. Request review before merging.
 
+Never push to any branch unless I explicitly say 'push' or 'push it'. Always commit locally first and wait for my go-ahead before pushing.
+
 ## Configuration & Secrets
 
 - Never commit secrets. Keep environment values in `.env.local`; update `.env.local.example` when new vars are required. Ensure Next.js settings align after env changes.
@@ -65,3 +67,10 @@ Migrations: write `<migration>.sql` files in `supabase/migrations` when needed. 
 # Changelog
 
 Always update changelog.md for major changes and document them there.
+
+
+## Planning & Implementation
+When I ask you to plan or stay in plan mode, do NOT exit plan mode or start implementing. Only write specs/plans until I explicitly say to implement.
+
+## Infrastructure section
+This project runs in Docker. Docker is required — do not suggest removing it. When debugging network issues, remember containers cannot reach localhost on the host; use internal Docker service names or dedicated internal URLs (e.g., SUPABASE_INTERNAL_URL).
