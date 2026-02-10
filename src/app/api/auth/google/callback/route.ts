@@ -8,8 +8,27 @@ import { getAuthenticatedUser } from "@/lib/supabaseAuthServer";
 const GOOGLE_TOKEN_COOKIE = "google_access_token";
 const COOKIE_MAX_AGE = 60 * 60 * 24;
 
+const getAppBaseUrl = (req: NextRequest) => {
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  if (configuredSiteUrl) {
+    try {
+      return new URL(configuredSiteUrl).origin;
+    } catch {
+      throw new Error("Invalid NEXT_PUBLIC_SITE_URL environment variable");
+    }
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Missing NEXT_PUBLIC_SITE_URL environment variable in production");
+  }
+
+  return new URL(req.url).origin;
+};
+
 export async function GET(req: NextRequest) {
   try {
+    const appBaseUrl = getAppBaseUrl(req);
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code");
     const state = searchParams.get("state");
@@ -31,7 +50,7 @@ export async function GET(req: NextRequest) {
 
     const { user } = await getAuthenticatedUser(req);
     if (!user) {
-      return NextResponse.redirect(new URL("/login", req.url));
+      return NextResponse.redirect(new URL("/login", appBaseUrl));
     }
 
     if (user.id !== stateCheck.payload.userId) {
@@ -53,7 +72,10 @@ export async function GET(req: NextRequest) {
     }
 
     const response = NextResponse.redirect(
-      new URL(`/interview/${stateCheck.payload.interviewId}?oauth=success`, req.url)
+      new URL(
+        `/interview/${stateCheck.payload.interviewId}?oauth=success`,
+        appBaseUrl
+      )
     );
     response.cookies.set(GOOGLE_TOKEN_COOKIE, accessToken, {
       httpOnly: true,
