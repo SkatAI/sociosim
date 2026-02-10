@@ -23,7 +23,7 @@ export default function Home() {
   }, [isLoading, router, user?.id]);
 
   return (
-    <Container py={16}>
+    <Container py={16} maxW="lg" centerContent mx="auto">
       <Stack gap={8}>
         <Stack gap={4}>
           <Heading size="lg">Bienvenue sur Mimesis</Heading>
