@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { toaster } from "@/components/ui/toaster";
 import { useRouter } from "next/navigation";
 import { useAuthUser } from "@/hooks/useAuthUser";
+import { Ban, Power } from "lucide-react";
 
 type UserRole = "student" | "teacher" | "admin";
 
@@ -284,13 +285,15 @@ export default function ManageUsersClient() {
     );
   }
 
-  const sortedUsers = [...users].sort((a, b) => {
+  const sortUser = (a: UserSummary, b: UserSummary) => {
     const isCurrentA = a.id === currentUserId;
     const isCurrentB = b.id === currentUserId;
     if (isCurrentA !== isCurrentB) return isCurrentA ? -1 : 1;
-    if (a.is_banned !== b.is_banned) return a.is_banned ? 1 : -1;
     return a.email.localeCompare(b.email, "fr");
-  });
+  };
+
+  const activeUsers = [...users].filter((u) => !u.is_banned).sort(sortUser);
+  const bannedUsers = [...users].filter((u) => u.is_banned).sort(sortUser);
 
   return (
     <Container maxWidth="5xl" py={8} px={{ base: 4, md: 6 }}>
@@ -401,16 +404,12 @@ export default function ManageUsersClient() {
 
         <VStack gap={4} alignItems="stretch">
           <Heading size="md">Utilisateurs</Heading>
-          {users.length === 0 && !error && (
-            <Box
-              padding={6}
-              borderRadius="md"
-              backgroundColor="bg.subtle"
-            >
-              <Text color="fg.muted">Aucun utilisateur disponible.</Text>
+          {activeUsers.length === 0 && !error && (
+            <Box padding={6} borderRadius="md" backgroundColor="bg.subtle">
+              <Text color="fg.muted">Aucun utilisateur actif.</Text>
             </Box>
           )}
-          {users.length > 0 && (
+          {activeUsers.length > 0 && (
             <Table.ScrollArea borderWidth="1px" borderColor="border.muted" borderRadius="md">
               <Table.Root size="sm" variant="outline" striped>
                 <Table.ColumnGroup>
@@ -436,16 +435,13 @@ export default function ManageUsersClient() {
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {sortedUsers.map((userRow) => (
+                  {activeUsers.map((userRow) => (
                     <Table.Row key={userRow.id}>
                       <Table.Cell paddingInlineStart={4}>{userRow.email}</Table.Cell>
                       <Table.Cell paddingInlineStart={4} fontWeight="medium">
                         {userRow.name}
                       </Table.Cell>
-                      <Table.Cell
-                        paddingInlineStart={4}
-                        textAlign="center"
-                      >
+                      <Table.Cell paddingInlineStart={4} textAlign="center">
                         <Button
                           size="xs"
                           variant="ghost"
@@ -457,28 +453,109 @@ export default function ManageUsersClient() {
                           {getRoleLabel(userRow.role)}
                         </Button>
                       </Table.Cell>
-                    <Table.Cell paddingInlineStart={4} textAlign="center">
-                      {userRow.id === currentUserId ? null : (
-                        <Button
-                          size="xs"
-                          variant="outline"
-                          borderColor={userRow.is_banned ? "status.activate" : "status.ban"}
-                          color={userRow.is_banned ? "status.activate" : "status.ban"}
-                          paddingInline={2}
-                          loading={Boolean(banLoading[userRow.id])}
-                          onClick={() => handleToggleBan(userRow)}
-                        >
-                          {userRow.is_banned ? "Activer" : "Bannir"}
-                        </Button>
-                      )}
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
+                      <Table.Cell paddingInlineStart={4} textAlign="center">
+                        {userRow.id === currentUserId ? null : (
+                          <Tooltip.Root openDelay={150}>
+                            <Tooltip.Trigger asChild>
+                              <IconButton
+                                size="xs"
+                                variant="ghost"
+                                color="status.ban"
+                                loading={Boolean(banLoading[userRow.id])}
+                                onClick={() => handleToggleBan(userRow)}
+                                aria-label="Bannir"
+                              >
+                                <Ban size={14} />
+                              </IconButton>
+                            </Tooltip.Trigger>
+                            <Tooltip.Positioner>
+                              <Tooltip.Content px={3} py={2}>
+                                Bannir
+                              </Tooltip.Content>
+                            </Tooltip.Positioner>
+                          </Tooltip.Root>
+                        )}
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
                 </Table.Body>
               </Table.Root>
             </Table.ScrollArea>
           )}
         </VStack>
+
+        {bannedUsers.length > 0 && (
+          <VStack gap={4} alignItems="stretch">
+            <Heading size="sm">Désactivé(es)</Heading>
+            <Table.ScrollArea borderWidth="1px" borderColor="border.muted" borderRadius="md">
+              <Table.Root size="sm" variant="outline" striped>
+                <Table.ColumnGroup>
+                  <Table.Column htmlWidth="40%" />
+                  <Table.Column htmlWidth="35%" />
+                  <Table.Column htmlWidth="15%" />
+                  <Table.Column htmlWidth="10%" />
+                </Table.ColumnGroup>
+                <Table.Header>
+                  <Table.Row bg="bg.subtle">
+                    <Table.ColumnHeader paddingInlineStart={4} fontWeight="bold">
+                      Email
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader paddingInlineStart={4} fontWeight="bold">
+                      Nom
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader paddingInlineStart={4} textAlign="center" fontWeight="bold">
+                      Admin
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader paddingInlineStart={4} textAlign="center" fontWeight="bold">
+                      Actions
+                    </Table.ColumnHeader>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {bannedUsers.map((userRow) => (
+                    <Table.Row key={userRow.id}>
+                      <Table.Cell paddingInlineStart={4}>{userRow.email}</Table.Cell>
+                      <Table.Cell paddingInlineStart={4} fontWeight="medium">
+                        {userRow.name}
+                      </Table.Cell>
+                      <Table.Cell paddingInlineStart={4} textAlign="center">
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          colorPalette={getRoleColor(userRow.role)}
+                          disabled
+                        >
+                          {getRoleLabel(userRow.role)}
+                        </Button>
+                      </Table.Cell>
+                      <Table.Cell paddingInlineStart={4} textAlign="center">
+                        <Tooltip.Root openDelay={150}>
+                          <Tooltip.Trigger asChild>
+                            <IconButton
+                              size="xs"
+                              variant="ghost"
+                              color="status.activate"
+                              loading={Boolean(banLoading[userRow.id])}
+                              onClick={() => handleToggleBan(userRow)}
+                              aria-label="Activer"
+                            >
+                              <Power size={14} />
+                            </IconButton>
+                          </Tooltip.Trigger>
+                          <Tooltip.Positioner>
+                            <Tooltip.Content px={3} py={2}>
+                              Activer
+                            </Tooltip.Content>
+                          </Tooltip.Positioner>
+                        </Tooltip.Root>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </Table.ScrollArea>
+          </VStack>
+        )}
       </VStack>
     </Container>
   );
