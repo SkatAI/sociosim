@@ -6,11 +6,9 @@ import {
   VStack,
   HStack,
   Card,
-  IconButton,
-  Tooltip,
 } from "@chakra-ui/react";
-import { CirclePlus } from "lucide-react";
 import { type Agent } from "@/lib/agents";
+import NewInterviewButton from "@/app/components/NewInterviewButton";
 
 interface AgentCardProps {
   agent: Agent;
@@ -51,31 +49,11 @@ export function AgentCard({
               )}
             </VStack>
             {agent.active && (
-              <Tooltip.Root openDelay={150}>
-                <Tooltip.Trigger asChild>
-                  <IconButton
-                    aria-label="Commencer un nouvel entretien"
-                    size="sm"
-                    variant="outline"
-                    rounded="full"
-                    colorPalette="blue"
-                    backgroundColor="blue.400"
-                    color="white"
-                    borderColor="blue.400"
-                    _hover={{ backgroundColor: "blue.500" }}
-                    onClick={() => onSelectAgent(agent.id)}
-                    loading={isCreatingSession}
-                    disabled={isCreatingSession || agent.has_published_prompt === false}
-                  >
-                    <CirclePlus size={18} />
-                  </IconButton>
-                </Tooltip.Trigger>
-                <Tooltip.Positioner>
-                  <Tooltip.Content px={3} py={2}>
-                    Commencer un nouvel entretien
-                  </Tooltip.Content>
-                </Tooltip.Positioner>
-              </Tooltip.Root>
+              <NewInterviewButton
+                onClick={() => onSelectAgent(agent.id)}
+                loading={isCreatingSession}
+                disabled={isCreatingSession || agent.has_published_prompt === false}
+              />
             )}
           </HStack>
           <Text

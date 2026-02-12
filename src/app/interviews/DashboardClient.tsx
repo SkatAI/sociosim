@@ -18,7 +18,7 @@ import {
   Icon,
   Tooltip,
 } from "@chakra-ui/react";
-import { CirclePlus } from "lucide-react";
+import NewInterviewButton from "@/app/components/NewInterviewButton";
 import { LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp } from "react-icons/lu";
 import NextLink from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -299,12 +299,11 @@ export default function DashboardClient() {
               {user_admin ? "Tous les entretiens" : "Mes entretiens"}
             </Heading>
             {hasMultipleAgents && (
-              <NativeSelect.Root>
+              <NativeSelect.Root size="sm">
                 <NativeSelect.Field
                   aria-label="Filtrer par agent"
                   value={selectedAgentId}
                   onChange={(event) => setSelectedAgentId(event.target.value)}
-                  fontSize="sm"
                   borderWidth="1px"
                   borderColor="border.muted"
                   borderRadius="md"
@@ -321,12 +320,11 @@ export default function DashboardClient() {
               </NativeSelect.Root>
             )}
             {user_admin && userOptions.length > 0 && (
-              <NativeSelect.Root>
+              <NativeSelect.Root size="sm">
                 <NativeSelect.Field
                   aria-label="Filtrer par utilisateur"
                   value={selectedUserId}
                   onChange={(event) => setSelectedUserId(event.target.value)}
-                  fontSize="sm"
                   borderWidth="1px"
                   borderColor="border.muted"
                   borderRadius="md"
@@ -343,31 +341,11 @@ export default function DashboardClient() {
               </NativeSelect.Root>
             )}
           </HStack>
-          <Tooltip.Root openDelay={150}>
-            <Tooltip.Trigger asChild>
-              <IconButton
-                aria-label="Commencer un nouvel entretien"
-                size="sm"
-                variant="outline"
-                rounded="full"
-                colorPalette="blue"
-                backgroundColor="blue.400"
-                color="white"
-                borderColor="blue.400"
-                _hover={{ backgroundColor: "blue.500" }}
-                onClick={handleNewInterview}
-                loading={isCreatingSession}
-                disabled={isCreatingSession}
-              >
-                <CirclePlus size={18} />
-              </IconButton>
-            </Tooltip.Trigger>
-            <Tooltip.Positioner>
-              <Tooltip.Content px={3} py={2}>
-                Commencer un nouvel entretien
-              </Tooltip.Content>
-            </Tooltip.Positioner>
-          </Tooltip.Root>
+          <NewInterviewButton
+            onClick={handleNewInterview}
+            loading={isCreatingSession}
+            disabled={isCreatingSession}
+          />
         </HStack>
 
         {error && (

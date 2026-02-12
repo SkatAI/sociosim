@@ -8,7 +8,7 @@ import {
   HStack,
   Input,
   Menu,
-  Portal,
+  Textarea,
   Spinner,
   Text,
   VStack,
@@ -33,6 +33,7 @@ import PersonnaRightSidebar from "@/app/personnas/components/PersonnaRightSideba
 import PromptReviewSidebar, {
   type CauldronReview,
 } from "@/app/personnas/components/PromptReviewSidebar";
+import NewInterviewButton from "@/app/components/NewInterviewButton";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { withTimeout } from "@/lib/withTimeout";
 
@@ -75,6 +76,7 @@ export default function EditAgentPromptPage() {
   const [reviewedContent, setReviewedContent] = useState("");
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [isReviewing, setIsReviewing] = useState(false);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const editor = useEditor({
     extensions: [
@@ -338,6 +340,39 @@ export default function EditAgentPromptPage() {
     }
   };
 
+  const handleNewInterview = async () => {
+    if (!user?.id) {
+      router.push("/login");
+      return;
+    }
+    try {
+      setIsCreatingSession(true);
+      const response = await withTimeout(
+        "createSession",
+        fetch("/api/sessions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id, agent_id: agentId }),
+        }),
+        15000
+      );
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error || "Impossible de créer une nouvelle session");
+        return;
+      }
+      const data = await response.json();
+      router.push(
+        `/interview?interviewId=${data.interviewId}&sessionId=${data.sessionId}&adkSessionId=${data.adkSessionId}`
+      );
+    } catch (err) {
+      console.error("Error creating session:", err);
+      setError("Une erreur est survenue lors de la création de la session");
+    } finally {
+      setIsCreatingSession(false);
+    }
+  };
+
   const handleSaveAgent = async () => {
     if (!user?.id) {
       router.push("/login");
@@ -495,6 +530,13 @@ export default function EditAgentPromptPage() {
             <PersonnaLeftSidebar
               title={agentName || "Agent"}
               titleColor="blue.600"
+              titleRight={(
+                <NewInterviewButton
+                  onClick={handleNewInterview}
+                  loading={isCreatingSession}
+                  disabled={isCreatingSession}
+                />
+              )}
             >
               <VStack align="stretch" gap={4}>
                 <Field.Root>
@@ -510,12 +552,14 @@ export default function EditAgentPromptPage() {
 
                 <Field.Root>
                   <Field.Label fontSize="sm">Description</Field.Label>
-                  <Input
+                  <Textarea
                     size="xs"
+                    rows={2}
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     placeholder="Étudiant curieux, négociateur expérimenté..."
                     paddingInlineStart={4}
+                    resize="none"
                   />
                 </Field.Root>
 

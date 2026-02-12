@@ -7,6 +7,7 @@ import {
   Field,
   Input,
   Text,
+  Textarea,
   VStack,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
@@ -247,12 +248,14 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
 
                 <Field.Root>
                   <Field.Label fontSize="sm">Description</Field.Label>
-                  <Input
+                  <Textarea
                     size="xs"
+                    rows={2}
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     placeholder="Étudiant curieux, négociateur expérimenté..."
                     paddingInlineStart={4}
+                    resize="none"
                   />
                 </Field.Root>
 

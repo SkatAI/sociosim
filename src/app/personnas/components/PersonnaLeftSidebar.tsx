@@ -1,11 +1,12 @@
 "use client";
 
-import { Box, Heading, Text, VStack } from "@chakra-ui/react";
+import { Box, Heading, HStack, Text, VStack } from "@chakra-ui/react";
 import type { ReactNode } from "react";
 
 type PersonnaLeftSidebarProps = {
   title: string;
   titleColor?: string;
+  titleRight?: ReactNode;
   subtitle?: string;
   children?: ReactNode;
 };
@@ -13,6 +14,7 @@ type PersonnaLeftSidebarProps = {
 export default function PersonnaLeftSidebar({
   title,
   titleColor,
+  titleRight,
   subtitle,
   children,
 }: PersonnaLeftSidebarProps) {
@@ -35,7 +37,10 @@ export default function PersonnaLeftSidebar({
     >
       <VStack align="stretch" gap={4}>
         <VStack align="stretch" gap={1}>
-          <Heading size="xl" color={titleColor}>{title}</Heading>
+          <HStack justify="space-between" align="center">
+            <Heading size="xl" color={titleColor}>{title}</Heading>
+            {titleRight}
+          </HStack>
           {subtitle ? (
             <Text color="fg.muted" fontSize="sm">
               {subtitle}
