@@ -18,8 +18,8 @@ export default function PersonnaLayout({ left, center, right }: PersonnaLayoutPr
       overflow="hidden"
       css={{
         "--personna-sidebar-gap": "30px",
-        "--personna-left-sidebar-width": "250px",
-        "--personna-right-sidebar-width": "250px",
+        "--personna-left-sidebar-width": "300px",
+        "--personna-right-sidebar-width": "300px",
         "--personna-left-offset": "calc(var(--personna-left-sidebar-width) + var(--personna-sidebar-gap))",
         "--personna-right-offset": "calc(var(--personna-right-sidebar-width) + var(--personna-sidebar-gap))",
       }}

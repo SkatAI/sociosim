@@ -357,7 +357,7 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
           center={(
             <Box
               height="100%"
-              maxWidth="960px"
+              maxWidth="720px"
               marginX="auto"
               paddingX={{ base: 4, lg: 6 }}
               paddingTop={{ base: 4, lg: 5 }}
