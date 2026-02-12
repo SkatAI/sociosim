@@ -3,10 +3,9 @@
 import {
   Box,
   Button,
-  Dialog,
+  Collapsible,
   Field,
   Input,
-  Portal,
   Text,
   VStack,
 } from "@chakra-ui/react";
@@ -21,6 +20,7 @@ import HeadingExtension from "@tiptap/extension-heading";
 import ListItem from "@tiptap/extension-list-item";
 import Paragraph from "@tiptap/extension-paragraph";
 import TextExtension from "@tiptap/extension-text";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { toaster } from "@/components/ui/toaster";
 import PersonnaLayout from "@/app/personnas/components/PersonnaLayout";
 import PersonnaLeftSidebar from "@/app/personnas/components/PersonnaLeftSidebar";
@@ -48,6 +48,7 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
   const [reviewedContent, setReviewedContent] = useState("");
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [isReviewing, setIsReviewing] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const editor = useEditor({
     extensions: [
       Document,
@@ -255,102 +256,88 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
                   />
                 </Field.Root>
 
-                <Dialog.Root>
-                  <Dialog.Trigger asChild>
+                <Collapsible.Root open={helpOpen} onOpenChange={({ open }) => setHelpOpen(open)}>
+                  <Collapsible.Trigger asChild>
                     <Button
                       variant="plain"
-                      size="sm"
-                      colorPalette="blue"
-                      textDecoration="underline"
+                      size="xs"
                       alignSelf="flex-start"
+                      paddingInline={0}
+                      color="fg.muted"
                     >
-                      Comment générer un system prompt à partir d&apos;un entretien ?
+                      <Text fontSize="xs">Comment générer un system prompt ?</Text>
+                      {helpOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </Button>
-                  </Dialog.Trigger>
-                  <Portal>
-                    <Dialog.Backdrop />
-                    <Dialog.Positioner>
-                      <Dialog.Content padding={8}>
-                        <Dialog.Header>
-                          <Dialog.Title>Aide</Dialog.Title>
-                        </Dialog.Header>
-                        <Dialog.Body>
-                          <Text>
-                            Le plus simple est de fournir à un chatbot (Claude, chatGPT, etc):
-                            <br />- un pdf de l&apos;interview
-                            <br />- un fichier de
-                            <Button
-                              asChild
-                              variant="plain"
-                              size="sm"
-                              colorPalette="blue"
-                              textDecoration="underline"
-                            >
-                              <a
-                                href="/docs/template_agent_system_prompt.md"
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                template au format markdown
-                              </a>
-                            </Button>
-                            <br /> <br />
-                            Le prompt suivant donne de bons résultats avec Claude.
-                            <Box
-                              as="span"
-                              display="block"
-                              marginTop={2}
-                              paddingLeft={8}
-                              fontFamily="mono"
-                              fontSize="sm"
-                              color="fg.muted"
-                            >
-                              Nous allons construire un system prompt pour une personna à partir d&apos;une interview
-                              sociologique de la personne réélle sur son usage de l&apos;IA.
-                              <br />
-                              Voir fichier pdf de l&apos;interview
-                              <br />
-                              Le but est de générer un fichier markdown suivant le template fourni.
-                              <br />
-                              Il faut renseigner tous les élèments entre acolades {"{"}{"}"}.
-                              <br />
-                              Ce fichier markdown servira de system prompt pour une personna dans une application de
-                              simulation d&apos;entretien en sociologie
-                              <br />
-                              Les élèments doivent être assez précis
-                              <br />
-                              Faisons un premier essai
-                            </Box>
-                            <br />
-                            Vous pouvez ensuite copier coller le resultat généré par l&apos;IA dans le champ ci-dessous.
-                            <br />
-                            Le template en markdown est disponible
-                            <Button
-                              asChild
-                              variant="plain"
-                              size="sm"
-                              colorPalette="blue"
-                              textDecoration="underline"
-                            >
-                              <a
-                                href="/docs/template_agent_system_prompt.md"
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                ici
-                              </a>
-                            </Button>
-                          </Text>
-                        </Dialog.Body>
-                        <Dialog.Footer>
-                          <Dialog.ActionTrigger asChild>
-                            <Button variant="outline">Fermer</Button>
-                          </Dialog.ActionTrigger>
-                        </Dialog.Footer>
-                      </Dialog.Content>
-                    </Dialog.Positioner>
-                  </Portal>
-                </Dialog.Root>
+                  </Collapsible.Trigger>
+                  <Collapsible.Content>
+                    <VStack align="stretch" gap={2} paddingTop={2}>
+                      <Text fontSize="xs" color="fg.muted">
+                        Le plus simple est de fournir à un chatbot (Claude, chatGPT, etc):
+                        <br />- un pdf de l&apos;interview
+                        <br />- un fichier de{" "}
+                        <Button
+                          asChild
+                          variant="plain"
+                          size="xs"
+                          colorPalette="blue"
+                          textDecoration="underline"
+                        >
+                          <a
+                            href="/docs/template_agent_system_prompt.md"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            template au format markdown
+                          </a>
+                        </Button>
+                      </Text>
+                      <Text fontSize="xs" color="fg.muted">
+                        Le prompt suivant donne de bons résultats avec Claude.
+                      </Text>
+                      <Box
+                        fontFamily="mono"
+                        fontSize="2xs"
+                        color="fg.muted"
+                        paddingLeft={3}
+                      >
+                        Nous allons construire un system prompt pour une personna à partir d&apos;une interview
+                        sociologique de la personne réélle sur son usage de l&apos;IA.
+                        <br />
+                        Voir fichier pdf de l&apos;interview
+                        <br />
+                        Le but est de générer un fichier markdown suivant le template fourni.
+                        <br />
+                        Il faut renseigner tous les élèments entre acolades {"{"}{"}"}.
+                        <br />
+                        Ce fichier markdown servira de system prompt pour une personna dans une application de
+                        simulation d&apos;entretien en sociologie
+                        <br />
+                        Les élèments doivent être assez précis
+                        <br />
+                        Faisons un premier essai
+                      </Box>
+                      <Text fontSize="xs" color="fg.muted">
+                        Vous pouvez ensuite copier coller le resultat généré par l&apos;IA dans le champ ci-dessous.
+                        Le template en markdown est disponible{" "}
+                        <Button
+                          asChild
+                          variant="plain"
+                          size="xs"
+                          colorPalette="blue"
+                          textDecoration="underline"
+                        >
+                          <a
+                            href="/docs/template_agent_system_prompt.md"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            ici
+                          </a>
+                        </Button>
+                      </Text>
+                    </VStack>
+                  </Collapsible.Content>
+                </Collapsible.Root>
               </VStack>
             </PersonnaLeftSidebar>
           )}

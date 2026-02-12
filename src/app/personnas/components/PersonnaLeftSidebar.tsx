@@ -5,12 +5,14 @@ import type { ReactNode } from "react";
 
 type PersonnaLeftSidebarProps = {
   title: string;
+  titleColor?: string;
   subtitle?: string;
   children?: ReactNode;
 };
 
 export default function PersonnaLeftSidebar({
   title,
+  titleColor,
   subtitle,
   children,
 }: PersonnaLeftSidebarProps) {
@@ -33,7 +35,7 @@ export default function PersonnaLeftSidebar({
     >
       <VStack align="stretch" gap={4}>
         <VStack align="stretch" gap={1}>
-          <Heading size="md">{title}</Heading>
+          <Heading size="xl" color={titleColor}>{title}</Heading>
           {subtitle ? (
             <Text color="fg.muted" fontSize="sm">
               {subtitle}
