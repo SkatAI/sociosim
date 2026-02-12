@@ -234,23 +234,23 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
             >
               <VStack align="stretch" gap={4}>
                 <Field.Root>
-                  <Field.Label fontSize="lg">Prénom</Field.Label>
+                  <Field.Label fontSize="sm">Prénom</Field.Label>
                   <Input
+                    size="xs"
                     value={agentName}
                     onChange={(event) => setAgentName(event.target.value)}
                     placeholder="Camille, Karim, Zoé, Alexis, Bilel, ..."
-                    fontSize="sm"
                     paddingInlineStart={4}
                   />
                 </Field.Root>
 
                 <Field.Root>
-                  <Field.Label fontSize="lg">Description</Field.Label>
+                  <Field.Label fontSize="sm">Description</Field.Label>
                   <Input
+                    size="xs"
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     placeholder="Étudiant curieux, négociateur expérimenté..."
-                    fontSize="sm"
                     paddingInlineStart={4}
                   />
                 </Field.Root>
@@ -370,15 +370,16 @@ export default function NewPersonnaForm({ templatePrompt }: NewPersonnaFormProps
                 <PersonnaPromptEditor
                   editor={editor}
                   error={error}
-                  editorToolbarRight={(
+                  headingRight={(
                     <Button
                       type="submit"
                       size="sm"
                       variant="subtle"
                       loading={isSaving}
+                      disabled={!agentName.trim() || !description.trim() || isSaving}
                       paddingInline={5}
                     >
-                      Enregistrer
+                      Créer la personna
                     </Button>
                   )}
                 />

@@ -8,12 +8,14 @@ import { RichTextEditor, Control } from "@/components/ui/rich-text-editor";
 type PersonnaPromptEditorProps = {
   editor: Editor | null;
   editorToolbarRight?: ReactNode;
+  headingRight?: ReactNode;
   error?: string | null;
 };
 
 export default function PersonnaPromptEditor({
   editor,
   editorToolbarRight,
+  headingRight,
   error,
 }: PersonnaPromptEditorProps) {
   return (
@@ -30,7 +32,10 @@ export default function PersonnaPromptEditor({
         </Box>
       ) : null}
       <Field.Root display="flex" flexDirection="column" flex="1" minHeight={0}>
-        <Heading size="md">Prompt du personna</Heading>
+        <HStack justify="space-between" align="center" width="full">
+          <Heading size="md">Prompt du personna</Heading>
+          {headingRight}
+        </HStack>
         <RichTextEditor.Root
           editor={editor}
           fontSize="sm"

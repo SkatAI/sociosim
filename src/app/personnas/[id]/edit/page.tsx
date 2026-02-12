@@ -68,7 +68,8 @@ export default function EditAgentPromptPage() {
     version: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingAgent, setIsSavingAgent] = useState(false);
+  const [isSavingPrompt, setIsSavingPrompt] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [review, setReview] = useState<CauldronReview | null>(null);
   const [reviewedContent, setReviewedContent] = useState("");
@@ -336,7 +337,7 @@ export default function EditAgentPromptPage() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSaveAgent = async () => {
     if (!user?.id) {
       router.push("/login");
       return;
@@ -356,116 +357,116 @@ export default function EditAgentPromptPage() {
     }
 
     try {
-      const trimmedPrompt = promptState.systemPrompt.trim();
-      if (isDirty && !trimmedPrompt) {
-        setError("Le prompt ne peut pas être vide.");
+      setIsSavingAgent(true);
+      setError(null);
+
+      const updateResponse = await withTimeout(
+        "updateAgent",
+        fetch(`/api/agents/${agentId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            agent_name: trimmedName,
+            description: trimmedDescription,
+          }),
+        }),
+        15000
+      );
+
+      if (!updateResponse.ok) {
+        const payload = await updateResponse.json().catch(() => null);
+        console.error("Error updating agent:", payload);
+        setError("Impossible de mettre à jour le personna.");
         return;
       }
 
-      if (isDirty) {
-        const reviewResult = await reviewPrompt(trimmedPrompt);
-        if (!reviewResult) {
-          setError("Impossible de valider le prompt.");
-          return;
-        }
-        if (reviewResult.status === "invalid") {
-          setError("Le prompt a été refusé par la validation.");
-          return;
-        }
+      baseAgentRef.current = { agentName: trimmedName, description: trimmedDescription };
+      toaster.create({
+        title: "Personna mis à jour",
+        description: "Les informations du personna ont été enregistrées.",
+        type: "success",
+      });
+    } catch (saveError) {
+      console.error("Error saving agent:", saveError);
+      setError("Une erreur est survenue lors de l'enregistrement.");
+    } finally {
+      setIsSavingAgent(false);
+    }
+  };
+
+  const handleSavePrompt = async () => {
+    if (!user?.id) {
+      router.push("/login");
+      return;
+    }
+
+    const trimmedPrompt = promptState.systemPrompt.trim();
+    if (!trimmedPrompt) {
+      setError("Le prompt ne peut pas être vide.");
+      return;
+    }
+
+    try {
+      const reviewResult = await reviewPrompt(trimmedPrompt);
+      if (!reviewResult) {
+        setError("Impossible de valider le prompt.");
+        return;
+      }
+      if (reviewResult.status === "invalid") {
+        setError("Le prompt a été refusé par la validation.");
+        return;
       }
 
-      setIsSaving(true);
+      setIsSavingPrompt(true);
       setError(null);
 
-      const isAgentDirty =
-        trimmedName !== baseAgentRef.current.agentName ||
-        trimmedDescription !== baseAgentRef.current.description;
-      let didSavePrompt = false;
-      let didSaveAgent = false;
-
-      if (isAgentDirty) {
-        const updateResponse = await withTimeout(
-          "updateAgent",
-          fetch(`/api/agents/${agentId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              agent_name: trimmedName,
-              description: trimmedDescription,
-            }),
+      const saveResponse = await withTimeout(
+        "savePrompt",
+        fetch(`/api/agents/${agentId}/prompts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_prompt: trimmedPrompt,
+            edited_by: user.id,
           }),
-          15000
-        );
+        }),
+        15000
+      );
 
-        if (!updateResponse.ok) {
-          const payload = await updateResponse.json().catch(() => null);
-          console.error("Error updating agent:", payload);
-          setError("Impossible de mettre à jour le personna.");
-          return;
-        }
-        baseAgentRef.current = { agentName: trimmedName, description: trimmedDescription };
-        didSaveAgent = true;
+      if (!saveResponse.ok) {
+        const payload = await saveResponse.json().catch(() => null);
+        console.error("Error saving agent prompt:", payload);
+        setError("Impossible d'enregistrer le prompt pour le moment.");
+        return;
       }
 
-      if (isDirty) {
-        const saveResponse = await withTimeout(
-          "savePrompt",
-          fetch(`/api/agents/${agentId}/prompts`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              system_prompt: trimmedPrompt,
-              edited_by: user.id,
-            }),
-          }),
-          15000
-        );
+      const refreshResponse = await withTimeout(
+        "refreshPrompts",
+        fetch(`/api/agents/${agentId}/prompts`),
+        15000
+      );
 
-        if (!saveResponse.ok) {
-          const payload = await saveResponse.json().catch(() => null);
-          console.error("Error saving agent prompt:", payload);
-          setError("Impossible d'enregistrer le prompt pour le moment.");
-          return;
-        }
-
-        const refreshResponse = await withTimeout(
-          "refreshPrompts",
-          fetch(`/api/agents/${agentId}/prompts`),
-          15000
-        );
-
-        if (!refreshResponse.ok) {
-          const payload = await refreshResponse.json().catch(() => null);
-          console.error("Error refreshing prompts:", payload);
-          setError("Le prompt est enregistré mais la liste ne peut pas être mise à jour.");
-          return;
-        }
-
-        const refreshedPayload = (await refreshResponse.json().catch(() => null)) as
-          | { prompts?: PromptOption[] }
-          | null;
-        applyPromptList((refreshedPayload?.prompts || []) as PromptOption[]);
-        didSavePrompt = true;
+      if (!refreshResponse.ok) {
+        const payload = await refreshResponse.json().catch(() => null);
+        console.error("Error refreshing prompts:", payload);
+        setError("Le prompt est enregistré mais la liste ne peut pas être mise à jour.");
+        return;
       }
 
-      if (didSavePrompt) {
-        toaster.create({
-          title: "Prompt enregistré",
-          description: "Vos modifications ont été sauvegardées.",
-          type: "success",
-        });
-      } else if (didSaveAgent) {
-        toaster.create({
-          title: "Personna mis à jour",
-          description: "Les informations du personna ont été enregistrées.",
-          type: "success",
-        });
-      }
+      const refreshedPayload = (await refreshResponse.json().catch(() => null)) as
+        | { prompts?: PromptOption[] }
+        | null;
+      applyPromptList((refreshedPayload?.prompts || []) as PromptOption[]);
+      toaster.create({
+        title: "Prompt enregistré",
+        description: "Vos modifications ont été sauvegardées.",
+        type: "success",
+      });
     } catch (saveError) {
       console.error("Error saving agent prompt:", saveError);
       setError("Une erreur est survenue lors de l'enregistrement.");
     } finally {
-      setIsSaving(false);
+      setIsSavingPrompt(false);
     }
   };
 
@@ -485,17 +486,9 @@ export default function EditAgentPromptPage() {
   const isAgentDirty =
     agentName.trim() !== baseAgentRef.current.agentName ||
     description.trim() !== baseAgentRef.current.description;
-  const canSave = (isDirty || isAgentDirty) && !isSaving;
 
   return (
     <Box width="full" height="100%">
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          handleSave();
-        }}
-        style={{ height: "100%" }}
-      >
         <PersonnaLayout
           left={(
             <PersonnaLeftSidebar
@@ -550,26 +543,38 @@ export default function EditAgentPromptPage() {
                 </VStack>
 
                 <Field.Root>
-                  <Field.Label fontSize="lg">Prénom</Field.Label>
+                  <Field.Label fontSize="sm">Prénom</Field.Label>
                   <Input
+                    size="xs"
                     value={agentName}
                     onChange={(event) => setAgentName(event.target.value)}
                     placeholder="Camille, Karim, Zoé, Alexis, Bilel, ..."
-                    fontSize="sm"
                     paddingInlineStart={4}
                   />
                 </Field.Root>
 
                 <Field.Root>
-                  <Field.Label fontSize="lg">Description</Field.Label>
+                  <Field.Label fontSize="sm">Description</Field.Label>
                   <Input
+                    size="xs"
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     placeholder="Étudiant curieux, négociateur expérimenté..."
-                    fontSize="sm"
                     paddingInlineStart={4}
                   />
                 </Field.Root>
+
+                <Button
+                  size="sm"
+                  variant="subtle"
+                  onClick={handleSaveAgent}
+                  loading={isSavingAgent}
+                  disabled={!isAgentDirty || isSavingAgent}
+                  alignSelf="flex-start"
+                  paddingInline={5}
+                >
+                  Enregistrer
+                </Button>
 
                 <Dialog.Root>
                   <Dialog.Trigger asChild>
@@ -700,9 +705,9 @@ export default function EditAgentPromptPage() {
                         <Button
                           size="sm"
                           variant="subtle"
-                          onClick={handleSave}
-                          loading={isSaving}
-                          disabled={!canSave}
+                          onClick={handleSavePrompt}
+                          loading={isSavingPrompt}
+                          disabled={!isDirty || isSavingPrompt}
                           paddingInline={5}
                         >
                           Enregistrer
@@ -740,7 +745,6 @@ export default function EditAgentPromptPage() {
             </PersonnaRightSidebar>
           )}
         />
-      </form>
     </Box>
   );
 }
