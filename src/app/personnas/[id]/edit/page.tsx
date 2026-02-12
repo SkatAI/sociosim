@@ -111,11 +111,11 @@ export default function EditAgentPromptPage() {
     const date = new Date(prompt.last_edited);
     const pad2 = (value: number) => value.toString().padStart(2, "0");
     const formattedDate = Number.isNaN(date.getTime())
-      ? "date-inconnue"
-      : `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+      ? "date inconnue"
+      : `${date.toLocaleDateString("fr-FR", { month: "short", day: "numeric" })} ${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
     const editorName = prompt.users?.name || "Inconnu";
-    const shortId = prompt.id.slice(0, 7);
-    return `${formattedDate} ${editorName} ${shortId}`;
+    const prefix = prompt.published ? "[publié] " : "";
+    return `${prefix}${formattedDate} - ${editorName}`;
   };
 
   const applyPromptList = (prompts: PromptOption[], nextSelectedId?: string) => {
@@ -496,52 +496,6 @@ export default function EditAgentPromptPage() {
               subtitle={agentName || "Agent"}
             >
               <VStack align="stretch" gap={4}>
-                <VStack alignItems="flex-start" gap={2}>
-                  <Text fontSize="sm" fontWeight="semibold" color="fg.muted">
-                    Version
-                  </Text>
-                  <Menu.Root positioning={{ placement: "bottom-start" }}>
-                    <Menu.Trigger asChild>
-                      <Button
-                        variant="subtle"
-                        size="sm"
-                        width="full"
-                        justifyContent="space-between"
-                        gap={3}
-                        disabled={promptOptions.length === 0}
-                      >
-                        <Text
-                          fontSize="sm"
-                          color={selectedPrompt ? "fg.default" : "fg.muted"}
-                          truncate
-                        >
-                          {selectedPrompt ? formatPromptLabel(selectedPrompt) : "Aucun prompt disponible"}
-                        </Text>
-                        <ChevronDown size={16} />
-                      </Button>
-                    </Menu.Trigger>
-                    <Menu.Positioner>
-                      <Menu.Content minWidth="full" maxHeight="320px" overflowY="auto">
-                        {promptOptions.map((prompt) => (
-                          <Menu.Item
-                            key={prompt.id}
-                            value={prompt.id}
-                            onClick={() => handlePromptSelection(prompt.id)}
-                            fontWeight={prompt.id === selectedPromptId ? "semibold" : "normal"}
-                            color={
-                              prompt.published
-                                ? { base: "red.600", _dark: "red.300" }
-                                : "fg.default"
-                            }
-                          >
-                            {formatPromptLabel(prompt)}
-                          </Menu.Item>
-                        ))}
-                      </Menu.Content>
-                    </Menu.Positioner>
-                  </Menu.Root>
-                </VStack>
-
                 <Field.Root>
                   <Field.Label fontSize="sm">Prénom</Field.Label>
                   <Input
@@ -692,6 +646,48 @@ export default function EditAgentPromptPage() {
                 <PersonnaPromptEditor
                   editor={editor}
                   error={error}
+                  headingRight={(
+                    <Menu.Root positioning={{ placement: "bottom-end" }}>
+                      <Menu.Trigger asChild>
+                        <Button
+                          variant="subtle"
+                          size="xs"
+                          justifyContent="space-between"
+                          gap={2}
+                          disabled={promptOptions.length === 0}
+                        >
+                          <Text
+                            fontSize="xs"
+                            color={selectedPrompt ? "fg.default" : "fg.muted"}
+                            truncate
+                          >
+                            {selectedPrompt ? formatPromptLabel(selectedPrompt) : "Aucun prompt disponible"}
+                          </Text>
+                          <ChevronDown size={14} />
+                        </Button>
+                      </Menu.Trigger>
+                      <Menu.Positioner>
+                        <Menu.Content maxHeight="320px" overflowY="auto" paddingX={2}>
+                          {promptOptions.map((prompt) => (
+                            <Menu.Item
+                              key={prompt.id}
+                              value={prompt.id}
+                              onClick={() => handlePromptSelection(prompt.id)}
+                              fontSize="xs"
+                              fontWeight={prompt.id === selectedPromptId ? "semibold" : "normal"}
+                              color={
+                                prompt.published
+                                  ? { base: "red.600", _dark: "red.300" }
+                                  : "fg.default"
+                              }
+                            >
+                              {formatPromptLabel(prompt)}
+                            </Menu.Item>
+                          ))}
+                        </Menu.Content>
+                      </Menu.Positioner>
+                    </Menu.Root>
+                  )}
                   editorToolbarRight={(
                     <>
                       <Text
