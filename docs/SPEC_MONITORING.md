@@ -29,34 +29,10 @@ monitor/
 
 ---
 
-## Environment Variables (`.env`)
+## Environment Variables
+see .env.local on local
 
-```env
-# Digital Ocean app URLs (public HTTPS endpoints)
-APP_SOCIOSIM_URL=https://sociosim.ondigitalocean.app
-APP_CAULDRON_URL=https://cauldron.ondigitalocean.app
-APP_ADK_AGENT_URL=https://sociosim-adk-agent.ondigitalocean.app
 
-# Supabase
-SUPABASE_URL=https://<project-ref>.supabase.co
-SUPABASE_ANON_KEY=<your-anon-key>
-
-# OpenRouter
-OPENROUTER_API_KEY=sk-or-...
-OPENROUTER_CREDIT_ALERT_THRESHOLD=2.00   # alert when below this dollar amount
-
-# LangSmith
-LANGSMITH_API_KEY=ls__...
-LANGSMITH_PROJECT_NAME=cauldron           # or whatever your project is named
-
-# Telegram
-TELEGRAM_BOT_TOKEN=<bot-token-from-botfather>
-TELEGRAM_CHAT_ID=<your-chat-id>
-
-# Monitoring behavior
-CHECK_INTERVAL_MINUTES=30                 # informational only, actual scheduling via cron
-HTTP_TIMEOUT_SECONDS=10
-```
 
 ---
 
