@@ -376,13 +376,20 @@ export default function PersonnasPage() {
             )}
             {allStudentAgents.length > 0 && (
               <VStack gap={4} alignItems="stretch">
-                <HStack gap={3} alignItems="center" flexWrap="wrap">
+                <HStack justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={3}>
                   <Heading size="md">Personnas des étudiants</Heading>
                   <HStack gap={2} alignItems="center">
                     <Text fontSize="sm" color="fg.muted">depuis</Text>
                     <Menu.Root positioning={{ placement: "bottom-start" }}>
                       <Menu.Trigger asChild>
-                        <Button variant="outline" size="xs" gap={1}>
+                        <Button
+                          variant="outline"
+                          size="xs"
+                          gap={1}
+                          bg={{ base: "blue.50", _dark: "blue.950" }}
+                          borderColor={{ base: "blue.200", _dark: "blue.800" }}
+                          paddingInline={3}
+                        >
                           <Text fontSize="xs">
                             {STUDENT_TIME_FILTERS.find((f) => f.value === studentTimeFilter)?.label}
                           </Text>
@@ -390,7 +397,7 @@ export default function PersonnasPage() {
                         </Button>
                       </Menu.Trigger>
                       <Menu.Positioner>
-                        <Menu.Content paddingX={2}>
+                        <Menu.Content paddingX={3}>
                           {STUDENT_TIME_FILTERS.map((filter) => (
                             <Menu.Item
                               key={filter.value}
