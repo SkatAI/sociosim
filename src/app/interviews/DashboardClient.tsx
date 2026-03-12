@@ -544,21 +544,12 @@ export default function DashboardClient() {
 
                 <Pagination.Items
                   render={(page) => (
-                    <Tooltip.Root openDelay={150}>
-                      <Tooltip.Trigger asChild>
-                        <IconButton
-                          aria-label={`Page ${page.value}`}
-                          variant={{ base: "subtle", _selected: "solid" }}
-                        >
-                          {page.value}
-                        </IconButton>
-                      </Tooltip.Trigger>
-                      <Tooltip.Positioner>
-                        <Tooltip.Content px={3} py={2}>
-                          Page {page.value}
-                        </Tooltip.Content>
-                      </Tooltip.Positioner>
-                    </Tooltip.Root>
+                    <IconButton
+                      aria-label={`Page ${page.value}`}
+                      variant={{ base: "subtle", _selected: "solid" }}
+                    >
+                      {page.value}
+                    </IconButton>
                   )}
                 />
 
