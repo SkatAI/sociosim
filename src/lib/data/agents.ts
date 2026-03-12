@@ -14,6 +14,7 @@ export interface AgentRecord {
   is_template: boolean;
   is_public: boolean;
   created_by: string | null;
+  created_at: string | null;
   creator_name: string | null;
   creator_role: string | null;
 }
@@ -30,7 +31,7 @@ export async function getAgents(): Promise<AgentRecord[]> {
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id, agent_name, description, active, is_template, is_public, created_by, users!agents_created_by_fkey(name, role)")
+    .select("id, agent_name, description, active, is_template, is_public, created_by, created_at, users!agents_created_by_fkey(name, role)")
     .order("agent_name");
 
   throwIfError(error, "Failed to load agents");
@@ -49,6 +50,7 @@ export async function getAgents(): Promise<AgentRecord[]> {
     is_template: agent.is_template,
     is_public: agent.is_public,
     created_by: agent.created_by,
+    created_at: agent.created_at ?? null,
     creator_name: agent.users?.name ?? null,
     creator_role: agent.users?.role ?? null,
   }));
@@ -65,7 +67,7 @@ export async function getAgentsWithPromptStatus(
   let query = supabase
     .from("agents")
     .select(
-      "id, agent_name, description, active, is_template, is_public, created_by, agent_prompts(published), users!agents_created_by_fkey(name, role)"
+      "id, agent_name, description, active, is_template, is_public, created_by, created_at, agent_prompts(published), users!agents_created_by_fkey(name, role)"
     )
     .order("agent_name");
 
@@ -94,6 +96,7 @@ export async function getAgentsWithPromptStatus(
     is_template: agent.is_template,
     is_public: agent.is_public,
     created_by: agent.created_by,
+    created_at: agent.created_at ?? null,
     creator_name: agent.users?.name ?? null,
     creator_role: agent.users?.role ?? null,
     has_published_prompt: (agent.agent_prompts || []).some((prompt) => prompt.published),
@@ -111,7 +114,7 @@ export async function getPublishedAgents(
   let query = supabase
     .from("agents")
     .select(
-      "id, agent_name, description, active, is_template, is_public, created_by, agent_prompts!inner(published), users!agents_created_by_fkey(name, role)"
+      "id, agent_name, description, active, is_template, is_public, created_by, created_at, agent_prompts!inner(published), users!agents_created_by_fkey(name, role)"
     )
     .eq("agent_prompts.published", true)
     .order("agent_name");
@@ -140,6 +143,7 @@ export async function getPublishedAgents(
     is_template: agent.is_template,
     is_public: agent.is_public,
     created_by: agent.created_by,
+    created_at: agent.created_at ?? null,
     creator_name: agent.users?.name ?? null,
     creator_role: agent.users?.role ?? null,
   }));
@@ -153,7 +157,7 @@ export async function getAgentByName(name: string): Promise<AgentRecord | null> 
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id, agent_name, description, active, is_template, is_public, created_by, users!agents_created_by_fkey(name, role)")
+    .select("id, agent_name, description, active, is_template, is_public, created_by, created_at, users!agents_created_by_fkey(name, role)")
     .eq("agent_name", name)
     .maybeSingle();
 
@@ -170,6 +174,7 @@ export async function getAgentByName(name: string): Promise<AgentRecord | null> 
     is_template: row.is_template,
     is_public: row.is_public,
     created_by: row.created_by,
+    created_at: row.created_at ?? null,
     creator_name: row.users?.name ?? null,
     creator_role: row.users?.role ?? null,
   };
@@ -183,7 +188,7 @@ export async function getAgentById(agentId: string): Promise<AgentRecord | null>
 
   const { data, error } = await supabase
     .from("agents")
-    .select("id, agent_name, description, active, is_template, is_public, created_by, users!agents_created_by_fkey(name, role)")
+    .select("id, agent_name, description, active, is_template, is_public, created_by, created_at, users!agents_created_by_fkey(name, role)")
     .eq("id", agentId)
     .maybeSingle();
 
@@ -200,6 +205,7 @@ export async function getAgentById(agentId: string): Promise<AgentRecord | null>
     is_template: row.is_template,
     is_public: row.is_public,
     created_by: row.created_by,
+    created_at: row.created_at ?? null,
     creator_name: row.users?.name ?? null,
     creator_role: row.users?.role ?? null,
   };

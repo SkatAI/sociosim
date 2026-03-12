@@ -13,6 +13,7 @@ export interface Agent {
   has_published_prompt?: boolean;
   is_public?: boolean;
   created_by?: string | null;
+  created_at?: string | null;
   creator_name?: string | null;
   creator_role?: string | null;
 }

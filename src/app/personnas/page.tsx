@@ -5,12 +5,14 @@ import {
   Button,
   Container,
   Heading,
+  Menu,
   Text,
   VStack,
   HStack,
   Spinner,
   Grid,
 } from "@chakra-ui/react";
+import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
@@ -32,6 +34,28 @@ interface InterviewWithDetails {
 }
 
 const GRID_COLUMNS = { base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" };
+
+const STUDENT_TIME_FILTERS = [
+  { value: "1h", label: "1h", hours: 1 },
+  { value: "3h", label: "3h", hours: 3 },
+  { value: "24h", label: "24h", hours: 24 },
+  { value: "1j", label: "1 jour", hours: 24 },
+  { value: "7j", label: "7 jours", hours: 7 * 24 },
+  { value: "28j", label: "28 jours", hours: 28 * 24 },
+  { value: "all", label: "toujours", hours: null },
+] as const;
+
+const DEFAULT_FILTER = "3h";
+
+function filterAgentsByTime(agents: Agent[], filterValue: string): Agent[] {
+  const filter = STUDENT_TIME_FILTERS.find((f) => f.value === filterValue);
+  if (!filter || filter.hours === null) return agents;
+  const cutoff = Date.now() - filter.hours * 60 * 60 * 1000;
+  return agents.filter((a) => {
+    if (!a.created_at) return false;
+    return new Date(a.created_at).getTime() >= cutoff;
+  });
+}
 
 function AgentGrid({
   agents,
@@ -89,6 +113,7 @@ export default function PersonnasPage() {
   const [error, setError] = useState<string | null>(null);
   const [interactedAgents, setInteractedAgents] = useState<string[]>([]);
   const [togglingAgentId, setTogglingAgentId] = useState<string | null>(null);
+  const [studentTimeFilter, setStudentTimeFilter] = useState(DEFAULT_FILTER);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -242,13 +267,21 @@ export default function PersonnasPage() {
   const groups = useMemo(() => groupAgentsByCreator(agents), [agents]);
   const staffGroup = useMemo(() => groups.find((g) => g.isStaff), [groups]);
   const studentGroups = useMemo(() => groups.filter((g) => !g.isStaff), [groups]);
-  const allStudentActive = useMemo(
-    () => studentGroups.flatMap((g) => g.activeAgents),
+  const allStudentAgents = useMemo(
+    () => studentGroups.flatMap((g) => [...g.activeAgents, ...g.inactiveAgents]),
     [studentGroups]
   );
-  const allStudentInactive = useMemo(
-    () => studentGroups.flatMap((g) => g.inactiveAgents),
-    [studentGroups]
+  const filteredStudentAgents = useMemo(
+    () => filterAgentsByTime(allStudentAgents, studentTimeFilter),
+    [allStudentAgents, studentTimeFilter]
+  );
+  const filteredStudentActive = useMemo(
+    () => filteredStudentAgents.filter((a) => a.active),
+    [filteredStudentAgents]
+  );
+  const filteredStudentInactive = useMemo(
+    () => filteredStudentAgents.filter((a) => !a.active),
+    [filteredStudentAgents]
   );
 
   // Student view: staff public active + own agents
@@ -341,12 +374,45 @@ export default function PersonnasPage() {
                 )}
               </VStack>
             )}
-            {(allStudentActive.length > 0 || allStudentInactive.length > 0) && (
+            {allStudentAgents.length > 0 && (
               <VStack gap={4} alignItems="stretch">
-                <Heading size="md">Personnas des étudiants</Heading>
-                <AgentGrid agents={allStudentActive} {...gridProps} />
-                {allStudentInactive.length > 0 && (
-                  <AgentGrid agents={allStudentInactive} {...gridProps} />
+                <HStack gap={3} alignItems="center" flexWrap="wrap">
+                  <Heading size="md">Personnas des étudiants</Heading>
+                  <HStack gap={2} alignItems="center">
+                    <Text fontSize="sm" color="fg.muted">depuis</Text>
+                    <Menu.Root positioning={{ placement: "bottom-start" }}>
+                      <Menu.Trigger asChild>
+                        <Button variant="outline" size="xs" gap={1}>
+                          <Text fontSize="xs">
+                            {STUDENT_TIME_FILTERS.find((f) => f.value === studentTimeFilter)?.label}
+                          </Text>
+                          <ChevronDown size={14} />
+                        </Button>
+                      </Menu.Trigger>
+                      <Menu.Positioner>
+                        <Menu.Content paddingX={2}>
+                          {STUDENT_TIME_FILTERS.map((filter) => (
+                            <Menu.Item
+                              key={filter.value}
+                              value={filter.value}
+                              onClick={() => setStudentTimeFilter(filter.value)}
+                              fontSize="xs"
+                              fontWeight={filter.value === studentTimeFilter ? "semibold" : "normal"}
+                            >
+                              {filter.label}
+                            </Menu.Item>
+                          ))}
+                        </Menu.Content>
+                      </Menu.Positioner>
+                    </Menu.Root>
+                    <Text fontSize="sm" color="fg.muted">
+                      {filteredStudentAgents.length} personna{filteredStudentAgents.length !== 1 ? "s" : ""}
+                    </Text>
+                  </HStack>
+                </HStack>
+                <AgentGrid agents={filteredStudentActive} {...gridProps} />
+                {filteredStudentInactive.length > 0 && (
+                  <AgentGrid agents={filteredStudentInactive} {...gridProps} />
                 )}
               </VStack>
             )}
