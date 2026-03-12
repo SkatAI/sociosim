@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Prompt Edit Permissions:** Restrict system prompt editing so admin/teacher can edit any agent, students can only edit their own. Enforced server-side (401/403) and hidden in UI.
 - **Test Coverage:** Add comprehensive test suite for main interview page (`/interview`) with 16 tests covering authentication, session creation, agent loading, and chat interaction.
 - **Google Docs Export:** Add OAuth flow and export pipeline to create interview documents in Google Docs.
 - **Auth Flow Tests:** Add tests for registration, login, password reset, and logout with invalid input coverage.
