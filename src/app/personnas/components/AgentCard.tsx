@@ -16,6 +16,7 @@ interface AgentCardProps {
   togglingAgentId: string | null;
   hasInteracted: boolean;
   userAdmin: boolean;
+  canEditAgent: boolean;
   onSelectAgent: (agentId: string) => void;
   onToggleAgent: (agent: Agent) => void;
   onNavigateHistory: (agentId: string) => void;
@@ -28,6 +29,7 @@ export function AgentCard({
   togglingAgentId,
   hasInteracted,
   userAdmin,
+  canEditAgent,
   onSelectAgent,
   onToggleAgent,
   onNavigateHistory,
@@ -82,15 +84,17 @@ export function AgentCard({
               Historique
             </Button>
           )}
-          <Button
-            variant="subtle"
-            size="xs"
-            paddingInline={2}
-            onClick={() => onNavigatePrompt(agent.id)}
-            disabled={!agent.active}
-          >
-            Prompt
-          </Button>
+          {canEditAgent && (
+            <Button
+              variant="subtle"
+              size="xs"
+              paddingInline={2}
+              onClick={() => onNavigatePrompt(agent.id)}
+              disabled={!agent.active}
+            >
+              Prompt
+            </Button>
+          )}
           {userAdmin && (
             <Button
               variant={agent.active ? "outline" : "subtle"}

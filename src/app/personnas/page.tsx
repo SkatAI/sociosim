@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { type Agent } from "@/lib/agents";
-import { isAdminLike } from "@/lib/agentPolicy";
+import { isAdminLike, canEditPrompt } from "@/lib/agentPolicy";
 import { toaster } from "@/components/ui/toaster";
 import { AgentCard } from "./components/AgentCard";
 import { groupAgentsByCreator } from "./groupAgents";
@@ -39,6 +39,8 @@ function AgentGrid({
   togglingAgentId,
   interactedAgents,
   userAdmin,
+  userId,
+  userRole,
   onSelectAgent,
   onToggleAgent,
   onNavigateHistory,
@@ -49,6 +51,8 @@ function AgentGrid({
   togglingAgentId: string | null;
   interactedAgents: string[];
   userAdmin: boolean;
+  userId: string;
+  userRole: string | null;
   onSelectAgent: (agentId: string) => void;
   onToggleAgent: (agent: Agent) => void;
   onNavigateHistory: (agentId: string) => void;
@@ -65,6 +69,7 @@ function AgentGrid({
           togglingAgentId={togglingAgentId}
           hasInteracted={interactedAgents.includes(agent.id)}
           userAdmin={userAdmin}
+          canEditAgent={canEditPrompt(userRole, userId, agent.created_by)}
           onSelectAgent={onSelectAgent}
           onToggleAgent={onToggleAgent}
           onNavigateHistory={onNavigateHistory}
@@ -77,7 +82,7 @@ function AgentGrid({
 
 export default function PersonnasPage() {
   const router = useRouter();
-  const { user, isLoading: isAuthLoading, user_admin } = useAuthUser();
+  const { user, role, isLoading: isAuthLoading, user_admin } = useAuthUser();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
@@ -263,6 +268,8 @@ export default function PersonnasPage() {
     togglingAgentId,
     interactedAgents,
     userAdmin: user_admin,
+    userId: user?.id ?? "",
+    userRole: role,
     onSelectAgent: handleSelectAgent,
     onToggleAgent: handleToggleAgent,
     onNavigateHistory: handleNavigateHistory,

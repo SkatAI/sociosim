@@ -35,6 +35,7 @@ import PromptReviewSidebar, {
 } from "@/app/personnas/components/PromptReviewSidebar";
 import NewInterviewButton from "@/app/components/NewInterviewButton";
 import { useAuthUser } from "@/hooks/useAuthUser";
+import { canEditPrompt } from "@/lib/agentPolicy";
 import { withTimeout } from "@/lib/withTimeout";
 
 type AgentPromptState = {
@@ -55,7 +56,8 @@ export default function EditAgentPromptPage() {
   const router = useRouter();
   const params = useParams();
   const agentId = typeof params.id === "string" ? params.id : "";
-  const { user, isLoading: isAuthLoading } = useAuthUser();
+  const { user, role, isLoading: isAuthLoading } = useAuthUser();
+  const [agentCreatedBy, setAgentCreatedBy] = useState<string | null>(null);
   const [agentName, setAgentName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
@@ -78,6 +80,7 @@ export default function EditAgentPromptPage() {
   const [isReviewing, setIsReviewing] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const canEdit = user ? canEditPrompt(role, user.id, agentCreatedBy) : false;
   const editor = useEditor({
     extensions: [
       Document,
@@ -175,11 +178,12 @@ export default function EditAgentPromptPage() {
         }
 
         const payload = (await response.json().catch(() => null)) as
-          | { agent?: { agent_name?: string; description?: string | null }; prompts?: PromptOption[] }
+          | { agent?: { agent_name?: string; description?: string | null; created_by?: string | null }; prompts?: PromptOption[] }
           | null;
         const prompts = (payload?.prompts || []) as PromptOption[];
         const nextAgentName = payload?.agent?.agent_name ?? "";
         const nextDescription = payload?.agent?.description ?? "";
+        setAgentCreatedBy(payload?.agent?.created_by ?? null);
         setAgentName(nextAgentName);
         setDescription(nextDescription);
         baseAgentRef.current = { agentName: nextAgentName, description: nextDescription };
@@ -202,6 +206,12 @@ export default function EditAgentPromptPage() {
       editor.commands.setContent(promptState.systemPrompt, { contentType: "markdown" });
     }
   }, [editor, promptState.systemPrompt]);
+
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(canEdit);
+    }
+  }, [editor, canEdit]);
 
   useEffect(() => {
     document.body.classList.add("personna-layout");
@@ -547,6 +557,7 @@ export default function EditAgentPromptPage() {
                     onChange={(event) => setAgentName(event.target.value)}
                     placeholder="Camille, Karim, Zoé, Alexis, Bilel, ..."
                     paddingInlineStart={4}
+                    disabled={!canEdit}
                   />
                 </Field.Root>
 
@@ -560,20 +571,23 @@ export default function EditAgentPromptPage() {
                     placeholder="Étudiant curieux, négociateur expérimenté..."
                     paddingInlineStart={4}
                     resize="none"
+                    disabled={!canEdit}
                   />
                 </Field.Root>
 
-                <Button
-                  size="sm"
-                  variant="subtle"
-                  onClick={handleSaveAgent}
-                  loading={isSavingAgent}
-                  disabled={!isAgentDirty || isSavingAgent}
-                  alignSelf="flex-end"
-                  paddingInline={5}
-                >
-                  Modifier
-                </Button>
+                {canEdit && (
+                  <Button
+                    size="sm"
+                    variant="subtle"
+                    onClick={handleSaveAgent}
+                    loading={isSavingAgent}
+                    disabled={!isAgentDirty || isSavingAgent}
+                    alignSelf="flex-end"
+                    paddingInline={5}
+                  >
+                    Modifier
+                  </Button>
+                )}
 
                 <Collapsible.Root open={helpOpen} onOpenChange={({ open }) => setHelpOpen(open)}>
                   <Collapsible.Trigger asChild>
@@ -728,33 +742,35 @@ export default function EditAgentPromptPage() {
                       >
                         {isSelectedPublished ? "Publié" : "Brouillon"}
                       </Text>
-                      <HStack gap={2} flex="1" justify="flex-end" flexWrap="wrap">
-                        <Button
-                          size="sm"
-                          variant="subtle"
-                          onClick={handleSavePrompt}
-                          loading={isSavingPrompt}
-                          disabled={!isDirty || isSavingPrompt}
-                          paddingInline={5}
-                        >
-                          Enregistrer
-                        </Button>
-                        <Button
-                          size="sm"
-                          colorPalette="blue"
-                          onClick={handlePublish}
-                          loading={isPublishing}
-                          disabled={
-                            !selectedPromptId ||
-                            isSelectedPublished ||
-                            isReviewing ||
-                            review?.status === "invalid"
-                          }
-                          paddingInline={5}
-                        >
-                          Publier
-                        </Button>
-                      </HStack>
+                      {canEdit && (
+                        <HStack gap={2} flex="1" justify="flex-end" flexWrap="wrap">
+                          <Button
+                            size="sm"
+                            variant="subtle"
+                            onClick={handleSavePrompt}
+                            loading={isSavingPrompt}
+                            disabled={!isDirty || isSavingPrompt}
+                            paddingInline={5}
+                          >
+                            Enregistrer
+                          </Button>
+                          <Button
+                            size="sm"
+                            colorPalette="blue"
+                            onClick={handlePublish}
+                            loading={isPublishing}
+                            disabled={
+                              !selectedPromptId ||
+                              isSelectedPublished ||
+                              isReviewing ||
+                              review?.status === "invalid"
+                            }
+                            paddingInline={5}
+                          >
+                            Publier
+                          </Button>
+                        </HStack>
+                      )}
                     </>
                   )}
                 />

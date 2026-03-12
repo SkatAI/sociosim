@@ -49,6 +49,21 @@ export function canViewAgent(
 }
 
 /**
+ * Can this user edit the agent's system prompt or metadata?
+ *
+ * - Admin/teacher can edit any agent.
+ * - Others can only edit agents they created.
+ */
+export function canEditPrompt(
+  role: string | null | undefined,
+  userId: string,
+  agentCreatedBy: string | null | undefined
+): boolean {
+  if (isAdminLike(role)) return true;
+  return !!agentCreatedBy && agentCreatedBy === userId;
+}
+
+/**
  * Can this user toggle an agent's active/inactive status?
  * Only admin-like roles.
  */

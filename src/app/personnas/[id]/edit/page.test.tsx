@@ -15,6 +15,7 @@ vi.mock("@tiptap/react", async () => {
     EditorContent: () => React.createElement("div", { "data-testid": "editor" }),
     useEditor: () => ({
       getMarkdown: () => "",
+      setEditable: vi.fn(),
       commands: { setContent: vi.fn() },
       isActive: () => false,
       chain: () => ({

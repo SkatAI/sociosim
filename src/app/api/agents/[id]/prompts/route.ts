@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceSupabaseClient } from "@/lib/supabaseServiceClient";
+import { getAuthenticatedUser } from "@/lib/supabaseAuthServer";
+import { canEditPrompt } from "@/lib/agentPolicy";
 
 export async function GET(
   _request: NextRequest,
@@ -15,7 +17,7 @@ export async function GET(
 
     const { data: agentData, error: agentError } = await supabase
       .from("agents")
-      .select("id, agent_name, description")
+      .select("id, agent_name, description, created_by")
       .eq("id", agentId)
       .single();
 
@@ -56,6 +58,11 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { user } = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id: agentId } = await params;
     if (!agentId) {
       return NextResponse.json({ error: "Missing agent id" }, { status: 400 });
@@ -63,9 +70,8 @@ export async function POST(
 
     const body = await request.json().catch(() => null);
     const systemPrompt = body?.system_prompt?.trim();
-    const editedBy = body?.edited_by;
 
-    if (!systemPrompt || !editedBy) {
+    if (!systemPrompt) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -73,6 +79,35 @@ export async function POST(
     }
 
     const supabase = createServiceSupabaseClient();
+
+    // Check permission: admin/teacher can edit any agent, others only their own
+    const { data: userRecord, error: userError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (userError) {
+      const message = userError.message ?? "Failed to load user role";
+      console.error("[/api/agents/:id/prompts POST] Role error:", message);
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+
+    const { data: agentData, error: agentError } = await supabase
+      .from("agents")
+      .select("created_by")
+      .eq("id", agentId)
+      .maybeSingle();
+
+    if (agentError || !agentData) {
+      const message = agentError?.message ?? "Agent not found";
+      console.error("[/api/agents/:id/prompts POST] Agent error:", message);
+      return NextResponse.json({ error: message }, { status: 404 });
+    }
+
+    if (!canEditPrompt(userRecord?.role, user.id, agentData.created_by)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const { data: latestPrompt, error: latestError } = await supabase
       .from("agent_prompts")
@@ -92,7 +127,7 @@ export async function POST(
     const { error: insertError } = await supabase.from("agent_prompts").insert({
       agent_id: agentId,
       system_prompt: systemPrompt,
-      edited_by: editedBy,
+      edited_by: user.id,
       version: nextVersion,
       published: false,
     });
