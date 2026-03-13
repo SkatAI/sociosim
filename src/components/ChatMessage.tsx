@@ -6,6 +6,7 @@ interface ChatMessageProps {
   userName?: string;
   agentName?: string;
   timestamp?: string;
+  isError?: boolean;
 }
 
 /**
@@ -14,14 +15,18 @@ interface ChatMessageProps {
  * - User messages: right-aligned with icon
  * - Assistant messages: left-aligned with icon
  */
-export function ChatMessage({ role, text, userName, agentName, timestamp }: ChatMessageProps) {
+export function ChatMessage({ role, text, userName, agentName, timestamp, isError }: ChatMessageProps) {
   const isUser = role === "user";
-  const bubbleBg = isUser
-    ? { base: "blue.100", _dark: "blue.900" }
-    : { base: "gray.100", _dark: "gray.800" };
-  const bubbleColor = isUser
-    ? { base: "blue.900", _dark: "blue.50" }
-    : { base: "gray.900", _dark: "gray.100" };
+  const bubbleBg = isError
+    ? { base: "red.50", _dark: "red.900/30" }
+    : isUser
+      ? { base: "blue.100", _dark: "blue.900" }
+      : { base: "gray.100", _dark: "gray.800" };
+  const bubbleColor = isError
+    ? { base: "red.700", _dark: "red.200" }
+    : isUser
+      ? { base: "blue.900", _dark: "blue.50" }
+      : { base: "gray.900", _dark: "gray.100" };
   const timestampColor = { base: "gray.500", _dark: "gray.400" };
   const avatarName = isUser ? userName || "Utilisateur" : agentName || "Agent";
 

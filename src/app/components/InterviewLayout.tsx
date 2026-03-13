@@ -141,6 +141,7 @@ export function InterviewLayout({
                     userName={userName}
                     agentName={agentNameForMessages}
                     timestamp={msg.timestamp}
+                    isError={msg.isError}
                   />
                 ))}
                 {showAssistantSkeleton && <AssistantSkeleton />}

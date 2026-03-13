@@ -122,11 +122,6 @@ export async function sendInterviewMessage({
               });
             } else if (data.type === "done") {
               console.log("[Interview SSE] done event:", data);
-              // Stream finished, token info available but not displayed yet
-              console.log("[Interview] Stream finished, tokens:", {
-                input: data.event.total_input_tokens,
-                output: data.event.total_output_tokens,
-              });
               const totalInputTokens = data.event.total_input_tokens;
               const totalOutputTokens = data.event.total_output_tokens;
               setInterviewStats((prev) => ({
@@ -134,6 +129,22 @@ export async function sendInterviewMessage({
                 inputTokens: prev.inputTokens + (totalInputTokens ?? 0),
                 outputTokens: prev.outputTokens + (totalOutputTokens ?? 0),
               }));
+            } else if (data.type === "error") {
+              console.error("[Interview SSE] error event:", data);
+              const errorText = data.error || "Une erreur est survenue. Veuillez réessayer.";
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: generateUuid(),
+                  role: "assistant" as const,
+                  text: errorText,
+                  timestamp: new Date().toLocaleTimeString("fr-FR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+                  isError: true,
+                } as UIMessage,
+              ]);
             } else {
               console.log("[Interview SSE] event:", data);
             }
@@ -158,11 +169,12 @@ export async function sendInterviewMessage({
       {
         id: generateUuid(),
         role: "assistant" as const,
-        text: `Erreur: ${errorMessage}`,
+        text: "Une erreur est survenue. Veuillez patienter un instant et réessayer.",
         timestamp: new Date().toLocaleTimeString("fr-FR", {
           hour: "2-digit",
           minute: "2-digit",
         }),
+        isError: true,
       } as UIMessage,
     ]);
   } finally {

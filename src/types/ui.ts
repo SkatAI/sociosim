@@ -17,4 +17,5 @@ export interface UIMessage {
   role: MessageRole;
   text: string;
   timestamp: string;
+  isError?: boolean;
 }

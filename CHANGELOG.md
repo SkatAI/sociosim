@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Error Handling:** User-friendly French error messages for 503/rate-limit, timeout, session expired, and network errors in the chat UI, with red error bubble styling.
+- **Error Tests:** Unit tests for `toUserFacingError` covering all error patterns.
+- **Mock ADK Server:** `scripts/mock-adk-503.mjs` for manual E2E testing of error handling.
 - **Prompt Edit Permissions:** Restrict system prompt editing so admin/teacher can edit any agent, students can only edit their own. Enforced server-side (401/403) and hidden in UI.
 - **Test Coverage:** Add comprehensive test suite for main interview page (`/interview`) with 16 tests covering authentication, session creation, agent loading, and chat interaction.
 - **Google Docs Export:** Add OAuth flow and export pipeline to create interview documents in Google Docs.

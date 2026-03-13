@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AdkClient } from "@/lib/adkClient";
 import { messages, usage } from "@/lib/data";
 import { getInterviewWithAgent } from "@/lib/data/agents";
+import { toUserFacingError } from "@/lib/chatErrors";
 
 const adkClient = new AdkClient();
 
@@ -242,10 +243,12 @@ function handleStreamingResponse(
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("[/api/chat] Stream error:", errorMessage, error);
 
+        const userMessage = toUserFacingError(errorMessage);
+
         try {
           const errorEvent = `data: ${JSON.stringify({
             type: "error",
-            error: errorMessage,
+            error: userMessage,
           })}\n\n`;
           controller.enqueue(encoder.encode(errorEvent));
         } catch (e) {
@@ -337,7 +340,7 @@ async function handleBatchResponse(
     console.error("[/api/chat] Batch error:", errorMessage);
 
     return NextResponse.json(
-      { error: `Failed to send message: ${errorMessage}` },
+      { error: toUserFacingError(errorMessage) },
       { status: 500 }
     );
   }
