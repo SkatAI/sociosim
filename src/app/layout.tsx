@@ -18,6 +18,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Mimesis: Entretiens avec des personnas IA",
   description: "Entrainez-vous à mener des entretiens en sociologie avec des personnas IA.",
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+    noimageindex: true,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noarchive: true,
+      noimageindex: true,
+    },
+  },
 };
 
 export default function RootLayout({
